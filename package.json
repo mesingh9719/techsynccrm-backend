@@ -1,0 +1,61 @@
+{
+  "name": "techsync-crm-backend",
+  "version": "1.0.0",
+  "description": "TechSync CRM API (Node.js + Express)",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=.env src/server.js",
+    "dev:worker": "node --watch --env-file-if-exists=.env src/worker.js",
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "worker": "node --env-file-if-exists=.env src/worker.js",
+    "build": "prisma7 generate && node scripts/build.js",
+    "postinstall": "prisma7 generate",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "vitest run test/integration",
+    "db:generate": "prisma7 generate",
+    "db:migrate:dev": "prisma7 migrate dev",
+    "db:migrate": "prisma7 migrate deploy",
+    "db:status": "prisma7 migrate status",
+    "db:studio": "prisma7 studio",
+    "db:seed": "node --env-file-if-exists=.env scripts/seed.js"
+  },
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1152.0",
+    "@aws-sdk/s3-presigned-post": "^3.1152.0",
+    "@aws-sdk/s3-request-presigner": "^3.1152.0",
+    "@neon/config": "^1.9.2",
+    "@neon/env": "^1.6.3",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "^7.10.1",
+    "bcryptjs": "^3.0.3",
+    "compression": "^1.8.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "files-sdk": "^3.1.1",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "libphonenumber-js": "^1.13.15",
+    "multer": "^2.4.0",
+    "nodemailer": "^10.1.7",
+    "pg": "8.23.1",
+    "pg-boss": "^12.38.0",
+    "pino": "^10.4.0",
+    "pino-http": "^11.0.0",
+    "zod": "^4.6.7"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=22.18"
+  },
+  "//engines": "Node >=22.18 is required: src/db/prisma.js imports the generated TypeScript Prisma client, which relies on Node's built-in type stripping.",
+  "devDependencies": {
+    "@prisma/prisma7": "7.10.1",
+    "pino-pretty": "^13.2.0",
+    "prisma": "^8.0.0-rc.23",
+    "vitest": "^5.0.5"
+  }
+}
