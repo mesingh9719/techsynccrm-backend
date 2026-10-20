@@ -21,6 +21,7 @@ router.get('/', requireAuth, orgs.list)
 router.post('/', requireAuth, validate(createOrganizationSchema), orgs.create)
 
 router.get('/current', requireOrg, orgs.getCurrent)
+router.get('/current/storage', requireOrg, orgs.getStorage)
 router.patch('/current', requireOrg, permit('settings.workspace.manage'), validate(updateOrganizationSchema), orgs.updateCurrent)
 router.delete('/current', requireOrg, permit('organization.delete'), validate(deleteOrganizationSchema), orgs.deleteCurrent)
 router.post('/current/transfer-ownership', requireOrg, permit('ownership.transfer'), validate(transferOwnershipSchema), transferOwnership)

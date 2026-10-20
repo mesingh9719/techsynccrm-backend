@@ -172,6 +172,11 @@ export async function transferOwnership(ctx, { userId, password }) {
   }
 
   await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM organizations WHERE id = ${ctx.orgId}::uuid FOR UPDATE`
+    const current = await tx.membership.findUnique({ where: { organizationId_userId: { organizationId: ctx.orgId, userId: ctx.userId } } })
+    const next = await tx.membership.findUnique({ where: { organizationId_userId: { organizationId: ctx.orgId, userId } } })
+    if (current?.role !== 'owner' || current.status !== 'active') throw forbidden('Only the current workspace owner can transfer ownership.')
+    if (next?.status !== 'active') throw fieldError({ userId: 'Choose an active member' })
     await tx.membership.update({ where: { organizationId_userId: { organizationId: ctx.orgId, userId: ctx.userId } }, data: { role: 'admin' } })
     await tx.membership.update({ where: { organizationId_userId: { organizationId: ctx.orgId, userId } }, data: { role: 'owner' } })
     await emit(tx, ctx, 'organization.ownership_transferred', { entityType: 'organization', entityId: ctx.orgId }, { from: ctx.userId, to: userId })

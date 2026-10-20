@@ -1,7 +1,7 @@
 import { permissionsFor } from '../config/permissions.js'
 import { planHasFeature } from '../config/plans.js'
 import { prisma } from '../db/prisma.js'
-import { visibilityWhere } from '../lib/visibility.js'
+import { taskVisibilityWhere } from '../lib/visibility.js'
 import { loadRecord, RECORD_TYPES } from './recordRef.service.js'
 
 /** Build the recipient's current context, never the actor's permissions. */
@@ -42,7 +42,7 @@ export async function notificationRecord(ctx, notification, db = prisma, now = n
         if (!d || d.status !== 'open' || d.stage.rottingDays == null || now - new Date(Math.max(d.lastActivityAt?.getTime() ?? 0, d.stageEnteredAt.getTime())) <= d.stage.rottingDays * 86400000) return null
       }
     } else if (entityType === 'task') {
-      const task = await db.task.findFirst({ where: { AND: [{ id: entityId, organizationId: ctx.orgId, deletedAt: null }, { OR: [visibilityWhere(ctx, 'tasks', 'read', 'assigneeId'), { createdById: ctx.userId }] }] } })
+      const task = await db.task.findFirst({ where: { AND: [{ id: entityId, organizationId: ctx.orgId, deletedAt: null }, taskVisibilityWhere(ctx)] } })
       if (!task) return null
       if (task.entityType) await loadRecord(ctx, task.entityType, task.entityId, 'read', db)
       if (type.startsWith('task_') && task.assigneeId !== ctx.userId) return null

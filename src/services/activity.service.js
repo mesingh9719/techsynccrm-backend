@@ -246,6 +246,7 @@ export async function deleteActivity(ctx, id) {
   if (activity.actorId !== ctx.userId && !isAdmin(ctx)) throw new ApiError(403, 'Only the author or an admin can delete this.', { code: 'FORBIDDEN' })
   await prisma.$transaction(async (tx) => {
     await tx.activity.update({ where: { id }, data: { deletedAt: new Date() } })
+    await emit(tx, ctx, 'activity.deleted', { entityType: 'activity', entityId: id })
     await recordAudit(tx, ctx, { action: 'activity.delete', entityType: 'activity', entityId: id, changes: { type: activity.type, recordType: activity.entityType, recordId: activity.entityId } })
     await rescoreActivityLeads(tx, ctx, id)
   })

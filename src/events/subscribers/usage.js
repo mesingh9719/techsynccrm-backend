@@ -8,6 +8,7 @@ import { refreshUsage } from '../../services/entitlements.service.js'
  */
 const PATTERNS = [
   'member.*',
+  'file.uploaded',
   'organization.created',
   'organization.plan_changed',
   'contact.created',

@@ -1,3 +1,4 @@
+import { versionedUpdate } from '../lib/versionedUpdate.js'
 import { prisma } from '../db/prisma.js'
 import { diff, emit } from '../events/outbox.js'
 import { recordAudit } from '../lib/audit.js'
@@ -212,13 +213,13 @@ export async function listCompanyContacts(ctx, id) {
 
 // ---------- Write ----------
 
-export async function createCompany(ctx, input, { allowDuplicate = false } = {}) {
+export async function createCompany(ctx, input, { allowDuplicate = false, tx: externalTx } = {}) {
   const data = await prepare(ctx, input)
   if (!allowDuplicate) {
     const duplicates = await findCompanyDuplicates(ctx, { name: data.name, domain: data.domain, gstin: data.gstin })
     if (duplicates.length) throw duplicateError(duplicates)
   }
-  const row = await prisma.$transaction(async (tx) => {
+  const row = await (externalTx ? (fn) => fn(externalTx) : (fn) => prisma.$transaction(fn))(async (tx) => {
     const company = await tx.company.create({
       data: { ...data, organizationId: ctx.orgId, ownerId: 'ownerId' in data ? data.ownerId : ctx.userId, createdById: ctx.userId },
       select: withOrg,
@@ -228,11 +229,11 @@ export async function createCompany(ctx, input, { allowDuplicate = false } = {})
     if (allowDuplicate) await recordAudit(tx, ctx, { action: 'company.create_duplicate', entityType: ENTITY, entityId: company.id, changes: { name: [null, company.name] } })
     return company
   })
-  return present(row)
+  return externalTx ? row : present(row)
 }
 
-export async function updateCompany(ctx, id, input, { expectedUpdatedAt, allowDuplicate = false } = {}) {
-  const before = await getForAction(ctx, id, 'update')
+export async function updateCompany(ctx, id, input, { expectedUpdatedAt, allowDuplicate = false, tx: externalTx } = {}) {
+  const before = await getForAction(ctx, id, 'update', {}, externalTx ?? prisma)
   assertNotStale(before, expectedUpdatedAt)
   if ('ownerId' in input && input.ownerId === before.ownerId) delete input.ownerId
   const data = await prepare(ctx, input, before)
@@ -240,14 +241,14 @@ export async function updateCompany(ctx, id, input, { expectedUpdatedAt, allowDu
     const duplicates = await findCompanyDuplicates(ctx, { name: data.name, domain: data.domain, gstin: data.gstin }, id)
     if (duplicates.length) throw duplicateError(duplicates)
   }
-  const after = await prisma.$transaction(async (tx) => {
-    const row = await tx.company.update({ where: { id }, data, select: withOrg })
+  const after = await (externalTx ? (fn) => fn(externalTx) : (fn) => prisma.$transaction(fn))(async (tx) => {
+    const row = await versionedUpdate(tx, 'company', ctx, before, data, withOrg)
     if (input.tagIds) await setRecordTags(tx, ctx, ENTITY, id, input.tagIds)
     const changes = diff(before, row, AUDITED)
     if (changes || input.tagIds) await emit(tx, ctx, 'company.updated', { entityType: ENTITY, entityId: id }, { changes: changes ?? {} })
     return row
   })
-  return present(after)
+  return externalTx ? after : present(after)
 }
 
 export async function deleteCompany(ctx, id) {

@@ -74,7 +74,7 @@ export const env = Object.freeze({
   /** Neon Object Storage — credentials/endpoint come from the AWS_* vars read by the SDK. */
   STORAGE_BUCKET: process.env.STORAGE_BUCKET ?? 'assets',
   STORAGE_URL_EXPIRES_IN: number('STORAGE_URL_EXPIRES_IN', 900),
-  MAX_UPLOAD_MB: number('MAX_UPLOAD_MB', 10),
+  MAX_UPLOAD_MB: number('MAX_UPLOAD_MB', 25),
 
   /** Public URL of the frontend — used to build links in emails. */
   FRONTEND_URL: (isProduction ? required('FRONTEND_URL') : (process.env.FRONTEND_URL ?? 'http://localhost:5173')).replace(/\/$/, ''),

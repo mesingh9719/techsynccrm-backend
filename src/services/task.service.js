@@ -1,3 +1,4 @@
+import { versionedUpdate } from '../lib/versionedUpdate.js'
 import { env } from '../config/env.js'
 import { DB_NULL, prisma } from '../db/prisma.js'
 import { queueEmail } from '../email/mailer.js'
@@ -7,7 +8,7 @@ import { recordAudit } from '../lib/audit.js'
 import { registerConversionHook, registerMergeHook } from '../lib/merge.js'
 import { listParam, usersById, validationError } from '../lib/records.js'
 import { DEFAULT_TZ, parseIsoDate, startOfDayInTz, zonedParts, zonedTimeToUtc } from '../lib/time.js'
-import { canAccessRecord, registerReassignable, visibilityWhere } from '../lib/visibility.js'
+import { canAccessRecord, registerReassignable, taskVisibilityWhere } from '../lib/visibility.js'
 import { ApiError } from '../utils/ApiError.js'
 import { logActivityTx } from './activity.service.js'
 import { loadRecord, memberCanRead, namesFor } from './recordRef.service.js'
@@ -153,12 +154,12 @@ async function present(rows, tz = DEFAULT_TZ) {
 }
 
 /** Tasks the caller can see: by role scope on the assignee, plus tasks they created. */
-const readWhere = (ctx) => ({ OR: [visibilityWhere(ctx, RESOURCE, 'read', 'assigneeId'), { createdById: ctx.userId }] })
+const readWhere = taskVisibilityWhere
 
 async function getForAction(ctx, id, action, db = prisma) {
   const task = await db.task.findFirst({ where: { AND: [{ id, organizationId: ctx.orgId, deletedAt: null }, readWhere(ctx)] }, select: taskSelect })
   if (!task) throw ApiError.notFound('Task not found')
-  if (action !== 'read' && task.createdById !== ctx.userId && !canAccessRecord(ctx, RESOURCE, action, task.assigneeId)) {
+  if (action !== 'read' && !(action === 'update' && task.createdById === ctx.userId) && !canAccessRecord(ctx, RESOURCE, action, task.assigneeId)) {
     throw new ApiError(403, 'You don’t have permission to change this task.', { code: 'FORBIDDEN' })
   }
   return task
@@ -253,8 +254,7 @@ export async function updateTask(ctx, id, input) {
   if ('dueAt' in data && data.dueAt?.getTime() !== before.dueAt?.getTime()) data.overdueNotifiedAt = null
 
   await prisma.$transaction(async (tx) => {
-    const changed = await tx.task.updateMany({ where: { id, organizationId: ctx.orgId, deletedAt: null, updatedAt: before.updatedAt, status: before.status }, data })
-    if (changed.count !== 1) throw new ApiError(409, 'The task changed. Refresh and try again.', { code: 'STALE_UPDATE' })
+    await versionedUpdate(tx, 'task', ctx, before, data)
     const ref = { entityType: 'task', entityId: id }
     await emit(tx, ctx, 'task.updated', ref, { fields: Object.keys(data) })
     if (data.assigneeId) await emit(tx, ctx, 'task.assigned', ref, { changes: { assigneeId: [before.assigneeId, data.assigneeId] } })
@@ -281,7 +281,7 @@ export async function completeTask(ctx, id, { logActivity: logInput = null } = {
 
   await prisma.$transaction(async (tx) => {
     const now = new Date()
-    const done = await tx.task.updateMany({ where: { id, organizationId: ctx.orgId, status: 'open', deletedAt: null, updatedAt: task.updatedAt }, data: { status: 'completed', completedAt: now, completedById: ctx.userId } })
+    const done = await tx.task.updateMany({ where: { id, organizationId: ctx.orgId, status: 'open', deletedAt: null, updatedAt: task.updatedAt }, data: { status: 'completed', completedAt: now, completedById: ctx.userId, updatedAt: new Date(Math.max(now.getTime(), task.updatedAt.getTime() + 1)) } })
     if (done.count !== 1) throw new ApiError(409, 'The task changed. Refresh and try again.', { code: 'STALE_UPDATE' })
     await emit(tx, ctx, 'task.completed', { entityType: 'task', entityId: id }, { title: task.title, recordType: task.entityType, recordId: task.entityId, assigneeId: task.assigneeId })
     await recordAudit(tx, ctx, { action: 'task.complete', entityType: 'task', entityId: id, changes: { status: ['open', 'completed'] } })
@@ -328,10 +328,7 @@ export async function reopenTask(ctx, id) {
   const task = await getForAction(ctx, id, 'update')
   if (task.status === 'open') return getTask(ctx, id)
   await prisma.$transaction(async (tx) => {
-    await tx.task.update({
-      where: { id },
-      data: { status: 'open', completedAt: null, completedById: null, remindAt: task.dueAt && task.dueAt > new Date() ? remindAtFor(task.dueAt, task.reminderOffsetMinutes) : null, reminderSentAt: null, overdueNotifiedAt: null },
-    })
+    await versionedUpdate(tx, 'task', ctx, task, { status: 'open', completedAt: null, completedById: null, remindAt: task.dueAt && task.dueAt > new Date() ? remindAtFor(task.dueAt, task.reminderOffsetMinutes) : null, reminderSentAt: null, overdueNotifiedAt: null })
     await emit(tx, ctx, 'task.reopened', { entityType: 'task', entityId: id })
   })
   return getTask(ctx, id)
@@ -341,16 +338,16 @@ export async function cancelTask(ctx, id) {
   const task = await getForAction(ctx, id, 'update')
   if (task.status !== 'open') return getTask(ctx, id)
   await prisma.$transaction(async (tx) => {
-    await tx.task.update({ where: { id }, data: { status: 'cancelled', remindAt: null } })
+    await versionedUpdate(tx, 'task', ctx, task, { status: 'cancelled', remindAt: null })
     await emit(tx, ctx, 'task.cancelled', { entityType: 'task', entityId: id })
   })
   return getTask(ctx, id)
 }
 
 export async function deleteTask(ctx, id) {
-  const task = await getForAction(ctx, id, 'update')
+  const task = await getForAction(ctx, id, 'delete')
   await prisma.$transaction(async (tx) => {
-    await tx.task.update({ where: { id }, data: { deletedAt: new Date(), remindAt: null } })
+    await versionedUpdate(tx, 'task', ctx, task, { deletedAt: new Date(), remindAt: null })
     await recordAudit(tx, ctx, { action: 'task.delete', entityType: 'task', entityId: id, changes: { title: [task.title, null] } })
   })
 }

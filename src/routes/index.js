@@ -1,3 +1,4 @@
+import { importRoutes, exportRoutes } from './transfer.routes.js'
 import { Router } from 'express'
 import { getHealth } from '../controllers/health.controller.js'
 import authRoutes from './auth.routes.js'
@@ -27,6 +28,8 @@ router.use('/members', memberRoutes)
 router.use('/invitations', invitationRoutes)
 router.use('/teams', teamRoutes)
 router.use('/files', fileRoutes)
+router.use('/imports', importRoutes)
+router.use('/exports', exportRoutes)
 // CRM records (M07, M08)
 router.use('/contacts', contactRoutes)
 router.use('/companies', companyRoutes)

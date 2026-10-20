@@ -98,12 +98,17 @@ export async function createInvitations(ctx, { emails, role, teamIds = [] }) {
     }
     const token = newToken()
     const invitation = await prisma.$transaction(async (tx) => {
-      // Seats: active members + pending invitations must fit the plan (enforced from M06).
-      await assertWithinLimit(ctx, 'users', 1, tx)
+      await tx.$queryRaw`SELECT id FROM organizations WHERE id = ${ctx.orgId}::uuid FOR UPDATE`
+      const active = await tx.membership.count({ where: { organizationId: ctx.orgId, status: 'active', user: { email } } })
+      if (active) throw new ApiError(409, 'This person is already a member.', { code: 'ALREADY_MEMBER' })
+      const today = await tx.invitation.count({ where: { organizationId: ctx.orgId, createdAt: { gte: since } } })
+      if (today >= DAILY_INVITE_LIMIT) throw new ApiError(429, 'The daily invitation limit has been reached.', { code: 'INVITE_LIMIT' })
+      // Replace the previous reserved seat before counting. Rollback restores it if the limit fails.
       await tx.invitation.updateMany({
         where: { organizationId: ctx.orgId, email, acceptedAt: null, revokedAt: null },
         data: { revokedAt: new Date() },
       })
+      await assertWithinLimit(ctx, 'users', 1, tx)
       const created = await tx.invitation.create({
         data: { organizationId: ctx.orgId, email, role, teamIds, tokenHash: sha256(token), invitedById: ctx.userId, expiresAt: expiry() },
       })
@@ -130,11 +135,16 @@ async function getPending(ctx, id) {
 
 /** New link (the old one stops working) and a fresh expiry. */
 export async function resendInvitation(ctx, id) {
-  const inv = await getPending(ctx, id)
-  const wait = Math.ceil((RESEND_COOLDOWN_MS - (Date.now() - inv.lastSentAt.getTime())) / 1000)
-  if (wait > 0) throw new ApiError(429, `Please wait ${wait}s before resending.`, { code: 'COOLDOWN', details: { retryAfter: wait } })
   const token = newToken()
-  const updated = await prisma.invitation.update({ where: { id }, data: { tokenHash: sha256(token), expiresAt: expiry(), lastSentAt: new Date() } })
+  const updated = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM organizations WHERE id = ${ctx.orgId}::uuid FOR UPDATE`
+    const inv = await tx.invitation.findFirst({ where: { id, organizationId: ctx.orgId, acceptedAt: null, revokedAt: null } })
+    if (!inv) throw ApiError.notFound('Invitation not found')
+    const wait = Math.ceil((RESEND_COOLDOWN_MS - (Date.now() - inv.lastSentAt.getTime())) / 1000)
+    if (wait > 0) throw new ApiError(429, `Please wait ${wait}s before resending.`, { code: 'COOLDOWN', details: { retryAfter: wait } })
+    await assertWithinLimit(ctx, 'users', inv.expiresAt <= new Date() ? 1 : 0, tx)
+    return tx.invitation.update({ where: { id, organizationId: ctx.orgId }, data: { tokenHash: sha256(token), expiresAt: expiry(), lastSentAt: new Date() } })
+  })
   await sendInvitationEmail(ctx, updated, token)
 }
 
@@ -183,8 +193,9 @@ function assertUsable(inv) {
 
 /** Adds the user to the workspace (or reactivates them) and marks the invitation used — in `tx`. */
 async function join(tx, inv, user, meta) {
+  await tx.$queryRaw`SELECT id FROM organizations WHERE id = ${inv.organizationId}::uuid FOR UPDATE`
   const claimed = await tx.invitation.updateMany({
-    where: { id: inv.id, acceptedAt: null, revokedAt: null },
+    where: { id: inv.id, organizationId: inv.organizationId, tokenHash: inv.tokenHash, expiresAt: { gt: new Date() }, acceptedAt: null, revokedAt: null, organization: { deletedAt: null } },
     data: { acceptedAt: new Date(), acceptedById: user.id },
   })
   if (claimed.count !== 1) throw new ApiError(400, 'This invitation has already been used.', { code: 'INVITE_USED' })

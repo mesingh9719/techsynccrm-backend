@@ -8,7 +8,7 @@ import { tryRecordAudit } from '../lib/audit.js'
 import { sha256 } from '../lib/hash.js'
 import { logger } from '../lib/logger.js'
 import { describeUserAgent } from '../lib/userAgent.js'
-import { storage } from '../storage/files.js'
+import { profileImageUrl } from './profileImage.service.js'
 import { ApiError } from '../utils/ApiError.js'
 import { createOrganizationTx, presentOrganizationSummary, resolveActiveMembership, withSlugRetry } from './organization.service.js'
 import { issueRefreshToken, recentSignInFrom, revokeAllForUser, revokeRefreshToken, rotateRefreshToken, signAccessToken } from './token.service.js'
@@ -42,12 +42,7 @@ export const userSelect = {
   createdAt: true,
 }
 
-async function avatarUrl(fileId) {
-  if (!fileId) return null
-  const file = await prisma.file.findUnique({ where: { id: fileId }, select: { storageKey: true } })
-  if (!file) return null
-  return storage.url(file.storageKey, { expiresIn: env.STORAGE_URL_EXPIRES_IN }).catch(() => null)
-}
+const avatarUrl = profileImageUrl
 
 /**
  * Public user shape — never includes the password hash or 2FA secrets. `organization` is the

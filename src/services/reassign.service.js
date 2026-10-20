@@ -18,7 +18,7 @@ export async function reassignRecords({ organizationId, fromUserId, toUserId, ac
   for (const { entity, model, ownerField, openWhere } of listReassignables()) {
     const { count } = await prisma[model].updateMany({
       where: { organizationId, [ownerField]: fromUserId, ...openWhere },
-      data: { [ownerField]: toUserId },
+      data: { [ownerField]: toUserId, ...(model === 'task' && { reminderSentAt: null, overdueNotifiedAt: null }) },
     })
     if (count) moved[entity] = count
   }

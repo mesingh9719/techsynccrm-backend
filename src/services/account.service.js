@@ -25,11 +25,18 @@ const auditCtx = (userId, meta = {}) => ({ userId, ip: meta.ip ?? null, userAgen
 
 export async function updateProfile(userId, input, meta) {
   if (input.avatarFileId) {
-    const file = await prisma.file.findFirst({ where: { id: input.avatarFileId, userId }, select: { contentType: true } })
+    const file = await prisma.file.findFirst({ where: { id: input.avatarFileId, userId, organizationId: meta.orgId, status: 'ready', deletedAt: null }, select: { contentType: true } })
     if (!file) throw fieldError({ avatarFileId: 'Upload the photo again' })
     if (!/^image\/(png|jpe?g|webp)$/.test(file.contentType)) throw fieldError({ avatarFileId: 'Use a PNG, JPG or WebP image' })
   }
-  await prisma.user.update({ where: { id: userId }, data: input })
+  await prisma.$transaction(async (tx) => {
+    if (input.avatarFileId) {
+      await tx.$queryRaw`SELECT id FROM files WHERE id = ${input.avatarFileId}::uuid FOR UPDATE`
+      const file = await tx.file.findFirst({ where: { id: input.avatarFileId, userId, organizationId: meta.orgId, status: 'ready', deletedAt: null } })
+      if (!file || !['image/png', 'image/jpeg', 'image/webp'].includes(file.contentType)) throw fieldError({ avatarFileId: 'Upload the photo again' })
+    }
+    await tx.user.update({ where: { id: userId }, data: input })
+  })
   await tryRecordAudit(auditCtx(userId, meta), { action: 'user.profile_updated', entityType: 'user', entityId: userId, changes: { fields: Object.keys(input) } })
   return getUserById(userId, meta.orgId ?? null)
 }

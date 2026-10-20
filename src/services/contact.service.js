@@ -1,3 +1,4 @@
+import { versionedUpdate } from '../lib/versionedUpdate.js'
 import { prisma } from '../db/prisma.js'
 import { diff, emit } from '../events/outbox.js'
 import { recordAudit } from '../lib/audit.js'
@@ -156,6 +157,7 @@ async function prepare(ctx, input, existing = null) {
   if ('phones' in input) data.phones = normalizePhones(input.phones, ctx.country)
   const emails = data.emails ?? existing?.emails ?? []
   const phones = data.phones ?? existing?.phones ?? []
+  if (!existing) Object.assign(data, { emails, phones })
   const first = 'firstName' in data ? data.firstName : existing?.firstName
   const last = 'lastName' in data ? data.lastName : existing?.lastName
   if (!first && !emails.length && !phones.length) throw validationError({ firstName: 'Enter a name, phone or email' })
@@ -263,24 +265,24 @@ export async function createContactTx(tx, ctx, data, { tagIds, companies, counts
   return contact
 }
 
-export async function createContact(ctx, input, { allowDuplicate = false } = {}) {
+export async function createContact(ctx, input, { allowDuplicate = false, tx: externalTx } = {}) {
   const data = await prepare(ctx, input)
   if (!allowDuplicate) {
     const duplicates = await findContactMatches(ctx.orgId, { emails: data.emails.map((e) => e.value), phones: data.phones.map((p) => p.e164) })
     if (duplicates.length) throw duplicateError(duplicates)
   }
-  const row = await prisma.$transaction(async (tx) => {
+  const row = await (externalTx ? (fn) => fn(externalTx) : (fn) => prisma.$transaction(fn))(async (tx) => {
     const contact = await createContactTx(tx, ctx, data, { tagIds: input.tagIds, companies: input.companies })
     if (allowDuplicate) {
       await recordAudit(tx, ctx, { action: 'contact.create_duplicate', entityType: ENTITY, entityId: contact.id, changes: { displayName: [null, contact.displayName] } })
     }
     return contact
   })
-  return present(row)
+  return externalTx ? row : present(row)
 }
 
-export async function updateContact(ctx, id, input, { expectedUpdatedAt, allowDuplicate = false } = {}) {
-  const before = await getForAction(ctx, id, 'update')
+export async function updateContact(ctx, id, input, { expectedUpdatedAt, allowDuplicate = false, tx: externalTx } = {}) {
+  const before = await getForAction(ctx, id, 'update', {}, externalTx ?? prisma)
   assertNotStale(before, expectedUpdatedAt)
   if ('ownerId' in input && input.ownerId === before.ownerId) delete input.ownerId
   const data = await prepare(ctx, input, before)
@@ -292,8 +294,8 @@ export async function updateContact(ctx, id, input, { expectedUpdatedAt, allowDu
     )
     if (duplicates.length) throw duplicateError(duplicates)
   }
-  const after = await prisma.$transaction(async (tx) => {
-    const row = await tx.contact.update({ where: { id }, data, select: contactSelect })
+  const after = await (externalTx ? (fn) => fn(externalTx) : (fn) => prisma.$transaction(fn))(async (tx) => {
+    const row = await versionedUpdate(tx, 'contact', ctx, before, data, contactSelect)
     if (data.emails || data.phones) await syncLookups(tx, ctx.orgId, id, row.emails, row.phones)
     if (input.tagIds) await setRecordTags(tx, ctx, ENTITY, id, input.tagIds)
     if (input.companies) await setCompanies(tx, ctx, id, input.companies)
@@ -302,7 +304,7 @@ export async function updateContact(ctx, id, input, { expectedUpdatedAt, allowDu
     if (changes?.ownerId) await emit(tx, ctx, 'contact.assigned', { entityType: ENTITY, entityId: id }, { changes: { ownerId: changes.ownerId } })
     return row
   })
-  return present(after)
+  return externalTx ? after : present(after)
 }
 
 export async function deleteContact(ctx, id) {

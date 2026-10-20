@@ -77,8 +77,7 @@ CREATE TABLE "tasks" (
     "due_at" TIMESTAMPTZ(6),
     "all_day" BOOLEAN NOT NULL DEFAULT false,
     "reminder_offset_minutes" INTEGER DEFAULT 15,
-    "remind_at" TIMESTAMPTZ(6),
-    "reminder_sent_at" TIMESTAMPTZ(6),
+    "reminder_job_id" TEXT,
     "recurrence" JSONB,
     "series_id" UUID,
     "entity_type" TEXT,
@@ -146,4 +145,3 @@ ALTER TABLE "tasks" ADD CONSTRAINT "tasks_organization_id_fkey" FOREIGN KEY ("or
 -- "My tasks" views and the overdue scan only look at live open tasks.
 CREATE INDEX "tasks_open_due_idx" ON "tasks" ("organization_id", "assignee_id", "due_at") WHERE "status" = 'open' AND "deleted_at" IS NULL;
 CREATE INDEX "tasks_overdue_scan_idx" ON "tasks" ("due_at") WHERE "status" = 'open' AND "deleted_at" IS NULL AND "overdue_notified_at" IS NULL;
-CREATE INDEX "tasks_remind_scan_idx" ON "tasks" ("remind_at") WHERE "status" = 'open' AND "deleted_at" IS NULL AND "reminder_sent_at" IS NULL;

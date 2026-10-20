@@ -28,7 +28,7 @@ export async function emit(tx, ctx, type, { entityType, entityId }, payload = {}
       type,
       entityType,
       entityId,
-      payload: toJsonValue(payload) ?? {},
+      payload: toJsonValue(ctx?.importId ? { ...payload, meta: { ...payload.meta, importId: ctx.importId } } : payload) ?? {},
     },
     select: { id: true },
   })

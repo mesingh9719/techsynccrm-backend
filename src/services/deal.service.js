@@ -1,3 +1,4 @@
+import { versionedUpdate } from '../lib/versionedUpdate.js'
 import { prisma } from '../db/prisma.js'
 import { diff, emit } from '../events/outbox.js'
 import { recordAudit } from '../lib/audit.js'
@@ -213,7 +214,7 @@ export async function setDealContacts(tx, ctx, dealId, links) {
 }
 
 /** Fields `stage` requires that `deal` lacks (Won also needs a value). */
-function missingFor(stage, deal, contactCount) {
+export function missingFor(stage, deal, contactCount) {
   const required = [...stage.requiredFields, ...(stage.type === 'won' ? ['valueMinor'] : [])]
   const missing = []
   for (const field of new Set(required)) {
@@ -428,8 +429,8 @@ export async function getHistory(ctx, id) {
 
 // ---------- Update ----------
 
-export async function updateDeal(ctx, id, input, { expectedUpdatedAt } = {}) {
-  const before = await getForAction(ctx, id, 'update')
+export async function updateDeal(ctx, id, input, { expectedUpdatedAt, tx: externalTx } = {}) {
+  const before = await getForAction(ctx, id, 'update', {}, externalTx ?? prisma)
   await assertWritable(ctx, before.pipelineId, 'open')
   assertNotStale(before, expectedUpdatedAt)
   const data = await prepare(ctx, input, before)
@@ -439,15 +440,15 @@ export async function updateDeal(ctx, id, input, { expectedUpdatedAt } = {}) {
   const missing = missingFor(before.stage, merged, contactCount)
   if (missing.length && missing.some((f) => f in data || (f === 'contacts' && input.contacts) || (f.startsWith('cf.') && 'customFields' in input))) throw requirementsError(before.stage, missing)
 
-  await prisma.$transaction(async (tx) => {
-    const row = await tx.deal.update({ where: { id }, data, select: dealSelect })
+  await (externalTx ? (fn) => fn(externalTx) : (fn) => prisma.$transaction(fn))(async (tx) => {
+    const row = await versionedUpdate(tx, 'deal', ctx, before, data, dealSelect)
     if (input.contacts) await setDealContacts(tx, ctx, id, input.contacts)
     if (input.tagIds) await setRecordTags(tx, ctx, ENTITY, id, input.tagIds)
     const changes = diff(before, row, AUDITED)
     if (changes || input.contacts || input.tagIds) await emit(tx, ctx, 'deal.updated', { entityType: ENTITY, entityId: id }, { changes: changes ?? {} })
     if (changes?.ownerId) await emit(tx, ctx, 'deal.assigned', { entityType: ENTITY, entityId: id }, { changes: { ownerId: changes.ownerId } })
   })
-  return getDeal(ctx, id)
+  return externalTx ? externalTx.deal.findFirst({ where: { id, organizationId: ctx.orgId } }) : getDeal(ctx, id)
 }
 
 /**

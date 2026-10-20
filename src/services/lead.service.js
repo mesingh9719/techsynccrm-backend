@@ -1,3 +1,4 @@
+import { versionedUpdate } from '../lib/versionedUpdate.js'
 import { prisma } from '../db/prisma.js'
 import { diff, emit } from '../events/outbox.js'
 import { recordAudit } from '../lib/audit.js'
@@ -269,7 +270,7 @@ async function assertSource(ctx, sourceId, db = prisma) {
 }
 
 /** `capture: true` skips required custom fields — a web form or connector can't fill them in. */
-async function prepare(ctx, input, existing = null, { capture = false } = {}) {
+async function prepare(ctx, input, existing = null, { capture = false, db = prisma } = {}) {
   const data = {}
   for (const f of ['firstName', 'lastName', 'companyName', 'requirement', 'city', 'stateCode', 'pincode', 'sourceDetail']) if (f in input) data[f] = input[f]
   if ('budgetMinor' in input) data.budgetMinor = input.budgetMinor === null ? null : BigInt(input.budgetMinor)
@@ -284,7 +285,7 @@ async function prepare(ctx, input, existing = null, { capture = false } = {}) {
   if (!first && !emails.length && !phones.length) throw validationError({ firstName: 'Enter a name, phone or email' })
   Object.assign(data, primaryColumns(emails, phones), { displayName: buildDisplayName({ firstName: first, lastName: last }, emails, phones) })
   if ('sourceId' in input && input.sourceId !== existing?.sourceId) {
-    await assertSource(ctx, input.sourceId)
+    await assertSource(ctx, input.sourceId, db)
     data.sourceId = input.sourceId
   }
   if ('customFields' in input || !existing) {
@@ -369,20 +370,21 @@ async function insertLeadTx(tx, ctx, data, { tagIds, extra = {} } = {}) {
  * Manual create. Duplicates (open leads or contacts sharing a phone/email) → 409 DUPLICATE_FOUND
  * unless `allowDuplicate` (audited). The creator owns it unless `ownerId` says otherwise (null = unassigned).
  */
-export async function createLead(ctx, input, { allowDuplicate = false } = {}) {
-  const data = await prepare(ctx, input)
+export async function createLead(ctx, input, { allowDuplicate = false, tx: externalTx, linkedContactId = null } = {}) {
+  const data = await prepare(ctx, input, null, { db: externalTx ?? prisma })
   const ownerId = 'ownerId' in input ? input.ownerId : ctx.userId
   await assertAssignableOwner(ctx, ownerId)
   if (!allowDuplicate) {
     const duplicates = await findDuplicates(ctx.orgId, data.emails, data.phones)
     if (duplicates.length) throw duplicateError(duplicates)
   }
-  const lead = await prisma.$transaction(async (tx) => {
-    const created = await insertLeadTx(tx, ctx, { ...data, ownerId }, { tagIds: input.tagIds })
+  const lead = await (externalTx ? (fn) => fn(externalTx) : (fn) => prisma.$transaction(fn))(async (tx) => {
+    if (linkedContactId && !await tx.contact.count({ where: { id: linkedContactId, organizationId: ctx.orgId, deletedAt: null } })) throw validationError({ contactId: 'This contact no longer exists' })
+    const created = await insertLeadTx(tx, ctx, { ...data, ownerId }, { tagIds: input.tagIds, extra: linkedContactId ? { contactId: linkedContactId } : {} })
     if (allowDuplicate) await recordAudit(tx, ctx, { action: 'lead.create_duplicate', entityType: ENTITY, entityId: created.id, changes: { displayName: [null, created.displayName] } })
     return created
   })
-  return present(lead)
+  return externalTx ? lead : present(lead)
 }
 
 /**
@@ -439,17 +441,17 @@ export async function createLeadFromCapture(ctx, payload, { sourceKey, dedupe = 
 
 // ---------- Update ----------
 
-export async function updateLead(ctx, id, input, { expectedUpdatedAt, allowDuplicate = false } = {}) {
-  const before = await getForAction(ctx, id, 'update')
+export async function updateLead(ctx, id, input, { expectedUpdatedAt, allowDuplicate = false, tx: externalTx } = {}) {
+  const before = await getForAction(ctx, id, 'update', {}, externalTx ?? prisma)
   assertOpen(before)
   assertNotStale(before, expectedUpdatedAt)
-  const data = await prepare(ctx, input, before)
+  const data = await prepare(ctx, input, before, { db: externalTx ?? prisma })
   if (!allowDuplicate && (data.emails || data.phones)) {
     const duplicates = await findDuplicates(ctx.orgId, data.emails ?? [], data.phones ?? [], id)
     if (duplicates.length) throw duplicateError(duplicates)
   }
-  const after = await prisma.$transaction(async (tx) => {
-    let row = await tx.lead.update({ where: { id }, data, select: leadSelect })
+  const after = await (externalTx ? (fn) => fn(externalTx) : (fn) => prisma.$transaction(fn))(async (tx) => {
+    let row = await versionedUpdate(tx, 'lead', ctx, before, data, leadSelect)
     if (data.emails || data.phones) await syncLeadLookups(tx, ctx.orgId, id, row.emails, row.phones)
     if (input.tagIds) await setRecordTags(tx, ctx, ENTITY, id, input.tagIds)
     row = await scoreTx(tx, row)
@@ -457,7 +459,7 @@ export async function updateLead(ctx, id, input, { expectedUpdatedAt, allowDupli
     if (changes || input.tagIds) await emit(tx, ctx, 'lead.updated', { entityType: ENTITY, entityId: id }, { changes: changes ?? {} })
     return row
   })
-  return present(after)
+  return externalTx ? after : present(after)
 }
 
 /** POST /leads/:id/status — enforces the status machine; lost needs a reason, junk a junk reason. */

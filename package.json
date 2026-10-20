@@ -18,7 +18,9 @@
     "db:migrate": "prisma7 migrate deploy",
     "db:status": "prisma7 migrate status",
     "db:studio": "prisma7 studio",
-    "db:seed": "node --env-file-if-exists=.env scripts/seed.js"
+    "db:seed": "node --env-file-if-exists=.env scripts/seed.js",
+    "db:check": "node --env-file-if-exists=.env scripts/check-schema.js",
+    "db:validate": "prisma7 validate"
   },
   "type": "module",
   "dependencies": {
@@ -33,10 +35,14 @@
     "compression": "^1.8.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
+    "csv-parse": "^7.0.3",
+    "exceljs": "^4.4.0",
     "express": "^5.3.0",
     "express-rate-limit": "^8.7.1",
+    "file-type": "^22.2.0",
     "files-sdk": "^3.1.1",
     "helmet": "^8.3.0",
+    "iconv-lite": "^0.7.3",
     "jsonwebtoken": "^9.0.3",
     "libphonenumber-js": "^1.13.15",
     "multer": "^2.4.0",
@@ -45,6 +51,8 @@
     "pg-boss": "^12.38.0",
     "pino": "^10.4.0",
     "pino-http": "^11.0.0",
+    "sharp": "^0.35.5",
+    "unzipper": "^0.12.5",
     "zod": "^4.6.7"
   },
   "private": true,
@@ -55,7 +63,12 @@
   "devDependencies": {
     "@prisma/prisma7": "7.10.1",
     "pino-pretty": "^13.2.0",
-    "prisma": "^8.0.0-rc.23",
+    "prisma": "^7.10.1",
     "vitest": "^5.0.5"
+  },
+  "overrides": {
+    "exceljs": {
+      "uuid": "^11.1.1"
+    }
   }
 }

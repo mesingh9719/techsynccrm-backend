@@ -41,8 +41,8 @@ const COUNTERS = {
   workflowRules: async () => 0,
   /** Bytes stored in Object Storage by this workspace. */
   storage: async (db, orgId) => {
-    const { _sum } = await db.file.aggregate({ where: { organizationId: orgId }, _sum: { sizeBytes: true } })
-    return Number(_sum.sizeBytes ?? 0)
+    const { _sum } = await db.file.aggregate({ where: { organizationId: orgId }, _sum: { sizeBytes: true, thumbnailBytes: true } })
+    return Number((_sum.sizeBytes ?? 0n) + (_sum.thumbnailBytes ?? 0n))
   },
 }
 

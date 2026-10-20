@@ -1,4 +1,3 @@
-import { env } from '../config/env.js'
 import { permissionsFor } from '../config/permissions.js'
 import { DB_NULL, prisma, UNIQUE_VIOLATION } from '../db/prisma.js'
 import { diff, emit } from '../events/outbox.js'
@@ -6,9 +5,9 @@ import { recordAudit } from '../lib/audit.js'
 import { planHasFeature, presentEntitlements } from '../config/plans.js'
 import { gstinErrors } from '../lib/india.js'
 import { DEFAULT_TZ } from '../lib/time.js'
-import { storage } from '../storage/files.js'
+import { profileImageUrl } from './profileImage.service.js'
 import { ApiError } from '../utils/ApiError.js'
-import { assertFeature } from './entitlements.service.js'
+import { assertFeature, countUsage } from './entitlements.service.js'
 import { ensureLeadDefaults } from './leadSetup.service.js'
 import { ensureDefaultPipeline } from './pipeline.service.js'
 import { initialPlanFor, planOverview, recordPlanChangeTx } from './plan.service.js'
@@ -184,16 +183,7 @@ export async function listMyOrganizations(userId, currentOrgId) {
   }))
 }
 
-async function logoUrl(logoFileId) {
-  if (!logoFileId) return null
-  const file = await prisma.file.findUnique({ where: { id: logoFileId }, select: { storageKey: true } })
-  if (!file) return null
-  try {
-    return await storage.url(file.storageKey, { expiresIn: env.STORAGE_URL_EXPIRES_IN })
-  } catch {
-    return null
-  }
-}
+const logoUrl = profileImageUrl
 
 /** Full settings record plus plan, trial, entitlements and usage (M06). */
 async function presentFull(org) {
@@ -221,9 +211,9 @@ async function assertCurrencyChangeAllowed(ctx) {
   if (deals) throw validationError({ currency: 'The currency can’t change once deals have been recorded in it' })
 }
 
-async function assertLogoFile(ctx, fileId) {
-  const file = await prisma.file.findFirst({
-    where: { id: fileId, OR: [{ organizationId: ctx.orgId }, { userId: ctx.userId }] },
+async function assertLogoFile(ctx, fileId, db = prisma) {
+  const file = await db.file.findFirst({
+    where: { id: fileId, organizationId: ctx.orgId, status: 'ready', deletedAt: null },
     select: { id: true, contentType: true, organizationId: true },
   })
   if (!file) throw validationError({ logoFileId: 'Upload the logo again' })
@@ -248,13 +238,17 @@ export async function updateCurrentOrganization(ctx, input) {
     if (!me?.twoFactorEnabledAt) throw validationError({ require2fa: 'Turn on two-factor authentication for your own account first' })
   }
   if (input.logoFileId) {
-    const file = await assertLogoFile(ctx, input.logoFileId)
-    if (file.organizationId !== ctx.orgId) await prisma.file.update({ where: { id: file.id }, data: { organizationId: ctx.orgId } })
+    await assertLogoFile(ctx, input.logoFileId)
+
   }
 
   let after
   try {
     after = await prisma.$transaction(async (tx) => {
+      if (input.logoFileId) {
+        await tx.$queryRaw`SELECT id FROM files WHERE id = ${input.logoFileId}::uuid AND organization_id = ${ctx.orgId}::uuid FOR UPDATE`
+        await assertLogoFile(ctx, input.logoFileId, tx)
+      }
       const data = { ...input, ...(input.address === null && { address: DB_NULL }) }
       const updated = await tx.organization.update({ where: { id: ctx.orgId }, data, select: fullSelect })
       const changes = diff(before, updated, AUDITED_FIELDS)
@@ -309,6 +303,8 @@ export async function switchOrganization(userId, organizationId) {
  * theirs as they ship (import leads — M13, invite team — M04, connect WhatsApp — M19, web form — M14).
  */
 const CHECKLIST = [
+  { key: 'import_leads', title: 'Import your leads', description: 'Bring your spreadsheet into the workspace.', href: '/app/import?entity=leads', done: (_org, counts) => counts.imports > 0 },
+  { key: 'first_pipeline', title: 'Set up your first pipeline', description: 'Your industry pipeline is ready to use.', href: '/app/deals', done: (_org, counts) => counts.pipelines > 0 },
   {
     key: 'invite_team',
     title: 'Invite your team',
@@ -333,16 +329,18 @@ const CHECKLIST = [
 ]
 
 export async function getChecklist(ctx) {
-  const [org, membership, members, invitations] = await Promise.all([
+  const [org, membership, members, invitations, imports, pipelines] = await Promise.all([
     prisma.organization.findUniqueOrThrow({ where: { id: ctx.orgId }, select: { stateCode: true, address: true, logoFileId: true } }),
     prisma.membership.findUniqueOrThrow({
       where: { organizationId_userId: { organizationId: ctx.orgId, userId: ctx.userId } },
       select: { dismissedChecklistAt: true },
     }),
     prisma.membership.count({ where: { organizationId: ctx.orgId, status: 'active' } }),
-    prisma.invitation.count({ where: { organizationId: ctx.orgId, acceptedAt: null, revokedAt: null } }),
+    prisma.invitation.count({ where: { organizationId: ctx.orgId, acceptedAt: null, revokedAt: null, expiresAt: { gt: new Date() } } }),
+    prisma.importJob.count({ where: { organizationId: ctx.orgId, entityType: 'lead', status: 'completed', created: { gt: 0 } } }),
+    prisma.pipeline.count({ where: { organizationId: ctx.orgId, archivedAt: null } }),
   ])
-  const counts = { members, invitations }
+  const counts = { members, invitations, imports, pipelines }
   return {
     items: CHECKLIST.map(({ done, ...item }) => ({ ...item, done: done(org, counts) })),
     dismissed: Boolean(membership.dismissedChecklistAt),
@@ -354,4 +352,10 @@ export async function dismissChecklist(ctx) {
     where: { organizationId_userId: { organizationId: ctx.orgId, userId: ctx.userId } },
     data: { dismissedChecklistAt: new Date() },
   })
+}
+
+/** Live storage includes reserved pending bytes, soft-deleted objects and generated thumbnails. */
+export async function getStorageUsage(ctx) {
+  const limit = ctx.entitlements.limits.storageGb * 1024 ** 3
+  return { usedBytes: await countUsage(ctx.orgId, 'storage'), quotaBytes: Number.isFinite(limit) ? limit : null }
 }

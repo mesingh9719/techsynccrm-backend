@@ -1,3 +1,5 @@
+import { runImport, runExport, recoverTransfers } from '../services/transfer.service.js'
+import { maintainFiles } from '../services/file.service.js'
 import { queueNotificationEmails, queueNotificationDigests, deliverNotificationBatch, cleanupNotifications } from '../services/notificationDelivery.service.js'
 import { registerHandler, schedule } from './queue.js'
 import { sendQueuedEmail } from './handlers/email.js'
@@ -14,6 +16,12 @@ import { scanOverdueTasks, sendDueReminders } from '../services/task.service.js'
 
 /** Registers every job handler and cron schedule. Called once by the worker after the queue starts. */
 export async function registerJobs() {
+  await registerHandler('import.run', (job) => runImport(job.data.importId))
+  await registerHandler('export.run', (job) => runExport(job.data.exportId))
+  await registerHandler('transfers.recover', recoverTransfers)
+  await schedule('transfers.recover', '* * * * *', null, { tz: 'UTC' })
+  await registerHandler('files.maintenance', () => maintainFiles())
+  await schedule('files.maintenance', '10 * * * *', null, { tz: 'UTC' })
   await registerHandler('notifications.emails', () => queueNotificationEmails())
   await registerHandler('notifications.digests', () => queueNotificationDigests())
   await registerHandler('notifications.deliver', (job) => deliverNotificationBatch(job.data.batchId), { concurrency: 3 })

@@ -12,6 +12,7 @@ export const NOTIFICATION_TYPES = {
   mention: { label: 'Mentions', inApp: true, email: true, mandatory: true },
   member_joined: { label: 'Invited members joining', inApp: true, email: false },
   import_finished: { label: 'Import results', inApp: true, email: true },
+  export_finished: { label: 'Export results', inApp: true, email: true },
   trial_ending: { label: 'Trial ending', inApp: true, email: true },
   system: { label: 'Workspace announcements', inApp: true, email: false },
 }

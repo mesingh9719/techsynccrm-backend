@@ -177,6 +177,12 @@ model Organization {
   /// Trial expiry and reminder scans
   @@index([trialEndsAt])
   @@map("organizations")
+  fileLinks FileLink[]
+  importJobs ImportJob[]
+  importRecords ImportRecord[]
+  importMappings ImportMapping[]
+  exportJobs ExportJob[]
+
 }
 
 // ---------- Plans & entitlements (M06) ----------
@@ -352,21 +358,33 @@ model UserToken {
 /// Metadata for objects in Neon Object Storage. The bytes live in the bucket; the key lives here.
 model File {
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId         String   @map("user_id") @db.Uuid
-  /// Workspace the file belongs to. Nullable until M12 makes files workspace-scoped.
-  organizationId String?  @map("organization_id") @db.Uuid
+  userId         String   @map("uploaded_by_id") @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
   storageKey     String   @unique @map("storage_key")
   originalName   String   @map("original_name")
   contentType    String   @map("content_type")
   sizeBytes      BigInt   @map("size_bytes")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade, map: "files_user_id_fkey")
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  status String @default("ready")
+  sha256 String?
+  scanStatus String @default("not_scanned") @map("scan_status")
+  thumbnailKey String? @map("thumbnail_key")
+  thumbnailBytes BigInt @default(0) @map("thumbnail_bytes")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  expiresAt DateTime? @map("expires_at") @db.Timestamptz(6)
+  links FileLink[]
 
-  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)], map: "files_user_id_created_at_idx")
   @@index([organizationId])
   @@map("files")
+  imports ImportJob[] @relation("ImportSource")
+  importReports ImportJob[] @relation("ImportErrorReport")
+  exports ExportJob[]
+
 }
 
 // ---------- Platform infrastructure (M00) ----------
@@ -513,6 +531,7 @@ model NewsletterSubscriber {
 
 /// An account: a business you sell to. Doesn't count toward the plan's `records` limit.
 model Company {
+  importId String? @map("import_id") @db.Uuid
   id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organizationId  String    @map("organization_id") @db.Uuid
   name            String
@@ -545,10 +564,12 @@ model Company {
   @@index([organizationId, gstin])
   @@index([organizationId, createdAt(sort: Desc)])
   @@map("companies")
+  @@index([organizationId, importId])
 }
 
 /// A person. Counts toward the plan's `records` limit (with leads).
 model Contact {
+  importId String? @map("import_id") @db.Uuid
   id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organizationId   String    @map("organization_id") @db.Uuid
   firstName        String?   @map("first_name")
@@ -589,6 +610,7 @@ model Contact {
   @@index([organizationId, primaryEmail])
   @@index([organizationId, createdAt(sort: Desc)])
   @@map("contacts")
+  @@index([organizationId, importId])
 }
 
 /// Every phone of every contact, for duplicate lookup and search. Kept in sync by contact.service.
@@ -747,6 +769,7 @@ model LostReason {
 
 /// An unqualified enquiry. Converts into a contact (+ company, + deal from M09).
 model Lead {
+  importId String? @map("import_id") @db.Uuid
   id                 String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organizationId     String     @map("organization_id") @db.Uuid
   firstName          String?    @map("first_name")
@@ -806,6 +829,7 @@ model Lead {
   @@index([organizationId, primaryEmail])
   @@index([organizationId, sourceId])
   @@map("leads")
+  @@index([organizationId, importId])
 }
 
 model LeadPhone {
@@ -915,6 +939,7 @@ model PipelineStage {
 }
 
 model Deal {
+  importId String? @map("import_id") @db.Uuid
   id                  String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organizationId      String     @map("organization_id") @db.Uuid
   title               String
@@ -957,6 +982,7 @@ model Deal {
   @@index([organizationId, status, closedAt])
   @@index([organizationId, companyId])
   @@map("deals")
+  @@index([organizationId, importId])
 }
 
 model DealContact {
@@ -1115,6 +1141,8 @@ model Task {
   /// When the reminder is due (due_at − offset); recomputed on every change, scanned every minute
   remindAt              DateTime?  @map("remind_at") @db.Timestamptz(6)
   reminderSentAt        DateTime?  @map("reminder_sent_at") @db.Timestamptz(6)
+  /// Retained for compatibility with the originally deployed M10 migration. No new jobs use it.
+  reminderJobId         String?    @map("reminder_job_id")
   /// { freq: daily|weekly|monthly, interval, byWeekday?, byMonthDay?, count?, until? }
   recurrence            Json?
   /// First task of a recurring series
@@ -1232,4 +1260,99 @@ model NotificationStreamTicket {
   @@index([organizationId, userId])
   @@index([expiresAt])
   @@map("notification_stream_tickets")
+}
+
+model FileLink {
+  fileId String @map("file_id") @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  entityType String @map("entity_type")
+  entityId String @map("entity_id") @db.Uuid
+  createdById String @map("created_by_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  file File @relation(fields: [fileId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  @@id([fileId, entityType, entityId])
+  @@index([organizationId, entityType, entityId])
+  @@map("file_links")
+}
+
+model ImportJob {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  entityType String @map("entity_type")
+  fileId String @map("file_id") @db.Uuid
+  sheetName String? @map("sheet_name")
+  headerRow Int @default(1) @map("header_row")
+  mapping Json @default("{}")
+  options Json @default("{}")
+  status String @default("draft")
+  totalRows Int @default(0) @map("total_rows")
+  processed Int @default(0)
+  created Int @default(0)
+  updated Int @default(0)
+  skipped Int @default(0)
+  failed Int @default(0)
+  lastError String? @map("last_error")
+  errorFileId String? @map("error_file_id") @db.Uuid
+  createdById String @map("created_by_id") @db.Uuid
+  startedAt DateTime? @map("started_at") @db.Timestamptz(6)
+  finishedAt DateTime? @map("finished_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  records ImportRecord[]
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@map("import_jobs")
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  file File @relation("ImportSource", fields: [fileId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  errorFile File? @relation("ImportErrorReport", fields: [errorFileId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+}
+model ImportRecord {
+  importId String @map("import_id") @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  rowIndex Int @map("row_index")
+  entityType String @map("entity_type")
+  entityId String? @map("entity_id") @db.Uuid
+  action String
+  error String?
+  recordUpdatedAt DateTime? @map("record_updated_at") @db.Timestamptz(6)
+  job ImportJob @relation(fields: [importId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  @@id([importId, rowIndex])
+  @@index([organizationId, entityType, entityId])
+  @@map("import_records")
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+}
+model ImportMapping {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  entityType String @map("entity_type")
+  name String
+  headersHash String @map("headers_hash")
+  mapping Json
+  @@unique([organizationId, entityType, headersHash])
+  @@map("import_mappings")
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+}
+model ExportJob {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  entityType String @map("entity_type")
+  filters Json @default("{}")
+  columns Json @default("[]")
+  format String
+  status String @default("queued")
+  rowCount Int @default(0) @map("row_count")
+  fileId String? @map("file_id") @db.Uuid
+  lastError String? @map("last_error")
+  createdById String @map("created_by_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  startedAt DateTime? @map("started_at") @db.Timestamptz(6)
+  finishedAt DateTime? @map("finished_at") @db.Timestamptz(6)
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@map("export_jobs")
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  file File? @relation(fields: [fileId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
 }

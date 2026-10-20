@@ -42,7 +42,7 @@ taskRoutes.post('/', permit('tasks.create'), validate(createTaskSchema), a.creat
 taskRoutes.post('/bulk', permit('tasks.update'), validate(taskBulkSchema), a.bulkTasks)
 taskRoutes.get('/:id', permit('tasks.read'), id, a.getTask)
 taskRoutes.patch('/:id', permit('tasks.update'), id, validate(updateTaskSchema), a.updateTask)
-taskRoutes.delete('/:id', permit('tasks.update'), id, a.deleteTask)
+taskRoutes.delete('/:id', permit('tasks.delete'), id, a.deleteTask)
 taskRoutes.post('/:id/complete', permit('tasks.update'), id, validate(completeTaskSchema), a.completeTask)
 taskRoutes.post('/:id/reopen', permit('tasks.update'), id, a.reopenTask)
 taskRoutes.post('/:id/cancel', permit('tasks.update'), id, a.cancelTask)

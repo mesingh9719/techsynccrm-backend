@@ -7,3 +7,5 @@ import './usage.js'
 import './scoring.js'
 import './timeline.js'
 import './notifications.js'
+
+import './fileLinks.js'

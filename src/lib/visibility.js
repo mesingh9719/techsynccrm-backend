@@ -22,7 +22,7 @@ export function visibilityWhere(ctx, resource, action = 'read', ownerField = 'ow
   if (scope === 'team' || scope === 'own') {
     const ids = scope === 'team' ? [ctx.userId, ...(ctx.managedUserIds ?? [])] : [ctx.userId]
     const owned = ids.length === 1 ? { [ownerField]: ids[0] } : { [ownerField]: { in: ids } }
-    if (action === 'read' && UNOWNED_READABLE.has(resource)) return { OR: [owned, { [ownerField]: null }] }
+    if (action === 'read' && !ctx.forExport && UNOWNED_READABLE.has(resource)) return { OR: [owned, { [ownerField]: null }] }
     return owned
   }
   throw new ApiError(403, 'You don’t have permission to do this in this workspace.', { code: 'FORBIDDEN' })
@@ -64,4 +64,10 @@ export function registerReassignable({ entity, model, ownerField = 'ownerId', op
 
 export function listReassignables() {
   return [...reassignables]
+}
+
+/** An all-scope empty condition must not be nested inside Prisma OR: it would be discarded. */
+export function taskVisibilityWhere(ctx) {
+  const assigned = visibilityWhere(ctx, 'tasks', 'read', 'assigneeId')
+  return Object.keys(assigned).length ? { OR: [assigned, { createdById: ctx.userId }] } : {}
 }

@@ -35,3 +35,7 @@ export async function dismissChecklist(req, res) {
   await orgService.dismissChecklist(req.ctx)
   res.json({ success: true, data: { dismissed: true } })
 }
+
+export async function getStorage(req, res) {
+  res.json({ success: true, data: await orgService.getStorageUsage(req.ctx) })
+}

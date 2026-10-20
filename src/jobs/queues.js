@@ -14,6 +14,10 @@ const standard = {
 }
 
 export const QUEUES = {
+  'import.run': { ...standard, expireInSeconds: 7200 },
+  'export.run': { ...standard, expireInSeconds: 1800 },
+  'transfers.recover': { ...standard, expireInSeconds: 120 },
+  'files.maintenance': { ...standard, expireInSeconds: 600 },
   'email.send': { ...standard, expireInSeconds: 120 },
   'tokens.cleanup': { ...standard, retryLimit: 2 },
   'members.reassign': { ...standard, expireInSeconds: 600 },
