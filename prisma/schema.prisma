@@ -91,7 +91,11 @@ model User {
   notificationReceipts   NotificationReceipt[]
   notificationBatches    NotificationEmailBatch[]
   notificationTickets    NotificationStreamTicket[]
+  facebookConnections FacebookConnection[]
+  facebookOAuthStates FacebookOAuthState[]
+  facebookAssignedForms FacebookForm[]
   recoveryCodes          RecoveryCode[]
+  inboundMessages        InboundMessage[]
   lastActiveOrganization Organization?  @relation("LastActiveOrganization", fields: [lastActiveOrganizationId], references: [id], onDelete: SetNull)
 
   @@map("users")
@@ -182,6 +186,11 @@ model Organization {
   importRecords ImportRecord[]
   importMappings ImportMapping[]
   exportJobs ExportJob[]
+  facebookConnection FacebookConnection?
+  facebookOAuthStates FacebookOAuthState[]
+  facebookPages FacebookPage[]
+  facebookForms FacebookForm[]
+  facebookDeliveries FacebookLeadDelivery[]
 
 }
 
@@ -478,6 +487,7 @@ model ContactRequest {
   /// ip, userAgent, pageUrl, referrer, utm
   meta        Json          @default("{}")
   createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  messages    InboundMessage[]
 
   @@index([status, createdAt(sort: Desc)])
   @@map("contact_requests")
@@ -501,10 +511,35 @@ model DemoRequest {
   status         InboundStatus @default(new)
   meta           Json          @default("{}")
   createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  messages       InboundMessage[]
 
   @@index([slotStart])
   @@index([status, createdAt(sort: Desc)])
   @@map("demo_requests")
+}
+
+/// Staff-only conversation history. Exactly one request FK is required by a SQL CHECK.
+model InboundMessage {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contactRequestId String?  @map("contact_request_id") @db.Uuid
+  demoRequestId    String?  @map("demo_request_id") @db.Uuid
+  authorId         String?  @map("author_id") @db.Uuid
+  /// note | reply
+  kind             String
+  body             String   @db.VarChar(10000)
+  /// pending | sent | failed; null for private notes
+  deliveryStatus   String?  @map("delivery_status")
+  sentAt           DateTime? @map("sent_at") @db.Timestamptz(6)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  contactRequest ContactRequest? @relation(fields: [contactRequestId], references: [id], onDelete: Cascade)
+  demoRequest    DemoRequest? @relation(fields: [demoRequestId], references: [id], onDelete: Cascade)
+  author         User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([contactRequestId, createdAt])
+  @@index([demoRequestId, createdAt])
+  @@index([authorId])
+  @@map("inbound_messages")
 }
 
 /// Newsletter list with double opt-in. Tokens: only the confirm token is hashed (it grants a state
@@ -769,6 +804,7 @@ model LostReason {
 
 /// An unqualified enquiry. Converts into a contact (+ company, + deal from M09).
 model Lead {
+  facebookDeliveries FacebookLeadDelivery[]
   importId String? @map("import_id") @db.Uuid
   id                 String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organizationId     String     @map("organization_id") @db.Uuid
@@ -1284,6 +1320,10 @@ model ImportJob {
   fileId String @map("file_id") @db.Uuid
   sheetName String? @map("sheet_name")
   headerRow Int @default(1) @map("header_row")
+  analysis Json @default("{}")
+  edits Json @default("{\"cells\":{},\"deletedRows\":[],\"addedRows\":[]}")
+  revision Int @default(0)
+  hasHeader Boolean @default(true) @map("has_header")
   mapping Json @default("{}")
   options Json @default("{}")
   status String @default("draft")
@@ -1355,4 +1395,136 @@ model ExportJob {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   file File? @relation(fields: [fileId], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
+}
+
+// ---------- Facebook Pages / Lead Ads ----------
+model FacebookConnection {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @unique @map("organization_id") @db.Uuid
+  connectedById String? @map("connected_by_id") @db.Uuid
+  facebookUserId String @map("facebook_user_id")
+  authorizedAt DateTime @default(now()) @map("authorized_at") @db.Timestamptz(6)
+  name String
+  tokenEnc String @map("token_enc")
+  tokenExpiresAt DateTime? @map("token_expires_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  connectedBy User? @relation(fields: [connectedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  pages FacebookPage[]
+  @@unique([id, organizationId])
+  @@index([connectedById])
+  @@index([facebookUserId])
+  @@map("facebook_connections")
+}
+model FacebookOAuthState {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  stateHash String @unique @map("state_hash")
+  browserHash String @map("browser_hash")
+  purpose String @default("redirect")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  @@index([expiresAt])
+  @@index([organizationId, userId])
+  @@index([userId])
+  @@map("facebook_oauth_states")
+}
+model FacebookPage {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  connectionId String @map("connection_id") @db.Uuid
+  facebookPageId String @unique @map("facebook_page_id")
+  name String
+  tokenEnc String @map("token_enc")
+  enabled Boolean @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  connection FacebookConnection @relation(fields: [connectionId, organizationId], references: [id, organizationId], onDelete: Cascade, onUpdate: NoAction)
+  forms FacebookForm[]
+  deliveries FacebookLeadDelivery[]
+  @@unique([id, organizationId])
+  @@index([organizationId])
+  @@index([connectionId, organizationId])
+  @@map("facebook_pages")
+}
+model FacebookForm {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  pageId String @map("page_id") @db.Uuid
+  facebookFormId String @map("facebook_form_id")
+  name String
+  mapping Json @default("{}")
+  enabled Boolean @default(false)
+  defaultOwnerId String? @map("default_owner_id") @db.Uuid
+  dedupe Boolean @default(true)
+  syncStatus String @default("idle") @map("sync_status")
+  syncAfter String? @map("sync_after")
+  syncLeaseUntil DateTime? @map("sync_lease_until") @db.Timestamptz(6)
+  lastSyncedAt DateTime? @map("last_synced_at") @db.Timestamptz(6)
+  lastError String? @map("last_error")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  page FacebookPage @relation(fields: [pageId, organizationId], references: [id, organizationId], onDelete: Cascade, onUpdate: NoAction)
+  defaultOwner User? @relation(fields: [defaultOwnerId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  @@unique([pageId, facebookFormId])
+  @@index([organizationId, pageId])
+  @@index([defaultOwnerId])
+  @@index([syncStatus, syncLeaseUntil])
+  @@index([pageId, organizationId])
+  @@map("facebook_forms")
+}
+model FacebookLeadDelivery {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  pageId String @map("page_id") @db.Uuid
+  facebookLeadId String @map("facebook_lead_id")
+  facebookFormId String @map("facebook_form_id")
+  leadId String? @map("lead_id") @db.Uuid
+  status String @default("pending")
+  outcome String?
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  metadata Json @default("{}")
+  lastError String? @map("last_error")
+  processedAt DateTime? @map("processed_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  page FacebookPage @relation(fields: [pageId, organizationId], references: [id, organizationId], onDelete: Cascade, onUpdate: NoAction)
+  lead Lead? @relation(fields: [leadId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  @@unique([pageId, facebookLeadId])
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([status, nextAttemptAt])
+  @@index([pageId, organizationId])
+  @@index([leadId])
+  @@map("facebook_lead_deliveries")
+}
+
+
+/// Public Meta callback tracking: encrypted subject exists only until processing completes.
+model FacebookDeletionRequest {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requestHash String @unique @map("request_hash")
+  confirmationHash String @unique @map("confirmation_hash")
+  subjectHash String? @map("subject_hash")
+  subjectEnc String? @map("subject_enc")
+  cutoffAt DateTime @map("cutoff_at") @db.Timestamptz(6)
+  status String @default("queued")
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  leaseUntil DateTime? @map("lease_until") @db.Timestamptz(6)
+  lastError String? @map("last_error")
+  completedAt DateTime? @map("completed_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  @@index([subjectHash, status])
+  @@index([status, nextAttemptAt, leaseUntil])
+  @@index([completedAt])
+  @@map("facebook_deletion_requests")
 }

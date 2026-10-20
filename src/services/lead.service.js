@@ -398,13 +398,13 @@ export async function createLead(ctx, input, { allowDuplicate = false, tx: exter
  * `ctx` is a workspace context; connectors pass a system context { orgId, actorType: 'system' }.
  * @returns {Promise<{ lead: object, outcome: 'created' | 'merged_into_open' | 'linked_contact' }>}
  */
-export async function createLeadFromCapture(ctx, payload, { sourceKey, dedupe = true } = {}) {
-  const source = sourceKey ? await getSourceByKey(ctx.orgId, sourceKey) : null
+export async function createLeadFromCapture(ctx, payload, { sourceKey, dedupe = true, tx: externalTx } = {}) {
+  const source = sourceKey ? await getSourceByKey(ctx.orgId, sourceKey, externalTx ?? prisma) : null
   const { sourceId: _ignored, ownerId: _owner, tagIds: _tags, ...fields } = payload
-  const data = await prepare({ ...ctx, actorType: 'system' }, fields, null, { capture: true })
+  const data = await prepare({ ...ctx, actorType: 'system' }, fields, null, { capture: true, db: externalTx ?? prisma })
   if (source) data.sourceId = source.id
 
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await (externalTx ? (fn) => fn(externalTx) : (fn) => prisma.$transaction(fn))(async (tx) => {
     // Serialise captures for the same phone/email so two webhooks can't both create a lead.
     const keys = [...data.emails.map((e) => e.value), ...data.phones.map((p) => p.e164).filter(Boolean)].sort()
     for (const k of keys) await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`lead:${ctx.orgId}:${k}`}))`
@@ -436,7 +436,7 @@ export async function createLeadFromCapture(ctx, payload, { sourceKey, dedupe = 
     const lead = await insertLeadTx(tx, { ...ctx, actorType: 'system' }, { ...data, ownerId: payload.ownerId ?? null }, { tagIds: payload.tagIds, extra })
     return { lead, outcome: contact ? 'linked_contact' : 'created' }
   })
-  return { lead: await present(result.lead), outcome: result.outcome }
+  return { lead: externalTx ? result.lead : await present(result.lead), outcome: result.outcome }
 }
 
 // ---------- Update ----------

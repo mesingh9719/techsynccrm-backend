@@ -1,3 +1,5 @@
+import { emptyOverlay, overlayStats, validateMappedRow, identityKeys } from '../lib/importCore.js'
+import { editedDataset, mergeEditBatch, sourceIssues } from '../lib/importDraft.js'
 import { validateCustomFields } from './customField.service.js'
 import { GST_STATE_LIST } from '../lib/india.js'
 import crypto from 'node:crypto'
@@ -23,7 +25,7 @@ import { accessibleFile, getFileWithUrl, storeGeneratedFile } from './file.servi
 import { countUsage } from './entitlements.service.js'
 import { notificationContext } from './notificationAccess.service.js'
 
-export const IMPORT_FIELDS = { lead: ['fullName', 'firstName', 'lastName', 'phone', 'email', 'companyName', 'source', 'owner', 'budgetMinor', 'requirement', 'city', 'stateCode', 'pincode'], contact: ['fullName', 'firstName', 'lastName', 'phone', 'email', 'companyName', 'source', 'owner', 'title'], company: ['name', 'phone', 'email', 'owner', 'domain', 'gstin', 'industry', 'website', 'size'], deal: ['title', 'valueMinor', 'expectedCloseDate', 'companyName', 'source', 'owner', 'pipeline', 'stage', 'lostReason'] }
+export const IMPORT_FIELDS = { lead: ['fullName', 'firstName', 'lastName', 'phone', 'email', 'companyName', 'source', 'owner', 'budgetMinor', 'requirement', 'city', 'stateCode', 'pincode', 'tags'], contact: ['fullName', 'firstName', 'lastName', 'phone', 'email', 'companyName', 'source', 'owner', 'title', 'tags'], company: ['name', 'phone', 'email', 'owner', 'domain', 'gstin', 'industry', 'website', 'size', 'tags'], deal: ['title', 'valueMinor', 'expectedCloseDate', 'companyName', 'source', 'owner', 'pipeline', 'stage', 'lostReason', 'tags'] }
 const ENTITIES = { lead: { create: createLead, update: updateLead, list: listLeads, schema: createLeadSchema, query: leadListQuery, resource: 'leads' }, contact: { create: createContact, update: updateContact, list: listContacts, schema: createContactSchema, query: contactListQuery, resource: 'contacts' }, company: { create: createCompany, update: updateCompany, list: listCompanies, schema: createCompanySchema, query: companyListQuery, resource: 'companies' }, deal: { update: updateDeal, list: listDeals, schema: createDealSchema, query: dealListQuery, resource: 'deals' } }
 export const TRANSFER_COLUMNS = {
   lead: ['id', 'displayName', 'firstName', 'lastName', 'primaryEmail', 'primaryPhoneE164', 'companyName', 'requirement', 'budgetMinor', 'city', 'stateCode', 'pincode', 'status', 'score', 'sourceId', 'ownerId', 'createdAt', 'updatedAt', 'lastActivityAt', 'owner', 'tags', 'source', 'company', 'contacts', 'stage', 'pipeline'],
@@ -51,20 +53,31 @@ async function currentContext(orgId, userId, db = prisma) {
 async function parsedJob(ctx, job) {
   const file = await accessibleFile(ctx, job.fileId)
   if (file.status !== 'ready' || file.deletedAt || !/\.(csv|xlsx)$/i.test(file.originalName)) throw invalid('Choose a ready CSV or XLSX upload.')
-  return parseSpreadsheet(file.originalName, await objectStore.bytes(file.storageKey), job)
+  const parsed = editedDataset(await parseSpreadsheet(file.originalName, await objectStore.bytes(file.storageKey), job), job.edits ?? emptyOverlay())
+  parsed.issueRows = new Map()
+  for (const entry of Object.entries(parsed.cellIssues)) {
+    const rowId = entry[0].slice(0, entry[0].lastIndexOf(':'))
+    if (!parsed.issueRows.has(rowId)) parsed.issueRows.set(rowId, [])
+    parsed.issueRows.get(rowId).push(entry)
+  }
+  return parsed
 }
 async function setup(ctx, db = prisma) {
-  const [members, sources, stages, definitions, lostReasons] = await Promise.all([
+  const [members, sources, stages, definitions, lostReasons, tags] = await Promise.all([
     db.membership.findMany({ where: { organizationId: ctx.orgId, status: 'active' }, select: { userId: true, user: { select: { fullName: true, email: true } } } }),
     db.leadSource.findMany({ where: { organizationId: ctx.orgId, archivedAt: null } }),
     db.pipelineStage.findMany({ where: { organizationId: ctx.orgId, pipeline: { archivedAt: null } }, include: { pipeline: true }, orderBy: { position: 'asc' } }),
     db.customFieldDefinition.findMany({ where: { organizationId: ctx.orgId, archivedAt: null } }),
     db.lostReason.findMany({ where: { organizationId: ctx.orgId, entityType: 'deal', archivedAt: null } }),
+    db.tag.findMany({ where: { organizationId: ctx.orgId } }),
   ])
-  return { members, sources, stages, definitions, lostReasons }
+  return { members, sources, stages, definitions, lostReasons, tags }
 }
 const equal = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase()
 export async function transformImportRow(ctx, job, headers, row, lookup, db = prisma) {
+  const checked = validateMappedRow(headers, row, job.mapping, { entityType: job.entityType, country: ctx.country, dateFormat: job.options.dateFormat, definitions: lookup.definitions.filter((definition) => definition.entityType === job.entityType) })
+  const invalidCells = checked.issues.filter((issue) => issue.severity === 'error')
+  if (invalidCells.length) throw invalid(invalidCells.map((issue) => issue.message).join('; '), { issues: invalidCells })
   const values = Object.create(null)
   for (const [index, header] of headers.entries()) {
     const field = job.mapping[header]
@@ -96,12 +109,12 @@ export async function transformImportRow(ctx, job, headers, row, lookup, db = pr
     if (!source && job.options.createMissingSources && ['owner', 'admin'].includes(ctx.role) && values.source.length <= 60) {
       pending.sourceName = values.source
       warnings.push(`Source will be created: ${values.source}`)
-    } else if (!source) throw invalid(`Unknown lead source: ${values.source}`)
+    } else if (!source) throw invalid(`Unknown lead source: ${values.source}`, { issues: [{ field: 'source', column: headers.findIndex((header) => job.mapping[header] === 'source'), severity: 'error', message: 'Choose an existing source name, or enable Create unknown lead sources in Import options.' }] })
     if (source) input.sourceId = source.id
   }
   if (values.companyName && ['contact', 'deal'].includes(job.entityType)) {
     if (values.companyName.length > 160) throw invalid('Keep company names under 160 characters.')
-    const company = await db.company.findFirst({ where: { organizationId: ctx.orgId, deletedAt: null, name: { equals: values.companyName, mode: 'insensitive' } } })
+    const company = lookup.companies ? lookup.companies.get(values.companyName.trim().toLowerCase()) : await db.company.findFirst({ where: { organizationId: ctx.orgId, deletedAt: null, name: { equals: values.companyName, mode: 'insensitive' } } })
     if (company) {
       if (job.entityType === 'contact') input.companies = [{ companyId: company.id, isPrimary: true }]
       else input.companyId = company.id
@@ -139,10 +152,25 @@ export async function transformImportRow(ctx, job, headers, row, lookup, db = pr
     } else cf[key] = v
   }
   if (Object.keys(cf).length) input.customFields = cf
+  if (values.tags) {
+    const names = [...new Set(values.tags.split(/[;,]/).map((name) => name.trim()).filter(Boolean))]
+    const selected = names.map((name) => lookup.tags.find((tag) => equal(tag.name, name)))
+    if (selected.some((tag) => !tag)) throw invalid('One or more tags do not exist. Create them in tag settings or correct the tag names.', { issues: [{ field: 'tags', column: headers.findIndex((header) => job.mapping[header] === 'tags'), severity: 'error', message: 'Use existing tag names separated by commas or semicolons.' }] })
+    input.tagIds = selected.map((tag) => tag.id)
+  }
   const result = ENTITIES[job.entityType].schema.safeParse(input)
-  if (!result.success) throw invalid(result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '))
+  if (!result.success) {
+    const issues = result.error.issues.map((issue) => {
+      const key = String(issue.path[0] ?? '')
+      const field = ({ phones: 'phone', emails: 'email', sourceId: 'source', ownerId: 'owner', tagIds: 'tags' })[key] ?? (key === 'customFields' ? `cf.${issue.path[1]}` : key)
+      const column = headers.findIndex((header) => job.mapping[header] === field || ['firstName', 'lastName'].includes(field) && job.mapping[header] === 'fullName')
+      return { field, column, severity: 'error', message: issue.message }
+    })
+    throw invalid(issues.map((issue) => issue.message).join('; '), { issues })
+  }
   if (['lead', 'contact'].includes(job.entityType) && !result.data.firstName && !result.data.emails?.length && !result.data.phones?.length) throw invalid('Enter a name, phone or email.')
-  await validateCustomFields(ctx, job.entityType, result.data.customFields ?? {}, { isCreate: false, db })
+  const custom = await validateCustomFields(ctx, job.entityType, result.data.customFields ?? {}, { isCreate: false, db })
+  if (result.data.customFields) result.data.customFields = custom
   if (job.entityType === 'deal') { const stage = lookup.stages.find((s) => s.id === result.data.stageId); const missing = missingFor(stage, result.data, 0).filter((field) => !(field === 'companyId' && pending.companyName)); if (missing.length) throw invalid(`Stage requires: ${missing.join(', ')}`) }
   return { input: result.data, warnings, pending }
 }
@@ -174,7 +202,7 @@ export async function createImport(ctx, { entityType, fileId }) {
     await tx.$queryRaw`SELECT id FROM files WHERE id = ${fileId}::uuid AND organization_id = ${ctx.orgId}::uuid FOR UPDATE`
     const source = await tx.file.findFirst({ where: { id: fileId, organizationId: ctx.orgId, status: 'ready', deletedAt: null, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] } })
     if (!source) throw invalid('The uploaded source is no longer available. Upload it again.')
-    const job = await tx.importJob.create({ data: { organizationId: ctx.orgId, createdById: ctx.userId, entityType, fileId, sheetName: parsed.sheetName, headerRow: parsed.headerRow, totalRows: parsed.rows.length, mapping: saved?.mapping ?? suggestMapping(parsed.headers, entityType, definitions), options: { duplicateStrategy: 'skip', updateMode: 'empty', dateFormat: 'DMY' } } })
+    const job = await tx.importJob.create({ data: { organizationId: ctx.orgId, createdById: ctx.userId, entityType, fileId, sheetName: parsed.sheetName, headerRow: parsed.headerRow, totalRows: parsed.rows.length, mapping: saved?.mapping ?? suggestMapping(parsed.headers, entityType, definitions, IMPORT_FIELDS[entityType]), options: { duplicateStrategy: 'skip', updateMode: 'empty', dateFormat: 'DMY' } } })
     await tx.fileLink.create({ data: { fileId, organizationId: ctx.orgId, entityType: 'import', entityId: job.id, createdById: ctx.userId } })
     return job
   })
@@ -187,42 +215,248 @@ export async function updateImport(ctx, id, input) {
     const fields = Object.values(input.mapping).filter(Boolean)
     if (new Set(fields).size !== fields.length) throw invalid('Map each CRM field once; ignore additional columns mapped to the same field.')
   }
-  const parsed = await parsedJob(ctx, { ...job, ...input })
-  const { mappingName, ...data } = input
-  const result = await prisma.importJob.updateMany({ where: { id, organizationId: ctx.orgId, status: 'draft' }, data: { ...data, totalRows: parsed.rows.length } })
-  if (!result.count) throw new ApiError(409, 'Import already started.', { code: 'CONFLICT' })
-  if (mappingName) await prisma.importMapping.upsert({ where: { organizationId_entityType_headersHash: { organizationId: ctx.orgId, entityType: job.entityType, headersHash: hashHeaders(parsed.headers) } }, create: { organizationId: ctx.orgId, entityType: job.entityType, name: mappingName, headersHash: hashHeaders(parsed.headers), mapping: data.mapping ?? job.mapping }, update: { name: mappingName, mapping: data.mapping ?? job.mapping } })
-  return { ...(await getImport(ctx, id)), headers: parsed.headers, sampleRows: parsed.rows.slice(0, 10) }
-}
-export async function previewImport(ctx, id) {
-  const job = await getImport(ctx, id)
-  const parsed = await parsedJob(ctx, job), lookup = await setup(ctx)
-  const rows = []
-  for (const [i, row] of parsed.rows.slice(0, 100).entries()) {
-    try {
-      // Transforms only propose lookup data; preview never writes it.
-      const result = await transformImportRow(ctx, job, parsed.headers, row, lookup)
-      const duplicate = await duplicateFor(ctx, job.entityType, result.input, prisma)
-      if (duplicate?.matchedEntityType === 'contact' && job.options.duplicateStrategy === 'update') throw invalid('This row matches an existing contact. Choose Create anyway for a new linked enquiry.')
-      await validateCustomFields(ctx, job.entityType, result.input.customFields ?? {}, { existing: job.options.duplicateStrategy === 'update' ? duplicate?.customFields ?? {} : {}, isCreate: !duplicate || job.options.duplicateStrategy === 'create' })
-      rows.push({ row: i + job.headerRow + 1, ...result, duplicate: Boolean(duplicate), errors: [] })
-    } catch (err) { rows.push({ row: i + job.headerRow + 1, errors: [err.message] }) }
+  if (input.revision !== undefined && input.revision !== job.revision) throw new ApiError(409, 'This draft changed in another tab. Reload it before saving.', { code: 'CONFLICT' })
+  const { mappingName, autoDetect, revision: _revision, editBatch, ...data } = input
+  const parsing = { ...job, ...data }
+  if (autoDetect) { parsing.sheetName = undefined; parsing.headerRow = undefined; parsing.hasHeader = true }
+  else if ('sheetName' in data && data.sheetName !== job.sheetName && data.headerRow === undefined) parsing.headerRow = undefined
+  const parsed = await parsedJob(ctx, { ...parsing, edits: emptyOverlay() })
+  const layoutChanged = autoDetect || parsed.sheetName !== job.sheetName || parsed.headerRow !== job.headerRow || parsed.hasHeader !== job.hasHeader
+  if (layoutChanged) {
+    data.sheetName = parsed.sheetName
+    data.headerRow = parsed.headerRow
+    data.hasHeader = parsed.hasHeader
+    data.edits = emptyOverlay()
+    if (!data.mapping) {
+      const definitions = await prisma.customFieldDefinition.findMany({ where: { organizationId: ctx.orgId, entityType: job.entityType, archivedAt: null } })
+      const saved = await prisma.importMapping.findUnique({ where: { organizationId_entityType_headersHash: { organizationId: ctx.orgId, entityType: job.entityType, headersHash: hashHeaders(parsed.headers) } } })
+      data.mapping = saved?.mapping ?? suggestMapping(parsed.headers, job.entityType, definitions, IMPORT_FIELDS[job.entityType])
+    }
   }
-  const used = await countUsage(ctx.orgId, 'records')
-  const limit = planDefinition(ctx.plan).limits.records
-  const availableRecordSlots = Number.isFinite(limit) ? Math.max(0, limit - used) : null
-  return { rows, totalRows: parsed.rows.length, availableRecordSlots, estimatedCreates: ['lead', 'contact'].includes(job.entityType) ? Math.ceil(parsed.rows.length * (rows.filter((r) => !r.duplicate).length / Math.max(1, rows.length))) : 0 }
+  if (editBatch) data.edits = mergeEditBatch(layoutChanged ? emptyOverlay() : job.edits, editBatch, parsed, { ...job, ...data })
+  const effective = editedDataset(parsed, data.edits ?? job.edits ?? emptyOverlay())
+  const result = await prisma.importJob.updateMany({ where: { id, organizationId: ctx.orgId, status: 'draft', revision: job.revision }, data: { ...data, totalRows: effective.rows.length, revision: { increment: 1 }, analysis: {} } })
+  if (!result.count) throw new ApiError(409, 'Import already started.', { code: 'CONFLICT' })
+  if (job.analysis?.key) await objectStore.delete(job.analysis.key).catch(() => {})
+  if (mappingName) await prisma.importMapping.upsert({ where: { organizationId_entityType_headersHash: { organizationId: ctx.orgId, entityType: job.entityType, headersHash: hashHeaders(parsed.headers) } }, create: { organizationId: ctx.orgId, entityType: job.entityType, name: mappingName, headersHash: hashHeaders(parsed.headers), mapping: data.mapping ?? job.mapping }, update: { name: mappingName, mapping: data.mapping ?? job.mapping } })
+  return { ...(await getImport(ctx, id)), sheets: parsed.sheets, headers: parsed.headers, sampleRows: effective.rows.slice(0, 10) }
 }
-export async function startImport(ctx, id) {
+export async function importDataset(ctx, id, { offset = 0, limit = 1000 } = {}) {
+  const job = await getImport(ctx, id)
+  const parsed = await parsedJob(ctx, job)
+  return { rows: parsed.sourceRows.slice(offset, offset + limit), totalSourceRows: parsed.sourceRows.length, totalRows: parsed.rows.length, columns: parsed.headers.map((key, index) => ({ key, index, label: parsed.originalHeaders[index] })), headerRow: parsed.headerRow, hasHeader: parsed.hasHeader, sheetName: parsed.sheetName, sheets: parsed.sheets, cellIssues: Object.fromEntries(Object.entries(parsed.cellIssues).filter(([key]) => { const number = Number(key.split(':')[1]); return number > offset && number <= offset + limit })), revision: job.revision, edits: job.edits, offset }
+}
+async function updateValues(ctx, job, input, duplicate, db) {
+  const values = { ...input }
+  if (!Object.values(job.mapping).includes('owner')) delete values.ownerId
+  delete values.stageId; delete values.pipelineId
+  if (job.options.updateMode !== 'overwrite') {
+    for (const key of Object.keys(values)) {
+      if (key === 'customFields') {
+        values.customFields = Object.fromEntries(Object.entries(values.customFields).filter(([field]) => duplicate.customFields?.[field] == null || duplicate.customFields[field] === ''))
+        if (!Object.keys(values.customFields).length) delete values.customFields
+      } else if (key === 'companies' && job.entityType === 'contact') {
+        if (duplicate._hasCompany ?? await db.contactCompany.count({ where: { organizationId: ctx.orgId, contactId: duplicate.id } })) delete values.companies
+      } else if (duplicate[key] !== null && duplicate[key] !== '' && !(Array.isArray(duplicate[key]) && !duplicate[key].length) && duplicate[key] !== undefined) delete values[key]
+    }
+  }
+  return values
+}
+async function preparePreviewLookups(ctx, job, parsed, lookup) {
+  const duplicateIndex = new Map(), companies = new Map()
+  const remember = (record, fallback = false) => {
+    for (const key of identityKeys(job.entityType === 'lead' && fallback ? 'contact' : job.entityType, { ...record, country: ctx.country })) {
+      const previous = duplicateIndex.get(key)
+      if (!previous || previous.matchedEntityType === 'contact' && !fallback || !previous.matchedEntityType && !fallback && (new Date(record.createdAt) < new Date(previous.createdAt) || +new Date(record.createdAt) === +new Date(previous.createdAt) && record.id < previous.id)) duplicateIndex.set(key, fallback ? { ...record, matchedEntityType: 'contact' } : record)
+    }
+  }
+  for (let offset = 0; offset < parsed.rows.length; offset += 200) {
+    const normalized = parsed.rows.slice(offset, offset + 200).map((row) => validateMappedRow(parsed.headers, row, job.mapping, { entityType: job.entityType, country: ctx.country, dateFormat: job.options.dateFormat, definitions: lookup.definitions }))
+    const names = [...new Set(normalized.map((row) => row.values.companyName).filter(Boolean))]
+    if (names.length && ['contact', 'deal'].includes(job.entityType)) {
+      for (const company of await prisma.company.findMany({ where: { organizationId: ctx.orgId, deletedAt: null, OR: names.map((name) => ({ name: { equals: name, mode: 'insensitive' } })) }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] })) if (!companies.has(company.name.toLowerCase())) companies.set(company.name.toLowerCase(), company)
+    }
+    if (job.entityType === 'deal') continue
+    let where
+    if (job.entityType === 'company') {
+      const OR = normalized.flatMap((row) => [row.values.name && { name: { equals: row.values.name, mode: 'insensitive' } }, row.values.domain && { domain: normalizeDomain(row.values.domain) }, row.values.gstin && { gstin: row.values.gstin.toUpperCase() }].filter(Boolean))
+      if (!OR.length) continue
+      where = { OR }
+    } else {
+      const emails = normalized.map((row) => row.values.email?.toLowerCase()).filter(Boolean), phones = normalized.map((row) => normalizePhone(row.values.phone, ctx.country).e164).filter(Boolean)
+      if (!emails.length && !phones.length) continue
+      where = { OR: [{ emailLookups: { some: { email: { in: emails } } } }, { phoneLookups: { some: { e164: { in: phones } } } }] }
+    }
+    const existing = await prisma[job.entityType].findMany({ where: { organizationId: ctx.orgId, deletedAt: null, ...where, ...(job.entityType === 'lead' && { status: { in: ['new', 'contacted', 'qualified'] } }) }, ...(job.entityType === 'contact' && { include: { companies: true } }), orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] })
+    for (const record of existing) remember({ ...record, ...(job.entityType === 'contact' && { _hasCompany: Boolean(record.companies?.length) }) })
+    if (job.entityType === 'lead') for (const record of await prisma.contact.findMany({ where: { organizationId: ctx.orgId, deletedAt: null, ...where }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] })) remember(record, true)
+  }
+  return { duplicateIndex, companies }
+}
+function reviewValues(result, checked, fields, lookup, job) {
+  const display = { ...checked.display }
+  if ('fullName' in display) display.fullName = [result.input.firstName, result.input.lastName].filter(Boolean).join(' ')
+  if ('firstName' in display) display.firstName = result.input.firstName ?? ''
+  if ('lastName' in display) display.lastName = result.input.lastName ?? ''
+  if ('email' in display) display.email = result.input.email ?? result.input.emails?.[0]?.value ?? ''
+  if ('domain' in display) display.domain = normalizeDomain(result.input.domain) ?? result.input.domain ?? ''
+  if ('tags' in display) display.tags = (result.input.tagIds ?? []).map((id) => lookup.tags.find((tag) => tag.id === id)?.name ?? '').filter(Boolean).join('; ')
+  if (job.entityType === 'deal') {
+    const stage = lookup.stages.find((item) => item.id === result.input.stageId)
+    if ('stage' in display) display.stage = stage?.name ?? display.stage
+    if ('pipeline' in display) display.pipeline = stage?.pipeline.name ?? display.pipeline
+  }
+  if ('ownerId' in result.input) display.owner = lookup.members.find((member) => member.userId === result.input.ownerId)?.user.fullName ?? 'Unassigned'
+  if (result.input.sourceId) display.source = lookup.sources.find((source) => source.id === result.input.sourceId)?.name ?? checked.values.source
+  for (const [key, value] of Object.entries(result.input.customFields ?? {})) {
+    const definition = lookup.definitions.find((item) => item.entityType === job.entityType && item.key === key)
+    display[`cf.${key}`] = definition?.type === 'currency' ? value / 100 : typeof value === 'boolean' ? value ? 'Yes' : 'No' : Array.isArray(value) ? value.join('; ') : value
+  }
+  for (const field of Object.keys(display)) if (!fields.includes(field)) delete display[field]
+  if (fields.includes('status')) display.status = job.entityType === 'lead' ? 'New' : (lookup.stages.find((stage) => stage.id === result.input.stageId)?.type ?? 'open')
+  return display
+}
+async function analyzeImport(ctx, job) {
+  const parsed = await parsedJob(ctx, job), lookup = await setup(ctx)
+  const firstIndex = job.status === 'failed' ? job.processed : 0
+  const planned = { ...parsed, rows: parsed.rows.slice(firstIndex, job.options.maxRows ?? parsed.rows.length) }
+  const { duplicateIndex, companies } = await preparePreviewLookups(ctx, job, planned, lookup)
+  lookup.companies = companies
+  const previewDb = new Proxy(prisma, { get: (target, key) => key === 'customFieldDefinition' ? { findMany: async ({ where }) => lookup.definitions.filter((definition) => definition.entityType === where.entityType) } : Reflect.get(target, key) })
+  const fields = [...new Set([...Object.values(job.mapping).filter(Boolean), 'owner'])]
+  if (['lead', 'deal'].includes(job.entityType) && !fields.includes('status')) fields.push('status')
+  const rows = [], seen = new Map(), updatedRecords = new Map(), originalRows = new Map(parsed.sourceRows.map((row) => [row.id, row.values]))
+  const summary = { rowsInFile: parsed.sourceRows.filter((row) => (row.sourceRow ?? 0) >= job.headerRow + (job.hasHeader === false ? 0 : 1) && row.values.some((value) => value.trim())).length, totalRows: planned.rows.length, willCreate: 0, willUpdate: 0, willSkip: 0, errorRows: 0, ...overlayStats(job.edits ?? emptyOverlay()) }
+  for (const [relativeIndex, raw] of planned.rows.entries()) {
+    const index = relativeIndex + firstIndex
+    const rowId = parsed.rowIds[index]
+    const checked = validateMappedRow(parsed.headers, raw, job.mapping, { entityType: job.entityType, country: ctx.country, dateFormat: job.options.dateFormat, definitions: lookup.definitions.filter((definition) => definition.entityType === job.entityType) })
+    const row = { id: rowId, row: parsed.sourceNumbers[index], index, originalValues: Object.fromEntries(parsed.headers.map((header, column) => [job.mapping[header], originalRows.get(rowId)?.[column] ?? ''])), input: {}, values: { ...checked.display }, raw, issues: [...checked.issues, ...sourceIssues(parsed, job, rowId)], warnings: [], errors: [], duplicate: false, edited: Boolean(job.edits?.cells?.[rowId]) || rowId.startsWith('a:'), editedFields: Object.keys(job.edits?.cells?.[rowId] ?? {}).map((column) => job.mapping[parsed.headers[Number(column)]]).filter(Boolean), status: 'ready', action: 'create' }
+    try {
+      const cellErrors = row.issues.filter((issue) => issue.severity === 'error')
+      if (cellErrors.length) throw invalid(cellErrors.map((issue) => issue.message).join('; '), { issues: cellErrors })
+      const result = await transformImportRow(ctx, job, parsed.headers, raw, lookup, previewDb)
+      row.input = result.input
+      row.values = reviewValues(result, checked, fields, lookup, job)
+      const identities = identityKeys(job.entityType, { ...result.input, country: ctx.country })
+      const candidates = identities.map((key) => { const original = duplicateIndex.get(key); if (!original) return null; const current = updatedRecords.get(original.id) ?? original; return identityKeys(current.matchedEntityType === 'contact' ? 'contact' : job.entityType, { ...current, country: ctx.country }).includes(key) ? current : null }).filter(Boolean).sort((a, b) => Number(Boolean(a.matchedEntityType)) - Number(Boolean(b.matchedEntityType)) || +new Date(a.createdAt) - +new Date(b.createdAt) || a.id.localeCompare(b.id))
+      const inFile = identities.map((key) => seen.get(key)).find(Boolean)
+      const duplicate = candidates[0] ? updatedRecords.get(candidates[0].id) ?? candidates[0] : inFile
+      row.duplicate = Boolean(duplicate)
+      if (duplicate?.matchedEntityType === 'contact' && job.options.duplicateStrategy === 'update') throw invalid('This lead matches an existing contact. Choose Create anyway for a new linked enquiry.')
+      row.action = duplicate && job.options.duplicateStrategy !== 'create' ? job.options.duplicateStrategy === 'update' ? 'update' : 'skip' : 'create'
+      if (row.action !== 'skip') await validateCustomFields(ctx, job.entityType, result.input.customFields ?? {}, { existing: row.action === 'update' ? duplicate?.customFields ?? {} : {}, isCreate: row.action === 'create', db: previewDb })
+      if (row.action === 'update') {
+        const plannedInput = { ...result.input }
+        if (result.pending.sourceName) plannedInput.sourceId = `pending:${result.pending.sourceName}`
+        if (result.pending.companyName) {
+          if (job.entityType === 'contact') plannedInput.companies = [{ companyId: `pending:${result.pending.companyName}`, isPrimary: true }]
+          else plannedInput.companyId = `pending:${result.pending.companyName}`
+        }
+        const changed = await updateValues(ctx, job, plannedInput, duplicate, previewDb)
+        if (!Object.keys(changed).length) row.action = 'skip'
+        else {
+          const allowed = new Set(Object.keys(changed).flatMap((key) => ({ firstName: ['firstName', 'fullName'], lastName: ['lastName', 'fullName'], emails: ['email'], phones: ['phone'], ownerId: ['owner'], sourceId: ['source'], companies: ['companyName'], companyId: ['companyName'], tagIds: ['tags'], customFields: Object.keys(changed.customFields ?? {}).map((key) => `cf.${key}`) })[key] ?? [key]))
+          row.values = Object.fromEntries(Object.entries(row.values).filter(([field]) => allowed.has(field)))
+          const simulated = { ...duplicate, ...changed, customFields: { ...duplicate.customFields, ...changed.customFields } }
+          updatedRecords.set(duplicate.id, simulated)
+          for (const key of identities) seen.set(key, simulated)
+        }
+      }
+      for (const warning of result.warnings) {
+        const field = /owner/i.test(warning) ? 'owner' : /source/i.test(warning) ? 'source' : /company/i.test(warning) ? 'companyName' : /phone/i.test(warning) ? 'phone' : ''
+        if (field) row.issues.push({ field, column: parsed.headers.findIndex((header) => job.mapping[header] === field), message: warning, severity: 'warning' })
+      }
+      row.warnings = [...new Set([...result.warnings, ...row.issues.filter((issue) => issue.severity === 'warning').map((issue) => issue.message)])]
+      if (row.duplicate) row.reason = `${duplicate._importRow ? `Matches source row ${duplicate._importRow}` : 'Matches an existing CRM record'}. ${row.action === 'skip' ? 'Will be skipped' : row.action === 'update' ? 'Will update matching fields' : 'Will create a separate record'}.`
+      row.status = row.duplicate ? 'duplicate' : row.warnings.length ? 'warning' : 'ready'
+      if (row.action === 'create') {
+        const simulated = { ...result.input, id: `preview:${index}`, _hasCompany: Boolean(result.input.companies?.length || result.pending.companyName), _importRow: row.row ?? `added ${index + 1}`, createdAt: new Date().toISOString() }
+        for (const key of identities) seen.set(key, simulated)
+      }
+      summary[row.action === 'create' ? 'willCreate' : row.action === 'update' ? 'willUpdate' : 'willSkip']++
+    } catch (error) {
+      if (!(error instanceof ApiError)) throw error
+      row.errors = [error.message]; row.status = 'error'; row.action = 'skip'
+      const fieldIssues = error.details?.issues ?? Object.entries(error.details?.fields ?? {}).map(([field, message]) => ({ field: field.replace(/^customFields\./, 'cf.'), column: parsed.headers.findIndex((header) => job.mapping[header] === field.replace(/^customFields\./, 'cf.')), message, severity: 'error' }))
+      row.issues.push(...fieldIssues)
+      summary.willSkip++; summary.errorRows++
+    }
+    rows.push(row)
+  }
+  const used = await countUsage(ctx.orgId, 'records'), limit = planDefinition(ctx.plan).limits.records
+  const availableRecordSlots = Number.isFinite(limit) ? Math.max(0, limit - used) : null
+  const counts = { all: rows.length, ready: rows.filter((row) => row.status === 'ready').length, attention: rows.filter((row) => row.errors.length || row.warnings.length).length, duplicates: rows.filter((row) => row.duplicate).length, edited: rows.filter((row) => row.edited).length }
+  return { status: 'complete', revision: job.revision, rows, fields, summary, counts, totalRows: planned.rows.length, estimatedCreates: summary.willCreate, availableRecordSlots, generatedAt: new Date().toISOString() }
+}
+export async function runImportPreview(id, revision) {
+  const job = await prisma.importJob.findUnique({ where: { id } })
+  if (!job || job.revision !== revision || job.status !== 'draft') return
+  await prisma.importJob.updateMany({ where: { id, revision, status: 'draft' }, data: { analysis: { status: 'running', revision } } })
+  try {
+    const ctx = await currentContext(job.organizationId, job.createdById)
+    const result = await analyzeImport(ctx, job)
+    const key = `orgs/${job.organizationId}/import-previews/${id}/${revision}.json`
+    await objectStore.upload(key, Buffer.from(JSON.stringify(result)), 'application/json')
+    const { rows: _rows, ...meta } = result
+    const saved = await prisma.importJob.updateMany({ where: { id, revision, status: 'draft' }, data: { analysis: { ...meta, key } } })
+    if (!saved.count) await objectStore.delete(key).catch(() => {})
+  } catch (error) {
+    await prisma.importJob.updateMany({ where: { id, revision, status: 'draft' }, data: { analysis: { status: 'error', revision, message: error instanceof ApiError ? error.message : 'Could not analyze the import. Retry the preview.' } } })
+    throw error
+  }
+}
+export async function previewImport(ctx, id, query = {}, request = true) {
+  let job = await getImport(ctx, id)
+  if (job.analysis?.revision !== job.revision || !job.analysis?.status || job.analysis.status === 'error' && request) {
+    if (!request) return { status: 'stale', revision: job.revision, rows: [] }
+    if (job.status !== 'draft') return analyzeImport(ctx, job)
+    await prisma.importJob.updateMany({ where: { id, revision: job.revision, status: 'draft' }, data: { analysis: { status: 'pending', revision: job.revision } } })
+    if (Math.min(job.totalRows, job.options.maxRows ?? job.totalRows) <= 1000) await runImportPreview(id, job.revision)
+    else await enqueue('import.preview', { importId: id, revision: job.revision }, { singletonKey: `${id}:${job.revision}` }).catch(() => {})
+    job = await getImport(ctx, id)
+  }
+  const analysis = job.analysis
+  if (analysis.status !== 'complete') return { ...analysis, rows: [] }
+  const all = JSON.parse((await objectStore.bytes(analysis.key)).toString('utf8'))
+  const q = (query.q ?? '').toLowerCase()
+  const filtered = all.rows.filter((row) => (!q || JSON.stringify([row.values, row.row, row.errors, row.warnings]).toLowerCase().includes(q)) && (query.filter === 'attention' ? row.errors.length || row.warnings.length : query.filter === 'duplicates' ? row.duplicate : query.filter === 'edited' ? row.edited : query.filter === 'ready' ? row.status === 'ready' : true))
+  const offset = query.offset ?? 0, limit = query.limit ?? 1000
+  return { ...all, rows: filtered.slice(offset, offset + limit), filteredTotal: filtered.length, offset }
+}
+export async function importAttentionData(ctx, id) {
+  const job = await getImport(ctx, id)
+  if (job.analysis?.status !== 'complete' || job.analysis.revision !== job.revision) throw invalid('Generate a current preview before downloading attention rows.')
+  const data = JSON.parse((await objectStore.bytes(job.analysis.key)).toString('utf8'))
+  return { headers: ['Source row', ...data.fields, 'Reason'], rows: data.rows.filter((row) => row.errors.length || row.warnings.length).map((row) => [String(row.row ?? 'Added'), ...data.fields.map((field) => String(row.values[field] ?? '')), [...row.errors, ...row.warnings].join('; ')]) }
+}
+export async function importAttention(ctx, id) {
+  const job = await getImport(ctx, id)
+  if (job.analysis?.status !== 'complete' || job.analysis.revision !== job.revision) throw invalid('Generate a current preview before downloading attention rows.')
+  const data = JSON.parse((await objectStore.bytes(job.analysis.key)).toString('utf8'))
+  const rows = data.rows.filter((row) => row.errors.length || row.warnings.length)
+  return writeSpreadsheet(['Source row', ...data.fields, 'Reason'], rows.map((row) => [row.row ?? 'Added', ...data.fields.map((field) => row.values[field] ?? ''), [...row.errors, ...row.warnings].join('; ')]), 'csv')
+}
+export async function startImport(ctx, id, { revision, acceptSkippedRows } = {}) {
   const job = await getImport(ctx, id)
   if (!['draft', 'failed'].includes(job.status)) return job
+  if (revision !== undefined && revision !== job.revision) throw new ApiError(409, 'The draft changed. Review the latest data before importing.', { code: 'CONFLICT' })
   if (!Object.values(job.mapping).some(Boolean)) throw invalid('Map at least one column.')
-  const preview = await previewImport(ctx, id)
-  if (job.options.duplicateStrategy === 'create' && preview.availableRecordSlots !== null && ['lead', 'contact'].includes(job.entityType) && Math.max(0, Math.min(job.totalRows, job.options.maxRows ?? job.totalRows) - job.processed) > preview.availableRecordSlots) throw new ApiError(403, 'Reduce the number of rows or upgrade your plan.', { code: 'PLAN_LIMIT_REACHED', details: { resource: 'records', available: preview.availableRecordSlots } })
-  await prisma.importJob.updateMany({ where: { id, organizationId: ctx.orgId, status: { in: ['draft', 'failed'] } }, data: { status: 'queued', lastError: null, finishedAt: null } })
-  await enqueue('import.run', { importId: id }, { singletonKey: id }).catch(() => {}) // recovery scan guarantees eventual enqueue
+  let preview
+  if (revision !== undefined) {
+    if (job.analysis?.revision !== revision || job.analysis?.status !== 'complete') throw invalid('Wait for the current preview to finish before starting.')
+    preview = job.analysis
+    if (preview.summary.errorRows && !acceptSkippedRows) throw invalid(`${preview.summary.errorRows} rows have errors. Confirm that they will be skipped.`)
+  } else preview = await analyzeImport(ctx, job)
+  if (!preview.totalRows) throw invalid('There are no data rows to import. Add data or adjust the sheet and header.')
+  const limit = planDefinition(ctx.plan).limits.records, used = await countUsage(ctx.orgId, 'records')
+  if (['lead', 'contact'].includes(job.entityType) && Number.isFinite(limit) && preview.summary.willCreate > Math.max(0, limit - used)) throw new ApiError(403, 'Reduce the number of rows or upgrade your plan.', { code: 'PLAN_LIMIT_REACHED', details: { resource: 'records', available: Math.max(0, limit - used) } })
+  const changed = await prisma.importJob.updateMany({ where: { id, organizationId: ctx.orgId, revision: job.revision, status: { in: ['draft', 'failed'] } }, data: { status: 'queued', lastError: null, finishedAt: null } })
+  if (!changed.count) throw new ApiError(409, 'The import changed. Refresh before starting.', { code: 'CONFLICT' })
+  await enqueue('import.run', { importId: id }, { singletonKey: id }).catch(() => {})
   return getImport(ctx, id)
 }
+
 async function finishImport(job, status, lastError = null) {
   await prisma.$transaction(async (tx) => {
     const changed = await tx.importJob.updateMany({ where: { id: job.id, organizationId: job.organizationId, status: { in: ['queued', 'running'] } }, data: { status, lastError, finishedAt: new Date() } })
@@ -252,6 +486,8 @@ export async function runImport(importId) {
         // Failed row writes must roll back without rolling back the import's error/progress journal.
         await tx.$executeRawUnsafe('SAVEPOINT import_row')
         try {
+          const fileErrors = sourceIssues(parsed, job, parsed.rowIds[index]).filter((issue) => issue.severity === 'error')
+          if (fileErrors.length) throw invalid(fileErrors.map((issue) => issue.message).join('; '))
           const { input, pending } = await transformImportRow(ctx, job, parsed.headers, parsed.rows[index], lookup, tx)
           const duplicate = await duplicateFor(ctx, job.entityType, input, tx)
           if (!duplicate || job.options.duplicateStrategy !== 'skip') {
@@ -270,20 +506,7 @@ export async function runImport(importId) {
             if (job.options.duplicateStrategy !== 'update') action = 'skipped'
             else {
               if (duplicate.matchedEntityType === 'contact') throw invalid('This lead matches an existing contact. Choose Create anyway to import a new enquiry linked to that contact.')
-              const values = { ...input }
-              if (!Object.values(job.mapping).includes('owner')) delete values.ownerId
-              // Stage is changed only via the move workflow, never through a generic import PATCH.
-              delete values.stageId; delete values.pipelineId
-              if (job.options.updateMode !== 'overwrite') {
-                for (const key of Object.keys(values)) {
-                  if (key === 'customFields') {
-                    values.customFields = Object.fromEntries(Object.entries(values.customFields).filter(([field]) => duplicate.customFields?.[field] == null || duplicate.customFields[field] === ''))
-                    if (!Object.keys(values.customFields).length) delete values.customFields
-                  } else if (key === 'companies' && job.entityType === 'contact') {
-                    if (await tx.contactCompany.count({ where: { organizationId: ctx.orgId, contactId: duplicate.id } })) delete values.companies
-                  } else if (duplicate[key] !== null && duplicate[key] !== '' && !(Array.isArray(duplicate[key]) && !duplicate[key].length) && duplicate[key] !== undefined) delete values[key]
-                }
-              }
+              const values = await updateValues(ctx, job, input, duplicate, tx)
               if (Object.keys(values).length) { await ENTITIES[job.entityType].update(ctx, duplicate.id, values, { allowDuplicate: true, tx }); action = 'updated' }
               else action = 'skipped'
               entityId = duplicate.id
@@ -338,7 +561,7 @@ export async function importErrors(ctx, id) {
   if (job.errorFileId) { try { return await getFileWithUrl(ctx, job.errorFileId) } catch (err) { if (err.statusCode !== 404) throw err } }
   const parsed = await parsedJob(ctx, job)
   const failed = await prisma.importRecord.findMany({ where: { importId: id, organizationId: ctx.orgId, action: 'failed' }, orderBy: { rowIndex: 'asc' } })
-  const bytes = await writeSpreadsheet([...parsed.headers, 'error'], failed.map((r) => [...parsed.rows[r.rowIndex], r.error]), 'csv')
+  const bytes = await writeSpreadsheet([...parsed.headers, 'error'], failed.map((r) => [...(parsed.rows[r.rowIndex] ?? []), r.error]), 'csv')
   const file = await storeGeneratedFile(ctx, `import-${id}-errors.csv`, bytes, Math.max(1 / 86400, 30 - (Date.now() - job.finishedAt.getTime()) / 86400000))
   await prisma.importJob.update({ where: { id, organizationId: ctx.orgId }, data: { errorFileId: file.id } })
   return getFileWithUrl(ctx, file.id)
@@ -429,6 +652,13 @@ export async function recoverTransfers() {
   await prisma.exportJob.updateMany({ where: { OR: [{ status: 'preparing', createdAt: { lt: new Date(Date.now() - 5 * 60000) } }, { status: 'running', startedAt: { lt: new Date(Date.now() - 35 * 60000) } }] }, data: { status: 'queued' } })
   const imports = await prisma.importJob.findMany({ where: { status: { in: ['queued', 'running'] } }, select: { id: true }, take: 100 })
   for (const job of imports) await enqueue('import.run', { importId: job.id }, { singletonKey: job.id })
+  const stale = await prisma.importJob.findMany({ where: { createdAt: { lt: new Date(Date.now() - 30 * 86400000) }, analysis: { path: ['status'], equals: 'complete' } }, select: { id: true, revision: true, analysis: true }, take: 20 })
+  for (const job of stale) if (job.analysis.key && new Date(job.analysis.generatedAt).getTime() < Date.now() - 30 * 86400000) {
+    await objectStore.delete(job.analysis.key)
+    await prisma.importJob.updateMany({ where: { id: job.id, revision: job.revision }, data: { analysis: {} } })
+  }
+  const previews = await prisma.importJob.findMany({ where: { status: 'draft', OR: [{ analysis: { path: ['status'], equals: 'pending' } }, { analysis: { path: ['status'], equals: 'running' } }] }, select: { id: true, revision: true }, take: 100 })
+  for (const job of previews) await enqueue('import.preview', { importId: job.id, revision: job.revision }, { singletonKey: `${job.id}:${job.revision}` })
   const exports = await prisma.exportJob.findMany({ where: { status: 'queued' }, select: { id: true }, take: 100 })
   for (const job of exports) await enqueue('export.run', { exportId: job.id }, { singletonKey: job.id })
 }

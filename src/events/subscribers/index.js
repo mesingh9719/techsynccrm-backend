@@ -9,3 +9,4 @@ import './timeline.js'
 import './notifications.js'
 
 import './fileLinks.js'
+import './inbound.js'

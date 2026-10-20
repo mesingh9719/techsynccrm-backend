@@ -1,4 +1,6 @@
-import { runImport, runExport, recoverTransfers } from '../services/transfer.service.js'
+import { runImport, runImportPreview, runExport, recoverTransfers } from '../services/transfer.service.js'
+import { processFacebookDelivery, syncFacebookForm, recoverFacebookJobs } from '../integrations/facebook/capture.js'
+import { processFacebookDeletion, recoverFacebookDeletions } from '../integrations/facebook/deletion.js'
 import { maintainFiles } from '../services/file.service.js'
 import { queueNotificationEmails, queueNotificationDigests, deliverNotificationBatch, cleanupNotifications } from '../services/notificationDelivery.service.js'
 import { registerHandler, schedule } from './queue.js'
@@ -16,6 +18,14 @@ import { scanOverdueTasks, sendDueReminders } from '../services/task.service.js'
 
 /** Registers every job handler and cron schedule. Called once by the worker after the queue starts. */
 export async function registerJobs() {
+  await registerHandler('facebook.delete', (job) => processFacebookDeletion(job.data.requestId), { concurrency: 2 })
+  await registerHandler('facebook.privacy_recover', recoverFacebookDeletions)
+  await schedule('facebook.privacy_recover', '* * * * *', null, { tz: 'UTC' })
+  await registerHandler('facebook.lead', (job) => processFacebookDelivery(job.data.deliveryId), { concurrency: 3 })
+  await registerHandler('facebook.sync', (job) => syncFacebookForm(job.data.formId))
+  await registerHandler('facebook.recover', recoverFacebookJobs)
+  await schedule('facebook.recover', '* * * * *', null, { tz: 'UTC' })
+  await registerHandler('import.preview', (job) => runImportPreview(job.data.importId, job.data.revision))
   await registerHandler('import.run', (job) => runImport(job.data.importId))
   await registerHandler('export.run', (job) => runExport(job.data.exportId))
   await registerHandler('transfers.recover', recoverTransfers)

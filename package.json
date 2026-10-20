@@ -19,8 +19,10 @@
     "db:status": "prisma7 migrate status",
     "db:studio": "prisma7 studio",
     "db:seed": "node --env-file-if-exists=.env scripts/seed.js",
+    "staff:provision": "node --env-file-if-exists=.env scripts/provision-staff.js",
     "db:check": "node --env-file-if-exists=.env scripts/check-schema.js",
-    "db:validate": "prisma7 validate"
+    "db:validate": "prisma7 validate",
+    "import:sync": "node scripts/sync-import-core.js"
   },
   "type": "module",
   "dependencies": {

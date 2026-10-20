@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit'
 import { pinoHttp } from 'pino-http'
 import { env } from './config/env.js'
 import { logger } from './lib/logger.js'
+import { safeRequestUrl } from './lib/requestUrl.js'
 import routes from './routes/index.js'
 import { requestId } from './middlewares/requestId.js'
 import { errorHandler, notFound } from './middlewares/errorHandler.js'
@@ -26,7 +27,7 @@ app.use(
     autoLogging: { ignore: (req) => req.url === '/api/health' },
     customLogLevel: (_req, res, err) => (err || res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'info'),
     serializers: {
-      req: (req) => ({ id: req.id, method: req.method, url: req.url?.startsWith('/api/notifications/stream?') ? '/api/notifications/stream' : req.url }),
+      req: (req) => ({ id: req.id, method: req.method, url: safeRequestUrl(req.url) }),
       res: (res) => ({ statusCode: res.statusCode }),
     },
   }),
@@ -40,13 +41,17 @@ app.use(
   }),
 )
 app.use(compression({ filter: (req, res) => req.headers.accept?.includes('text/event-stream') ? false : compression.filter(req, res) }))
-app.use(express.json({ limit: '1mb' }))
+app.use(express.json({ limit: '1mb', verify: (req, _res, bytes) => {
+  if (req.originalUrl.split('?')[0].replace(/\/$/, '') === '/api/webhooks/in/facebook') req.rawBody = Buffer.from(bytes)
+} }))
 app.use(express.urlencoded({ extended: true, limit: '1mb' }))
 app.use(cookieParser())
 
 app.use(
   '/api',
   rateLimit({
+    // Public provider callbacks have their own burst limits and signature verification.
+    skip: (req) => req.path.replace(/\/$/, '') === '/webhooks/in/facebook' || /^\/integrations\/facebook\/(?:data-deletion(?:\/status\/[^/]+)?|deauthorize)\/?$/.test(req.path),
     windowMs: env.RATE_LIMIT_WINDOW_MS,
     limit: env.RATE_LIMIT_MAX,
     standardHeaders: 'draft-8',

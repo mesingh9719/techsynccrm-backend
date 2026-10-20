@@ -15,6 +15,12 @@ function number(name, fallback) {
   return value
 }
 
+function positiveInteger(name, fallback) {
+  const value = number(name, fallback)
+  if (!Number.isSafeInteger(value) || value < 1) throw new Error(`Environment variable ${name} must be a positive integer`)
+  return value
+}
+
 const jwtSecret = required('JWT_ACCESS_SECRET')
 if (jwtSecret.length < 32) throw new Error('JWT_ACCESS_SECRET must be at least 32 characters')
 
@@ -51,6 +57,9 @@ export const env = Object.freeze({
   /** Direct connection, needed by the job queue (pg-boss) and migrations. Falls back to DATABASE_URL. */
   DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED || required('DATABASE_URL'),
   DB_POOL_MAX: number('DB_POOL_MAX', 10),
+  /** Interactive transaction limits include time across all queries and row-lock waits. */
+  DB_TRANSACTION_MAX_WAIT_MS: positiveInteger('DB_TRANSACTION_MAX_WAIT_MS', 10_000),
+  DB_TRANSACTION_TIMEOUT_MS: positiveInteger('DB_TRANSACTION_TIMEOUT_MS', 15_000),
 
   /** JWT access tokens */
   JWT_ACCESS_SECRET: jwtSecret,
@@ -60,6 +69,15 @@ export const env = Object.freeze({
 
   /** AES-256-GCM key for secrets stored in the database (2FA secrets, integration credentials). */
   DATA_ENCRYPTION_KEY: encryptionKey,
+
+  /** Optional Meta Lead Ads integration. Secrets stay on the backend. */
+  FACEBOOK_APP_ID: process.env.FACEBOOK_APP_ID || '',
+  FACEBOOK_APP_SECRET: process.env.FACEBOOK_APP_SECRET || '',
+  FACEBOOK_API_VERSION: process.env.FACEBOOK_API_VERSION || 'v26.0',
+  FACEBOOK_LOGIN_CONFIG_ID: process.env.FACEBOOK_LOGIN_CONFIG_ID || '',
+  FACEBOOK_REDIRECT_URI: process.env.FACEBOOK_REDIRECT_URI || '',
+  FACEBOOK_WEBHOOK_VERIFY_TOKEN: process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN || '',
+  FACEBOOK_SCOPES: process.env.FACEBOOK_SCOPES || 'pages_show_list,pages_read_engagement,pages_manage_metadata,pages_manage_ads,leads_retrieval,ads_read,ads_management,business_management',
 
   /** Account security (M05) */
   LOGIN_LOCKOUT_THRESHOLD: number('LOGIN_LOCKOUT_THRESHOLD', 10),

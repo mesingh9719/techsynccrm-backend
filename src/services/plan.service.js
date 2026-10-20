@@ -102,11 +102,11 @@ export async function recordPlanChangeTx(tx, ctx, { organizationId, fromPlan, to
 
 /** Locks the workspace row for the rest of the transaction and returns its plan fields. */
 async function lockOrg(tx, orgId) {
-  await tx.$queryRaw`SELECT id FROM organizations WHERE id = ${orgId}::uuid FOR UPDATE`
-  return tx.organization.findUnique({
-    where: { id: orgId },
-    select: { id: true, name: true, plan: true, trialEndsAt: true, timezone: true, seatSelectionRequiredAt: true, deletedAt: true },
-  })
+  const [org] = await tx.$queryRaw`
+    SELECT id, name, plan::text AS plan, trial_ends_at AS "trialEndsAt", timezone,
+           seat_selection_required_at AS "seatSelectionRequiredAt", deleted_at AS "deletedAt"
+      FROM organizations WHERE id = ${orgId}::uuid FOR UPDATE`
+  return org
 }
 
 /**
@@ -147,9 +147,14 @@ async function applyLimitsTx(tx, org, plan) {
  * Changes a workspace's plan inside `tx` and applies the new plan's limits. Used by staff tools now
  * and by billing (M16) later.
  */
-export async function changePlanTx(tx, ctx, orgId, toPlan, { reason, trialEndsAt, meta } = {}) {
-  const org = await lockOrg(tx, orgId)
+export async function changePlanTx(tx, ctx, orgId, toPlan, options = {}) {
+  return applyPlanTx(tx, ctx, await lockOrg(tx, orgId), toPlan, options)
+}
+
+/** Applies a change using the workspace snapshot already locked by the caller. */
+async function applyPlanTx(tx, ctx, org, toPlan, { reason, trialEndsAt, meta } = {}) {
   if (!org || org.deletedAt) throw ApiError.notFound('Workspace not found')
+  const orgId = org.id
   const data = { plan: toPlan, ...(trialEndsAt !== undefined && { trialEndsAt }) }
   await tx.organization.update({ where: { id: orgId }, data })
   // A staff change to the same plan still matters: it converts a trial into a paid plan.
@@ -371,7 +376,7 @@ export async function extendTrial(actor, orgId, days) {
       plan = TRIAL_PLANS.includes(last?.fromPlan) ? last.fromPlan : 'growth'
     }
     const ctx = staffCtx(actor, orgId)
-    await changePlanTx(tx, ctx, orgId, plan, { reason: 'trial_extended', trialEndsAt, meta: { days, trialEndsAt: trialEndsAt.toISOString() } })
+    await applyPlanTx(tx, ctx, org, plan, { reason: 'trial_extended', trialEndsAt, meta: { days, trialEndsAt: trialEndsAt.toISOString() } })
     if (plan === org.plan) {
       await recordAudit(tx, ctx, { action: 'organization.trial_extend', entityType: 'organization', entityId: orgId, changes: { trialEndsAt: [org.trialEndsAt, trialEndsAt], days } })
     }
@@ -388,11 +393,11 @@ export async function extendTrial(actor, orgId, days) {
 export async function setPlanByStaff(actor, orgId, plan) {
   if (!PLANS[plan]) throw fieldError({ plan: 'Choose a plan' })
   const result = await prisma.$transaction(async (tx) => {
-    const before = await tx.organization.findUnique({ where: { id: orgId }, select: { trialEndsAt: true } })
-    return changePlanTx(tx, staffCtx(actor, orgId), orgId, plan, {
+    const org = await lockOrg(tx, orgId)
+    return applyPlanTx(tx, staffCtx(actor, orgId), org, plan, {
       reason: 'staff',
       trialEndsAt: plan === 'starter' ? undefined : null,
-      meta: before?.trialEndsAt ? { previousTrialEndsAt: before.trialEndsAt.toISOString() } : undefined,
+      meta: org?.trialEndsAt ? { previousTrialEndsAt: org.trialEndsAt.toISOString() } : undefined,
     })
   })
   await refreshUsage(orgId).catch(() => {})

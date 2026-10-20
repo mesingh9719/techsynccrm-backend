@@ -14,6 +14,12 @@ const standard = {
 }
 
 export const QUEUES = {
+  'facebook.delete': { ...standard, retryLimit: 0, expireInSeconds: 180 },
+  'facebook.privacy_recover': { ...standard, expireInSeconds: 120 },
+  'facebook.lead': { ...standard, retryLimit: 0, expireInSeconds: 90 },
+  'facebook.sync': { ...standard, retryLimit: 0, expireInSeconds: 180 },
+  'facebook.recover': { ...standard, expireInSeconds: 120 },
+  'import.preview': { ...standard, expireInSeconds: 7200 },
   'import.run': { ...standard, expireInSeconds: 7200 },
   'export.run': { ...standard, expireInSeconds: 1800 },
   'transfers.recover': { ...standard, expireInSeconds: 120 },

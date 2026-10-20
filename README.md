@@ -30,6 +30,13 @@ outbox subscribers, queue handlers and cron schedules. `EMAIL_DELIVERY=direct` o
 email delivery; reminders, imports, cleanup and other background work still require a worker.
 Rebuild/release the frontend separately from `frontend/` when deploying UI changes.
 
+Interactive Prisma transactions use a 15-second execution budget and wait up to 10 seconds
+to acquire a transaction connection. Configure `DB_TRANSACTION_TIMEOUT_MS` and
+`DB_TRANSACTION_MAX_WAIT_MS` in milliseconds to override these defaults; restart the API and
+worker after changing them. The execution budget includes all queries and row-lock waits in
+the transaction. Keep external calls and password hashing outside ordinary write transactions.
+Audit entries remain in the same transaction as their changes so a failed write rolls back both.
+
 The configured application database was inspected on 20 October 2026: all 16 migrations are
 present; the read-only column/history inspection reported 598 expected columns and no problems.
 The API/worker were not restarted and the frontend was not rebuilt after final audit edits.
@@ -102,3 +109,21 @@ global queue/retention scans. Remote test databases require `TEST_DATABASE_DISPO
 SMTP, storage and queue enqueue are mocked; HTTP/Prisma transactions and Postgres LISTEN/NOTIFY
 use the real test database. The last earlier runs passed 120 offline and 43 integration tests;
 later changes have not been rerun. Browser flows and real storage/SMTP delivery remain pending.
+
+## Facebook Pages and Lead Ads
+
+Settings → Facebook Lead Ads now connects Pages, maps forms, browses campaigns and captures leads
+through signed webhooks and the worker. See [Facebook setup](../docs/06-facebook-integration.md).
+The additive Facebook migration is applied to the configured database (18 migrations now present, including SDK/deletion support),
+and the client is generated. Your App ID is configured locally. Enter the private App Secret in
+`backend/.env` and use the documented HTTPS tunnel setup for local development before connecting.
+No live connection, tests, builds, lint or browser checks were run for this connector.
+
+Facebook SDK login now checks browser status on the integration settings page and validates a
+session-bound challenge, signed response and app/user token server-side. The public data deletion
+callback returns Meta's confirmation/status contract, revokes credentials and queues bounded
+cleanup through `facebook.delete` / `facebook.privacy_recover`. See
+[SDK, deletion scope and operator recovery](../docs/07-facebook-sdk-data-deletion.md).
+Enable JavaScript SDK login and register the HTTPS frontend domain in Meta, then register
+`/api/integrations/facebook/data-deletion` as the Data Deletion Request URL. Privacy jobs require
+the worker even if Facebook credentials are disabled; restart API and worker after deployment.

@@ -32,6 +32,35 @@ describe('spreadsheet input and output', () => {
     b.addRow([{ formula: '1+1', result: 2 }, 'a@example.test']); bytes = Buffer.from(await book.xlsx.writeBuffer())
     await expect(parseSpreadsheet('input.xlsx', bytes, { sheetName: 'Customers' })).rejects.toThrow('formulas')
   })
+  it('automatically selects the data sheet after empty and instruction sheets', async () => {
+    const book = new ExcelJS.Workbook()
+    book.addWorksheet('Empty')
+    book.addWorksheet('Read me').addRow(['Import guide', 'October report'])
+    book.addWorksheet('Unused template').addRow(['Name', 'Email', 'Phone', 'Company', 'City', 'State'])
+    const sheet = book.addWorksheet('Customers')
+    sheet.addRow(['Customer report', 'October'])
+    sheet.addRow([])
+    sheet.addRow(['Customer Name', 'Mobile', 'Email ID'])
+    sheet.addRow(['Asha', '9876543210', 'asha@example.test'])
+    const parsed = await parseSpreadsheet('input.xlsx', Buffer.from(await book.xlsx.writeBuffer()))
+    expect(parsed).toMatchObject({ sheetName: 'Customers', headerRow: 3, headers: ['Customer Name', 'Mobile', 'Email ID'], rows: [['Asha', '9876543210', 'asha@example.test']] })
+  })
+  it.each([',', ';', '\t'])('detects %j-delimited CSV headers after notes and blank rows', async (delimiter) => {
+    const csv = `Customer report,October\n\n${['Customer Name', 'Mobile', 'Email ID'].join(delimiter)}\n${['Asha', '9876543210', 'asha@example.test'].join(delimiter)}\n`
+    const parsed = await parseSpreadsheet('input.csv', Buffer.from(csv))
+    expect(parsed).toMatchObject({ sheetName: null, headerRow: 3, headers: ['Customer Name', 'Mobile', 'Email ID'], rows: [['Asha', '9876543210', 'asha@example.test']] })
+  })
+  it('keeps explicit sheet/header choices and supports single-column imports', async () => {
+    const parsed = await parseSpreadsheet('input.csv', Buffer.from('Name\nAsha\nRohan\n'))
+    expect(parsed).toMatchObject({ headerRow: 1, headers: ['Name'], rows: [['Asha'], ['Rohan']] })
+    const manual = await parseSpreadsheet('input.csv', Buffer.from('Name,Email\nFirst,Second\nAsha,a@example.test\n'), { headerRow: 2 })
+    expect(manual.headers).toEqual(['First', 'Second'])
+  })
+  it('avoids duplicate automatic mappings and unsupported entity fields', () => {
+    expect(suggestMapping(['Name', 'Customer Name', 'Phone', 'Mobile'], 'lead')).toEqual({ Name: 'fullName', 'Customer Name': '', Phone: 'phone', Mobile: '' })
+    expect(suggestMapping(['Deal Title', 'Stage', 'Email'], 'contact', [], ['title', 'email'])).toEqual({ 'Deal Title': 'title', Stage: '', Email: 'email' })
+    expect(suggestMapping(['Name'], 'deal')).toEqual({ Name: 'title' })
+  })
   it('bounds cell and row sizes and rejects duplicate headers', async () => {
     await expect(parseSpreadsheet('x.csv', Buffer.from('Name,Name\na,b'))).rejects.toThrow('unique')
     await expect(parseSpreadsheet('x.csv', Buffer.from(`Name,Email\n${'a'.repeat(10001)},x`))).rejects.toThrow('10,000')

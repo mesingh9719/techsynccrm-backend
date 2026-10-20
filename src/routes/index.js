@@ -1,4 +1,5 @@
 import { importRoutes, exportRoutes } from './transfer.routes.js'
+import { facebookRoutes, facebookWebhookRoutes } from './facebook.routes.js'
 import { Router } from 'express'
 import { getHealth } from '../controllers/health.controller.js'
 import authRoutes from './auth.routes.js'
@@ -8,6 +9,7 @@ import { leadRoutes, leadSourceRoutes, lostReasonRoutes, savedViewRoutes } from 
 import { dealRoutes, pipelineRoutes, pipelineTemplateRoutes } from './deal.routes.js'
 import { activityRoutes, taskRoutes, timelineRoutes } from './activity.routes.js'
 import internalRoutes from './internal.routes.js'
+import superadminRoutes from './superadmin.routes.js'
 import metaRoutes from './meta.routes.js'
 import organizationRoutes from './organization.routes.js'
 import publicRoutes from './public.routes.js'
@@ -19,6 +21,8 @@ import { env } from '../config/env.js'
 
 /** Root API router, mounted at /api. */
 const router = Router()
+router.use('/integrations/facebook', facebookRoutes)
+router.use('/webhooks/in/facebook', facebookWebhookRoutes)
 
 router.get('/health', getHealth)
 router.use('/auth', authRoutes)
@@ -51,6 +55,7 @@ router.use('/notifications', notificationRoutes)
 router.use('/public', publicRoutes)
 router.use('/meta', metaRoutes)
 router.use('/internal', internalRoutes)
+router.use('/superadmin', superadminRoutes)
 
 // API reference for developers; not exposed in production until the public API (M20) is published.
 if (!env.isProduction) router.get('/docs.json', (_req, res) => res.json(getOpenApiDocument()))
