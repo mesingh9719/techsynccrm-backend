@@ -3,7 +3,7 @@
   "buildCommand": "npm run build",
   "functions": {
     "src/**/*.js": {
-      "includeFiles": "src/generated/prisma/**"
+      "includeFiles": "src/generated/prisma/**/*.js"
     }
   }
 }

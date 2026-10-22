@@ -1,16 +1,19 @@
 # Backend
 
 TechSync uses Express 5, Prisma ORM 7.10.1 with the pg adapter, Neon Postgres and a separate
-pg-boss worker. Use Node >=22.18 for the generated TypeScript client's native type stripping.
+pg-boss worker. Use Node >=22.18 to compile the generated Prisma client during install/build.
 The application and CLI dependencies now use ORM 7; the previous Prisma 8 RC conflict was removed.
 The npm scripts use `@prisma/prisma7` and `prisma7.config.ts`, which loads `.env` and uses
 `DATABASE_URL_UNPOOLED` for migrations. Preserve `.env`; copy `.env.example` only for a new setup.
 
 For Vercel, `vercel.json` runs `npm run build` and explicitly includes
-`src/generated/prisma/**` in the Express function. The generated client is ignored by Git,
-so it must be generated during deployment and packaged with the function. The build also
-imports the generated client without opening a database connection to catch missing runtime
-files before release.
+`src/generated/prisma/**/*.js` in the Express function. `npm run db:generate` generates
+Prisma's TypeScript and compiles it to JavaScript with Node's built-in type stripping.
+The application and the generated client both import `.js` files, so deployment does not
+depend on preserving TypeScript filenames. The generated files are ignored by Git and must
+be created during deployment. The build imports the compiled client without opening a
+database connection to catch missing runtime files before release. Use `npm run db:generate`
+rather than calling `prisma7 generate` directly so the JavaScript files are refreshed too.
 
 ## Setup and release
 

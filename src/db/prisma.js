@@ -1,5 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient, Prisma } from '../generated/prisma/client.ts'
+import { PrismaClient, Prisma } from '../generated/prisma/client.js'
 import { env } from '../config/env.js'
 import { withStrictSsl } from './connectionString.js'
 

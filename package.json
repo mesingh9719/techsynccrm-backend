@@ -8,12 +8,12 @@
     "dev:worker": "node --watch --env-file-if-exists=.env src/worker.js",
     "start": "node --env-file-if-exists=.env src/server.js",
     "worker": "node --env-file-if-exists=.env src/worker.js",
-    "build": "prisma7 generate && node scripts/build.js",
-    "postinstall": "prisma7 generate",
+    "build": "npm run db:generate && node scripts/build.js",
+    "postinstall": "npm run db:generate",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:integration": "vitest run test/integration",
-    "db:generate": "prisma7 generate",
+    "db:generate": "prisma7 generate && node scripts/compile-prisma-client.js",
     "db:migrate:dev": "prisma7 migrate dev",
     "db:migrate": "prisma7 migrate deploy",
     "db:status": "prisma7 migrate status",
@@ -61,7 +61,7 @@
   "engines": {
     "node": ">=22.18"
   },
-  "//engines": "Node >=22.18 is required: src/db/prisma.js imports the generated TypeScript Prisma client, which relies on Node's built-in type stripping.",
+  "//engines": "Node >=22.18 is required to compile Prisma's generated TypeScript to JavaScript during install/build using node:module stripTypeScriptTypes.",
   "devDependencies": {
     "@prisma/prisma7": "7.10.1",
     "pino-pretty": "^13.2.0",

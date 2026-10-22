@@ -2,8 +2,10 @@
 // Change models here, then run `npm run db:migrate:dev -- --name <change>` to create a migration.
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
 }
 
 datasource db {

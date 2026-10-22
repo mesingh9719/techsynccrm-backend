@@ -1,4 +1,4 @@
-import { Prisma } from '../generated/prisma/client.ts'
+import { Prisma } from '../generated/prisma/client.js'
 import { prisma } from '../db/prisma.js'
 import { hasPermission, scopeFor } from '../config/permissions.js'
 import { visibilityWhere, registerReassignable } from '../lib/visibility.js'
