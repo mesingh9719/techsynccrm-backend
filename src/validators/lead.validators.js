@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { leadQualificationSchema } from './leadQualification.validators.js'
 import { GST_STATE_CODES } from '../lib/india.js'
 import { customFields, emailList, expectedUpdatedAt, phoneList, recordListQuery, tagIds } from './crm.validators.js'
 
@@ -21,6 +22,7 @@ const leadFields = {
   phones: phoneList,
   companyName: text(160),
   requirement: text(2000),
+  qualification: leadQualificationSchema,
   /** Minor units (paise): ₹1,85,000 → 18500000 */
   budgetMinor: z.number().int('Use a whole amount in paise').min(0).max(Number.MAX_SAFE_INTEGER).nullable(),
   city: text(80),

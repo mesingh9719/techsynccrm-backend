@@ -822,6 +822,8 @@ model Lead {
   primaryPhoneE164   String?    @map("primary_phone_e164")
   companyName        String?    @map("company_name")
   requirement        String?
+  /// Structured qualification facts for the lead workspace; bounded and validated on writes.
+  qualification      Json       @default("{}")
   budgetMinor        BigInt?    @map("budget_minor")
   city               String?
   stateCode          String?    @map("state_code")

@@ -181,3 +181,24 @@ name, as in the existing `TEST_DATABASE_URL` instructions above. The five new en
 are in `test/integration/performance.test.js`; the instrumentation test runs offline. The final audit
 observed the same three pre-existing suite failures as the original code; see the report for exact
 counts and limitations. Do not use a failing suite result as a clean release certification.
+
+## Lead detail v2 qualification (22 October 2026)
+
+Migration `20261022195000_lead_qualification` adds `leads.qualification` as non-null JSONB
+with an empty-object default. It has only been applied to the disposable local test database.
+The paired frontend uses the existing lead GET/PATCH endpoints; their response now includes
+`qualification` and PATCH accepts a validated partial object. Updates merge fields, stamp a
+server timestamp and use existing tenant/role, converted-record and If-Match guards.
+The schema is in `src/validators/leadQualification.validators.js`. No extra endpoint is needed.
+
+Before releasing the paired frontend, use the intended environment's direct migration URL,
+run `npm run db:migrate` and `npm run db:generate`, then restart/release the API and worker.
+Follow the existing release process; no application migration or restart was performed here.
+The five-second DDL lock timeout makes lock contention fail instead of waiting indefinitely;
+investigate and retry through the migration recovery process if deployment reports failure.
+For a code rollback, retain the additive column and saved qualification facts. Do not edit an
+applied migration or drop the column to roll back the UI.
+
+Five new qualification tests pass, including HTTP/Prisma persistence, validation, stale-write
+rejection and tenant/role isolation. See the [frontend QA notes](../frontend/docs/lead-detail-v2-qa.md)
+for browser coverage, known unrelated suite failures and deployment assumptions.

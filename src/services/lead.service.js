@@ -1,4 +1,5 @@
 import { versionedUpdate } from '../lib/versionedUpdate.js'
+import { leadQualificationSchema } from '../validators/leadQualification.validators.js'
 import { prisma, DB_NULL } from '../db/prisma.js'
 import { resolveCampaignId } from '../lib/campaignAttribution.js'
 import { diff, emit } from '../events/outbox.js'
@@ -81,6 +82,7 @@ const leadSelect = {
   primaryPhoneE164: true,
   companyName: true,
   requirement: true,
+  qualification: true,
   budgetMinor: true,
   city: true,
   stateCode: true,
@@ -117,7 +119,7 @@ const leadSelect = {
   lostReason: { select: { id: true, name: true } },
 }
 
-const AUDITED = ['firstName', 'lastName', 'emails', 'phones', 'companyName', 'requirement', 'budgetMinor', 'city', 'stateCode', 'pincode', 'sourceId', 'sourceDetail', 'campaignId', 'utm', 'customFields']
+const AUDITED = ['firstName', 'lastName', 'emails', 'phones', 'companyName', 'requirement', 'qualification', 'budgetMinor', 'city', 'stateCode', 'pincode', 'sourceId', 'sourceDetail', 'campaignId', 'utm', 'customFields']
 
 // ---------- Presentation ----------
 
@@ -274,6 +276,11 @@ async function assertSource(ctx, sourceId, db = prisma) {
 /** `capture: true` skips required custom fields — a web form or connector can't fill them in. */
 async function prepare(ctx, input, existing = null, { capture = false, db = prisma } = {}) {
   const data = {}
+  if ('qualification' in input) {
+    const parsed = leadQualificationSchema.safeParse(input.qualification)
+    if (!parsed.success) throw validationError({ qualification: 'Check the qualification details and field limits.' })
+    data.qualification = { ...(existing?.qualification ?? {}), ...parsed.data, updatedAt: new Date().toISOString() }
+  }
   for (const f of ['firstName', 'lastName', 'companyName', 'requirement', 'city', 'stateCode', 'pincode', 'sourceDetail']) if (f in input) data[f] = input[f]
   if ('budgetMinor' in input) data.budgetMinor = input.budgetMinor === null ? null : BigInt(input.budgetMinor)
   if ('utm' in input) data.utm = input.utm ?? DB_NULL
