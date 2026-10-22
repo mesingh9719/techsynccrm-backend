@@ -334,11 +334,16 @@ export async function listLeads(ctx, query) {
   // Resolve tag IDs and custom-field definitions once for both rows and status tabs.
   const base = await listWhere(ctx, query, { withStatus: false })
   const and = query.status ? [...base, { status: { in: listParam(query.status) } }] : base
-  const [rows, total, grouped] = await Promise.all([
+  const [rows, counted, grouped] = await Promise.all([
     prisma.lead.findMany({ where: { AND: [...and, page.cursorWhere] }, orderBy: page.orderBy, take: page.take, select: leadSelect }),
-    query.count ? prisma.lead.count({ where: { AND: and } }) : null,
+    query.count && !query.counts ? prisma.lead.count({ where: { AND: and } }) : null,
     query.counts ? prisma.lead.groupBy({ by: ['status'], where: { AND: base }, _count: { _all: true } }) : null,
   ])
+  // The tab aggregation already contains the exact total for the current status filter.
+  const statuses = query.status ? new Set(listParam(query.status)) : null
+  const total = query.count && grouped
+    ? grouped.reduce((n, group) => n + (!statuses || statuses.has(group.status) ? group._count._all : 0), 0)
+    : counted
   const result = buildPage(rows, page)
   let counts
   if (grouped) {
