@@ -331,11 +331,13 @@ async function listWhere(ctx, query, { withStatus = true } = {}) {
 /** GET /leads. `counts=true` adds per-status counts for the tabs (same filters, ignoring status). */
 export async function listLeads(ctx, query) {
   const page = parseListQuery(query, { sortable: SORTABLE, defaultSort: '-createdAt' })
-  const and = await listWhere(ctx, query)
+  // Resolve tag IDs and custom-field definitions once for both rows and status tabs.
+  const base = await listWhere(ctx, query, { withStatus: false })
+  const and = query.status ? [...base, { status: { in: listParam(query.status) } }] : base
   const [rows, total, grouped] = await Promise.all([
     prisma.lead.findMany({ where: { AND: [...and, page.cursorWhere] }, orderBy: page.orderBy, take: page.take, select: leadSelect }),
     query.count ? prisma.lead.count({ where: { AND: and } }) : null,
-    query.counts ? listWhere(ctx, query, { withStatus: false }).then((w) => prisma.lead.groupBy({ by: ['status'], where: { AND: w }, _count: { _all: true } })) : null,
+    query.counts ? prisma.lead.groupBy({ by: ['status'], where: { AND: base }, _count: { _all: true } }) : null,
   ])
   const result = buildPage(rows, page)
   let counts
