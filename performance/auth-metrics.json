@@ -1,0 +1,20 @@
+[
+  {
+    "path": "/auth/login",
+    "p50": 292.76692600000024,
+    "p95": 320.23993900000096,
+    "queries": 6,
+    "bytes": 1899,
+    "dbMsFirstSample": 3.99,
+    "unchangedAuthCode": true
+  },
+  {
+    "path": "/auth/refresh",
+    "p50": 6.897046000000046,
+    "p95": 8.432360000000699,
+    "queries": 8,
+    "bytes": 1899,
+    "dbMsFirstSample": 2.75,
+    "unchangedAuthCode": true
+  }
+]

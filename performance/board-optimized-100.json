@@ -1,0 +1,14 @@
+{
+  "mode": "board-check",
+  "results": [
+    {
+      "path": "/deals/board",
+      "p50": 34.83403700000008,
+      "p95": 46.740531000000374,
+      "queries": 37,
+      "bytes": 533345
+    }
+  ],
+  "concurrent": 16,
+  "responseParity": true
+}

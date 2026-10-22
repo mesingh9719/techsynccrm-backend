@@ -136,3 +136,48 @@ cleanup through `facebook.delete` / `facebook.privacy_recover`. See
 Enable JavaScript SDK login and register the HTTPS frontend domain in Meta, then register
 `/api/integrations/facebook/data-deletion` as the Data Deletion Request URL. Privacy jobs require
 the worker even if Facebook credentials are disabled; restart API and worker after deployment.
+
+## API performance audit (22 October 2026)
+
+See [the measured audit and deployment/rollback notes](performance/REPORT.md) and
+[the 220-route inventory](performance/endpoints.md). Work is on `perf/api-audit-20261022`.
+The new concurrent partial index is forward migration `20261022173000_lead_live_status_counts`;
+it must run outside an enclosing transaction. It has only been applied to disposable local databases.
+
+`PERFORMANCE_METRICS=true` enables SQL-event counts, summed query durations, `Server-Timing`
+and structured response-finish metrics. It defaults off; `SLOW_QUERY_MS` defaults to 250.
+Slow-query warnings omit SQL and parameters. No permission or dashboard cache was added.
+
+The benchmark scripts never load `.env` and require an explicit localhost database named
+`techsync_perf`. Seed requires an empty database, creates only synthetic records and is intentionally
+not idempotent. Do not use the application database. For example, after starting a disposable
+PostgreSQL server and creating `techsync_perf` locally:
+
+```bash
+export PERF_DATABASE_URL='postgresql://YOUR_LOCAL_USER@127.0.0.1:55432/techsync_perf?uselibpqcompat=true&sslmode=disable'
+DATABASE_URL_UNPOOLED="$PERF_DATABASE_URL" npm run db:migrate
+node scripts/performance-audit.js seed
+node scripts/performance-audit.js baseline
+node scripts/performance-plans.js baseline
+node scripts/performance-audit.js contracts-before
+node scripts/performance-audit.js after
+node scripts/performance-plans.js after
+node scripts/performance-audit.js contracts-after
+node scripts/performance-audit.js auth
+node scripts/performance-audit.js board-check
+```
+
+Running both baseline and after on the current checkout checks repeatability only. To reproduce
+the actual optimization comparison, create a separate worktree at `dde2f8f` (instrumentation with
+original handlers), install/generate its dependencies, and copy the current `performance-audit.js`
+script there for the additional contract/auth modes. Migrate, seed, capture baseline/plans and
+`contracts-before` **from that worktree first**, then migrate from this branch and run after/plans
+and `contracts-after` against the same fixture. The worktree and this checkout must share the same
+`PERF_DATABASE_URL` and `/tmp/techsync-performance-fixture.json`. Results and synthetic snapshots
+are written under `/tmp/techsync-*`; the audit retains the original measurements in `performance/`.
+
+Use a **second** disposable database for the integration suite. Its URL can have another database
+name, as in the existing `TEST_DATABASE_URL` instructions above. The five new endpoint regressions
+are in `test/integration/performance.test.js`; the instrumentation test runs offline. The final audit
+observed the same three pre-existing suite failures as the original code; see the report for exact
+counts and limitations. Do not use a failing suite result as a clean release certification.
