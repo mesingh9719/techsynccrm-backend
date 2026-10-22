@@ -45,12 +45,21 @@ export async function receiveFacebookWebhook(payload) {
 const DEFAULT_MAPPING = { full_name: 'fullName', first_name: 'firstName', last_name: 'lastName', email: 'email', phone_number: 'phone', company_name: 'companyName', city: 'city', zip_code: 'pincode' }
 export function mapFacebookLead(data, form, page) {
   const fields = Object.create(null)
+  const placeholderFields = []
   for (const field of data.field_data ?? []) {
     const target = Object.hasOwn(form.mapping, field.name) ? form.mapping[field.name] : Object.hasOwn(DEFAULT_MAPPING, field.name) ? DEFAULT_MAPPING[field.name] : ''
     if (!target || !Array.isArray(field.values)) continue
     const value = field.values.map(String).join('; ').trim()
+    // Meta's testing tool supplies literal placeholders, including invalid phone/PIN values.
+    // Keep the test identifiable without inserting fake contact details or relaxing validation.
+    if (value === `<test lead: dummy data for ${field.name}>`) {
+      placeholderFields.push(field.name)
+      if (target === 'fullName' || target === 'firstName') fields[target] = 'Facebook test lead'
+      continue
+    }
     if (value) fields[target] = value
   }
+  if (placeholderFields.length) fields.requirement = [fields.requirement, `Facebook test lead. Meta supplied placeholder values for: ${placeholderFields.join(', ')}.`].filter(Boolean).join('\n')
   if (fields.fullName && !fields.firstName) { const parts = fields.fullName.split(/\s+/); fields.firstName = parts.length > 1 ? parts.slice(0, -1).join(' ') : parts[0]; fields.lastName ||= parts.length > 1 ? parts.at(-1) : null }
   const payload = { firstName: fields.firstName, lastName: fields.lastName, companyName: fields.companyName, city: fields.city, pincode: fields.pincode, requirement: fields.requirement, ownerId: form.defaultOwnerId, sourceDetail: `Page ${page.facebookPageId}; Form ${form.facebookFormId}; Lead ${data.id}`.slice(0, 200), utm: { source: 'facebook', medium: 'paid_social', ...(data.campaign_id && { campaign: String(data.campaign_id) }), ...(data.ad_id && { content: String(data.ad_id) }) } }
   if (fields.email) payload.emails = [{ value: fields.email.toLowerCase(), primary: true }]
@@ -128,6 +137,18 @@ export async function syncFacebookForm(id) {
 export async function recoverFacebookJobs() {
   if (!env.FACEBOOK_APP_ID || !env.FACEBOOK_APP_SECRET) return
   await prisma.facebookOAuthState.deleteMany({ where: { expiresAt: { lt: new Date() } } })
+  // Local installations cannot receive Meta webhooks. Periodic, idempotent form sync also
+  // recovers missed webhook deliveries on hosted installations. Never revive paused forms
+  // or replace a queued/running sync; the update predicate also protects against concurrent jobs.
+  await prisma.facebookForm.updateMany({
+    where: {
+      enabled: true,
+      syncStatus: { in: ['idle', 'completed', 'failed'] },
+      updatedAt: { lte: new Date(Date.now() - 5 * 60_000) },
+      page: { enabled: true, tokenEnc: { not: '' }, connection: { tokenEnc: { not: '' } } },
+    },
+    data: { syncStatus: 'queued', syncAfter: null, syncLeaseUntil: null, lastError: null },
+  })
   const deliveries = await prisma.facebookLeadDelivery.findMany({ where: { status: { in: ['pending', 'failed'] }, attempts: { lt: 5 }, nextAttemptAt: { lte: new Date() }, page: { enabled: true } }, select: { id: true }, orderBy: { nextAttemptAt: 'asc' }, take: 100 })
   for (const delivery of deliveries) await enqueue('facebook.lead', { deliveryId: delivery.id }, { singletonKey: delivery.id })
   const forms = await prisma.facebookForm.findMany({ where: { enabled: true, page: { enabled: true }, OR: [{ syncStatus: 'queued' }, { syncStatus: 'running', syncLeaseUntil: { lt: new Date() } }] }, select: { id: true }, take: 50 })

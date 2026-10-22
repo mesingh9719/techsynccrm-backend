@@ -10,7 +10,7 @@
  */
 
 /** CRM record types governed by owner-based visibility. */
-export const RECORD_RESOURCES = ['leads', 'contacts', 'companies', 'deals', 'tasks']
+export const RECORD_RESOURCES = ['leads', 'contacts', 'companies', 'deals', 'tasks', 'campaigns']
 
 /** Scope per action for each role. null = not allowed; true = allowed (no scope). */
 const RECORD_ACCESS = {

@@ -167,6 +167,7 @@ model Organization {
   leadSources     LeadSource[]
   lostReasons     LostReason[]
   leads           Lead[]
+  campaigns       Campaign[]
   savedViews      SavedView[]
   pipelines       Pipeline[]
   deals           Deal[]
@@ -804,6 +805,8 @@ model LostReason {
 
 /// An unqualified enquiry. Converts into a contact (+ company, + deal from M09).
 model Lead {
+  campaignId String? @map("campaign_id") @db.Uuid
+  campaign Campaign? @relation(fields: [organizationId, campaignId], references: [organizationId, id], onDelete: NoAction, onUpdate: NoAction)
   facebookDeliveries FacebookLeadDelivery[]
   importId String? @map("import_id") @db.Uuid
   id                 String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -864,8 +867,46 @@ model Lead {
   @@index([organizationId, primaryPhoneE164])
   @@index([organizationId, primaryEmail])
   @@index([organizationId, sourceId])
+  @@index([organizationId, campaignId])
   @@map("leads")
   @@index([organizationId, importId])
+}
+
+/// Workspace marketing campaigns. Metrics are aggregated from attributed CRM records.
+model Campaign {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  name String @db.VarChar(160)
+  code String @db.VarChar(80)
+  type String @db.VarChar(20)
+  objective String @db.VarChar(30)
+  status String @default("draft") @db.VarChar(20)
+  startDate DateTime @map("start_date") @db.Date
+  endDate DateTime? @map("end_date") @db.Date
+  budgetMinor BigInt? @map("budget_minor")
+  actualSpendMinor BigInt? @map("actual_spend_minor")
+  currency String @db.Char(3)
+  sourceId String? @map("source_id") @db.Uuid
+  ownerId String? @map("owner_id") @db.Uuid
+  externalAccountId String? @map("external_account_id") @db.VarChar(100)
+  externalCampaignId String? @map("external_campaign_id") @db.VarChar(100)
+  externalPlatform String? @map("external_platform") @db.VarChar(20)
+  landingUrl String? @map("landing_url") @db.VarChar(2000)
+  targetAudience String? @map("target_audience") @db.VarChar(2000)
+  description String? @db.VarChar(10000)
+  utm Json @default("{}")
+  createdById String? @map("created_by_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  leads Lead[]
+  @@unique([organizationId, id])
+  @@unique([organizationId, code])
+  @@unique([organizationId, externalPlatform, externalCampaignId])
+  @@index([organizationId, ownerId, status])
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@map("campaigns")
 }
 
 model LeadPhone {

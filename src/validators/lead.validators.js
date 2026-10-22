@@ -49,6 +49,7 @@ export const updateLeadSchema = z
 export const leadListQuery = recordListQuery({
   status: z.string().max(100).optional(),
   sourceId: z.string().max(800).optional(),
+  campaignId: z.uuid().optional(),
   scoreMin: z.coerce.number().int().min(0).max(100).optional(),
   city: z.string().trim().max(80).optional(),
   stateCode: z.string().max(200).optional(),

@@ -16,6 +16,7 @@ import publicRoutes from './public.routes.js'
 import { invitationRoutes, memberRoutes, teamRoutes } from './team.routes.js'
 import userRoutes from './user.routes.js'
 import { notificationRoutes } from './notification.routes.js'
+import { campaignRoutes } from './campaign.routes.js'
 import { getOpenApiDocument } from '../docs/openapi.js'
 import { env } from '../config/env.js'
 
@@ -40,6 +41,7 @@ router.use('/companies', companyRoutes)
 router.use('/tags', tagRoutes)
 router.use('/custom-fields', customFieldRoutes)
 router.use('/leads', leadRoutes)
+router.use('/campaigns', campaignRoutes)
 router.use('/lead-sources', leadSourceRoutes)
 router.use('/lost-reasons', lostReasonRoutes)
 router.use('/saved-views', savedViewRoutes)
