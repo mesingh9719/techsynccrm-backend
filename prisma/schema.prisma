@@ -864,6 +864,8 @@ model Lead {
   phoneLookups LeadPhone[]
   emailLookups LeadEmail[]
 
+  // Partial covering index leads_live_status_idx is managed in SQL (20261022173000),
+  // alongside the existing SQL-only partial/trigram indexes. Excludes deleted rows.
   @@index([organizationId, status, createdAt(sort: Desc)])
   @@index([organizationId, ownerId, status])
   @@index([organizationId, primaryPhoneE164])
