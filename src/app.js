@@ -10,6 +10,7 @@ import { logger } from './lib/logger.js'
 import { safeRequestUrl } from './lib/requestUrl.js'
 import routes from './routes/index.js'
 import { requestId } from './middlewares/requestId.js'
+import { requestPerformance } from './lib/performance.js'
 import { errorHandler, notFound } from './middlewares/errorHandler.js'
 
 const app = express()
@@ -33,11 +34,12 @@ app.use(
   }),
 )
 app.use(helmet())
+if (env.PERFORMANCE_METRICS) app.use(requestPerformance)
 app.use(
   cors({
     origin: env.CORS_ORIGINS,
     credentials: true,
-    exposedHeaders: ['X-Request-Id'],
+    exposedHeaders: ['X-Request-Id', ...(env.PERFORMANCE_METRICS ? ['Server-Timing'] : [])],
   }),
 )
 app.use(compression({ filter: (req, res) => req.headers.accept?.includes('text/event-stream') ? false : compression.filter(req, res) }))

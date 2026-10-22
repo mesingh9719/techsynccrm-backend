@@ -57,6 +57,8 @@ export const env = Object.freeze({
   /** Direct connection, needed by the job queue (pg-boss) and migrations. Falls back to DATABASE_URL. */
   DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED || required('DATABASE_URL'),
   DB_POOL_MAX: number('DB_POOL_MAX', 10),
+  PERFORMANCE_METRICS: process.env.PERFORMANCE_METRICS === 'true',
+  SLOW_QUERY_MS: positiveInteger('SLOW_QUERY_MS', 250),
   /** Interactive transaction limits include time across all queries and row-lock waits. */
   DB_TRANSACTION_MAX_WAIT_MS: positiveInteger('DB_TRANSACTION_MAX_WAIT_MS', 10_000),
   DB_TRANSACTION_TIMEOUT_MS: positiveInteger('DB_TRANSACTION_TIMEOUT_MS', 15_000),
