@@ -6,6 +6,14 @@ import { execFileSync } from 'node:child_process'
 import { readdirSync, statSync } from 'node:fs'
 import path from 'node:path'
 
+// Syntax checks do not resolve imports. Load the generated client too so a missing or
+// unusable client fails the build before the API is deployed. This does not connect to DB.
+const { PrismaClient, Prisma } = await import('../src/generated/prisma/client.ts')
+if (typeof PrismaClient !== 'function' || !Prisma?.DbNull) {
+  throw new Error('Generated Prisma client is missing its runtime exports')
+}
+console.log('[build] generated Prisma client imports OK')
+
 const roots = ['src', 'scripts']
 const files = []
 const walk = (dir) => {

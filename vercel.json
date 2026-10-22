@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "functions": {
+    "src/**/*.js": {
+      "includeFiles": "src/generated/prisma/**"
+    }
+  }
+}

@@ -6,6 +6,12 @@ The application and CLI dependencies now use ORM 7; the previous Prisma 8 RC con
 The npm scripts use `@prisma/prisma7` and `prisma7.config.ts`, which loads `.env` and uses
 `DATABASE_URL_UNPOOLED` for migrations. Preserve `.env`; copy `.env.example` only for a new setup.
 
+For Vercel, `vercel.json` runs `npm run build` and explicitly includes
+`src/generated/prisma/**` in the Express function. The generated client is ignored by Git,
+so it must be generated during deployment and packaged with the function. The build also
+imports the generated client without opening a database connection to catch missing runtime
+files before release.
+
 ## Setup and release
 
 From `backend/`, for a new checkout or another environment:
