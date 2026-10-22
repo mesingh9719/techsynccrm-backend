@@ -389,6 +389,10 @@ export async function board(ctx, query) {
     ),
   ])
   const writable = await writablePipelineIds(ctx.orgId, ctx.plan)
+  // Hydrate the visible cards together. Per-column hydration repeated the same owner,
+  // tag, contact, company, reason and source queries for every non-empty stage.
+  const cards = await present(columns.flatMap((rows) => rows.slice(0, BOARD_PAGE)))
+  const cardsById = new Map(cards.map((card) => [card.id, card]))
   const result = []
   for (const [i, stage] of stages.entries()) {
     const g = groups.filter((x) => x.stageId === stage.id)
@@ -401,7 +405,7 @@ export async function board(ctx, query) {
       totalMinor,
       weightedMinor: weighted,
       hasMore: rows.length > BOARD_PAGE,
-      deals: await present(rows.slice(0, BOARD_PAGE)),
+      deals: rows.slice(0, BOARD_PAGE).map((row) => cardsById.get(row.id)),
     })
   }
   return { pipeline: { ...pipeline, readOnly: writable ? !writable.has(pipeline.id) : false }, closedWithinDays: BOARD_CLOSED_DAYS, stages: result }

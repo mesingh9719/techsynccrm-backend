@@ -1,0 +1,72 @@
+[
+  {
+    "path": "/auth/me",
+    "p50": 4.561063999999988,
+    "p95": 12.890926000000036,
+    "queries": 3,
+    "bytes": 1411
+  },
+  {
+    "path": "/organizations/current",
+    "p50": 9.197583000000122,
+    "p95": 20.32234799999992,
+    "queries": 10,
+    "bytes": 2211
+  },
+  {
+    "path": "/organizations/current/checklist",
+    "p50": 6.964797999999973,
+    "p95": 15.923203000000285,
+    "queries": 9,
+    "bytes": 866
+  },
+  {
+    "path": "/leads?limit=1&counts=true",
+    "p50": 19.527855000000272,
+    "p95": 41.75959899999998,
+    "queries": 10,
+    "bytes": 1609
+  },
+  {
+    "path": "/leads?limit=50&count=true&counts=true",
+    "p50": 15.553926000000047,
+    "p95": 18.255329000000074,
+    "queries": 11,
+    "bytes": 63889
+  },
+  {
+    "path": "/leads?limit=50&count=true&counts=true&status=new&tag=05e377a8-5324-451c-9da4-b6ed8cb9bbaa&cf.segment=retail",
+    "p50": 205.903855999999,
+    "p95": 267.48953299999994,
+    "queries": 14,
+    "bytes": 58781
+  },
+  {
+    "path": "/leads?limit=50&q=Synthetic%20lead%202",
+    "p50": 8.563038000000233,
+    "p95": 19.083424999998897,
+    "queries": 9,
+    "bytes": 63971
+  },
+  {
+    "path": "/deals/board",
+    "p50": 40.227656000000934,
+    "p95": 51.01451300000008,
+    "queries": 72,
+    "bytes": 533345
+  },
+  {
+    "path": "/deals/forecast",
+    "p50": 12.712795000001279,
+    "p95": 21.889106999999058,
+    "queries": 6,
+    "bytes": 219
+  },
+  {
+    "path": "/tasks/summary",
+    "p50": 2.5975949999992736,
+    "p95": 3.850333000000319,
+    "queries": 6,
+    "bytes": 58
+  }
+]

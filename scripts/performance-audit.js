@@ -68,7 +68,7 @@ try {
     await prisma.$executeRawUnsafe('ANALYZE')
     await fs.writeFile(fixturePath, JSON.stringify(fixtures))
     console.log(JSON.stringify({ leads: await prisma.lead.count(), deals: await prisma.deal.count(), tenants: fixtures.length }))
-  } else if (['baseline', 'after', 'verify'].includes(mode)) {
+  } else if (['baseline', 'after', 'verify', 'contracts-before', 'contracts-after'].includes(mode)) {
     const fixtures = JSON.parse(await fs.readFile(fixturePath, 'utf8'))
     const f = fixtures[0]
     const { default: app } = await import('../src/app.js')
@@ -87,6 +87,36 @@ try {
       `/leads?limit=50&count=true&counts=true&status=new&tag=${f.tagId}&cf.segment=retail`,
       '/leads?limit=50&q=Synthetic%20lead%202', '/deals/board', '/deals/forecast', '/tasks/summary',
     ]
+    if (mode.startsWith('contracts-')) {
+      const contracts = {}
+      for (let role = 0; role < 5; role++) {
+        for (const path of [
+          '/leads?limit=5&count=true&counts=true', '/leads?limit=5&counts=true&status=new,qualified',
+          '/leads?limit=5&counts=true&deleted=true', '/leads?limit=5&counts=true&q=absent-value',
+          `/leads?limit=5&counts=true&tag=${f.tagId}&cf.segment=retail&ownerId=none`,
+          '/deals/board', '/deals/board?q=absent-value',
+        ]) {
+          const response = await request(path, token(f, role))
+          assert.equal(response.status, 200)
+          contracts[`${role}:${path}`] = response.body
+        }
+      }
+      const page1 = await request('/leads?limit=100&count=true&counts=true&scoreMin=1')
+      assert.equal(page1.body.data.items.length, 0)
+      assert.equal(page1.body.data.nextCursor, null)
+      contracts.empty = page1.body
+      const first = await request('/leads?limit=5&count=true&counts=true')
+      contracts.next = (await request(`/leads?limit=5&count=true&counts=true&cursor=${first.body.data.nextCursor}`)).body
+      const foreign = await request(`/leads/${first.body.data.items[0].id}`, token(fixtures[1]))
+      assert.equal(foreign.status, 404)
+      // Membership and role revocations must take effect on the very next request.
+      await prisma.membership.update({ where: { organizationId_userId: { organizationId: f.orgId, userId: f.users[3].id } }, data: { status: 'deactivated' } })
+      try { assert.equal((await request('/deals/board', token(f, 3))).status, 403) }
+      finally { await prisma.membership.update({ where: { organizationId_userId: { organizationId: f.orgId, userId: f.users[3].id } }, data: { status: 'active' } }) }
+      await fs.writeFile(`/tmp/techsync-${mode}.json`, JSON.stringify(contracts, null, 2))
+      if (mode === 'contracts-after') assert.deepEqual(contracts, JSON.parse(await fs.readFile('/tmp/techsync-contracts-before.json', 'utf8')))
+      console.log(JSON.stringify({ mode, contracts: Object.keys(contracts).length, foreignTenant: '404', revocation: '403', parity: mode === 'contracts-after' }))
+    } else {
     const results = [], responses = {}, queries = []
     let captured
     prisma.$on('query', (e) => { if (captured) queries.push({ endpoint: captured, query: e.query, params: e.params, duration: e.duration }) })
@@ -113,6 +143,7 @@ try {
     await fs.writeFile(`/tmp/techsync-${mode}-metrics.json`, JSON.stringify(results, null, 2))
     if (mode !== 'baseline') assert.deepEqual(responses, JSON.parse(await fs.readFile('/tmp/techsync-baseline-responses.json', 'utf8')))
     console.log(JSON.stringify({ mode, results, concurrent: concurrent.length, responseParity: mode !== 'baseline' }, null, 2))
+    }
   } else throw new Error('Use seed, baseline, after or verify')
 } finally {
   if (server) await new Promise((resolve) => server.close(resolve))
