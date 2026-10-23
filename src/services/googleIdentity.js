@@ -10,7 +10,11 @@ export function googleConfiguration() {
     const url = new URL(env.GOOGLE_AUTH_REDIRECT_URI)
     valid = !url.username && !url.password && !url.search && !url.hash && url.pathname === '/api/auth/google/callback' &&
       (url.protocol === 'https:' || !env.isProduction && url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname))
+<<<<<<< HEAD
   } catch { /* Disabled until configured. */ }
+=======
+  } catch { /* Remains disabled until a valid callback is configured. */ }
+>>>>>>> feat/gmail-integration
   return { enabled: env.GOOGLE_AUTH_ENABLED !== false && Boolean(env.GOOGLE_AUTH_CLIENT_ID && env.GOOGLE_AUTH_CLIENT_SECRET && valid), redirectUri: valid ? env.GOOGLE_AUTH_REDIRECT_URI : null }
 }
 export function googleClient() {
@@ -18,11 +22,19 @@ export function googleClient() {
   return new OAuth2Client({ clientId: env.GOOGLE_AUTH_CLIENT_ID, clientSecret: env.GOOGLE_AUTH_CLIENT_SECRET, redirectUri: env.GOOGLE_AUTH_REDIRECT_URI, transporterOptions: { timeout: 20000, retry: false } })
 }
 export function verifiedIdentity(payload, nonce) {
+<<<<<<< HEAD
   if (typeof nonce !== 'string' || nonce.length < 20 || !payload || typeof payload.sub !== 'string' || !payload.sub || payload.sub.length > 255 || payload.email_verified !== true || typeof payload.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email) || payload.email.length > 254 || !safeEqual(payload.nonce, nonce) || payload.azp && payload.azp !== env.GOOGLE_AUTH_CLIENT_ID) throw googleError('GOOGLE_IDENTITY_INVALID', 'Google sign-in could not be verified. Please try again.')
   const email = payload.email.toLowerCase()
   return { subject: payload.sub, email, fullName: String(payload.name || email.split('@')[0]).trim().slice(0, 60) || 'Google user', authoritative: email.endsWith('@gmail.com') || Boolean(typeof payload.hd === 'string' && payload.hd.trim()) }
 }
 /** Production always verifies Google's signature, issuer, audience and expiry. */
+=======
+  if (!payload || typeof payload.sub !== 'string' || !payload.sub || payload.sub.length > 255 || payload.email_verified !== true || typeof payload.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email) || payload.email.length > 254 || !safeEqual(payload.nonce, nonce) || payload.azp && payload.azp !== env.GOOGLE_AUTH_CLIENT_ID) throw googleError('GOOGLE_IDENTITY_INVALID', 'Google sign-in could not be verified. Please try again.')
+  const email = payload.email.toLowerCase()
+  return { subject: payload.sub, email, fullName: String(payload.name || email.split('@')[0]).trim().slice(0, 60) || 'Google user', authoritative: email.endsWith('@gmail.com') || Boolean(typeof payload.hd === 'string' && payload.hd.trim()) }
+}
+/** Narrow mock boundary: production always verifies Google's signature, issuer, audience and expiry. */
+>>>>>>> feat/gmail-integration
 export const googleIdentity = {
   async exchange(code, verifier, nonce) {
     try {

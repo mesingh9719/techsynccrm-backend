@@ -68,6 +68,8 @@ function build(role) {
       else if (scope) perms.push(`${resource}.${action}.${scope}`)
     }
   }
+  if (role !== 'viewer') perms.push('email.connect', 'email.send', 'email.templates.write.own')
+  if (['owner', 'admin'].includes(role)) perms.push('email.connections.manage', 'email.templates.manage')
   return Object.freeze(perms)
 }
 

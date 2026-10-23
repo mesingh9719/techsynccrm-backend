@@ -1,3 +1,4 @@
+import { gmailRoutes, emailRoutes, emailTemplateRoutes, gmailWebhookRoutes } from './gmail.routes.js'
 import { importRoutes, exportRoutes } from './transfer.routes.js'
 import { facebookRoutes, facebookWebhookRoutes } from './facebook.routes.js'
 import { Router } from 'express'
@@ -22,6 +23,10 @@ import { env } from '../config/env.js'
 
 /** Root API router, mounted at /api. */
 const router = Router()
+router.use('/integrations/gmail', gmailRoutes)
+router.use('/emails', emailRoutes)
+router.use('/email-templates', emailTemplateRoutes)
+router.use('/webhooks/gmail', gmailWebhookRoutes)
 router.use('/integrations/facebook', facebookRoutes)
 router.use('/webhooks/in/facebook', facebookWebhookRoutes)
 

@@ -1,3 +1,4 @@
+import { disableMemberMailboxes } from '../integrations/gmail/hooks.js'
 import { env } from '../config/env.js'
 import { MAX_TRIAL_EXTENSION_DAYS, PLANS, planDefinition, planName, TRIAL_DAYS, TRIAL_PLANS } from '../config/plans.js'
 import { prisma } from '../db/prisma.js'
@@ -291,6 +292,7 @@ export async function selectSeats(ctx, keepUserIds) {
     const now = new Date()
     for (const m of leaving) {
       await tx.membership.update({ where: { id: m.id }, data: { status: 'deactivated', deactivatedAt: now } })
+      await disableMemberMailboxes(tx, m.userId, ctx.orgId)
       await tx.teamMember.deleteMany({ where: { userId: m.userId, team: { organizationId: ctx.orgId } } })
       await tx.user.updateMany({ where: { id: m.userId, lastActiveOrganizationId: ctx.orgId }, data: { lastActiveOrganizationId: null } })
       await emit(tx, ctx, 'member.deactivated', { entityType: 'user', entityId: m.userId }, { reassignToUserId: ctx.userId, reason: 'seat_selection' })

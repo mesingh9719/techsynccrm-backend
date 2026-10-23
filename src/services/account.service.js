@@ -1,3 +1,4 @@
+import { disableMemberMailboxes } from '../integrations/gmail/hooks.js'
 import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import { env } from '../config/env.js'
@@ -192,6 +193,7 @@ export async function deleteAccount(userId, { password }, meta) {
 
   await prisma.$transaction(async (tx) => {
     await tx.membership.updateMany({ where: { userId, status: 'active' }, data: { status: 'deactivated', deactivatedAt: new Date() } })
+    await disableMemberMailboxes(tx, userId)
     await tx.teamMember.deleteMany({ where: { userId } })
     await tx.recoveryCode.deleteMany({ where: { userId } })
     await tx.userToken.deleteMany({ where: { userId } })

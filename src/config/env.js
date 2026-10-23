@@ -1,4 +1,8 @@
 /** Reads and validates environment variables once at startup. Fails fast on anything missing. */
+<<<<<<< HEAD
+=======
+import { gmailOAuthEnvironment } from './gmailOAuth.js'
+>>>>>>> feat/gmail-integration
 import { googleAuthEnvironment } from './googleAuth.js'
 
 const NODE_ENV = process.env.NODE_ENV ?? 'development'
@@ -73,6 +77,18 @@ export const env = Object.freeze({
 
   /** AES-256-GCM key for secrets stored in the database (2FA secrets, integration credentials). */
   DATA_ENCRYPTION_KEY: encryptionKey,
+
+  /** Gmail is opt-in; no worker connects to a mailbox until configuration and user consent exist. */
+  GMAIL_ENABLED: process.env.GMAIL_ENABLED === 'true',
+  GMAIL_SYNC_ENABLED: process.env.GMAIL_SYNC_ENABLED === 'true',
+  ...gmailOAuthEnvironment(),
+  ...googleAuthEnvironment(),
+  GMAIL_KMS_KEY_NAME: process.env.GMAIL_KMS_KEY_NAME || '',
+  GMAIL_PUBSUB_TOPIC: process.env.GMAIL_PUBSUB_TOPIC || '',
+  GMAIL_PUBSUB_AUDIENCE: process.env.GMAIL_PUBSUB_AUDIENCE || '',
+  GMAIL_PUBSUB_SERVICE_ACCOUNT: process.env.GMAIL_PUBSUB_SERVICE_ACCOUNT || '',
+  GMAIL_POLL_SECONDS: Math.max(60, positiveInteger('GMAIL_POLL_SECONDS', 300)),
+  GMAIL_MESSAGE_RETENTION_DAYS: Math.min(365, positiveInteger('GMAIL_MESSAGE_RETENTION_DAYS', 365)),
 
   /** Optional Meta Lead Ads integration. Secrets stay on the backend. */
   FACEBOOK_APP_ID: process.env.FACEBOOK_APP_ID || '',

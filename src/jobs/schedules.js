@@ -1,4 +1,8 @@
 import { runImport, runImportPreview, runExport, recoverTransfers } from '../services/transfer.service.js'
+import { sendQueued as sendGmail } from '../integrations/gmail/jobs.js'
+import { maintainGmail } from '../integrations/gmail/maintenance.js'
+import { syncMailbox } from '../integrations/gmail/jobs.js'
+import '../integrations/gmail/hooks.js'
 import { processFacebookDelivery, syncFacebookForm, recoverFacebookJobs } from '../integrations/facebook/capture.js'
 import { processFacebookDeletion, recoverFacebookDeletions } from '../integrations/facebook/deletion.js'
 import { maintainFiles } from '../services/file.service.js'
@@ -18,6 +22,10 @@ import { scanOverdueTasks, sendDueReminders } from '../services/task.service.js'
 
 /** Registers every job handler and cron schedule. Called once by the worker after the queue starts. */
 export async function registerJobs() {
+  await registerHandler('gmail.send', (job) => sendGmail(job.data), { concurrency: 2 })
+  await registerHandler('gmail.sync', (job) => syncMailbox(job.data), { concurrency: 2 })
+  await registerHandler('gmail.maintain', () => maintainGmail())
+  await schedule('gmail.maintain', '* * * * *', null, { tz: 'UTC' })
   await registerHandler('facebook.delete', (job) => processFacebookDeletion(job.data.requestId), { concurrency: 2 })
   await registerHandler('facebook.privacy_recover', recoverFacebookDeletions)
   await schedule('facebook.privacy_recover', '* * * * *', null, { tz: 'UTC' })

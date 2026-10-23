@@ -19,7 +19,14 @@ export async function startGoogle(input) {
   if (input.intent === 'signup' && input.acceptTerms !== true) throw googleError('TERMS_REQUIRED', 'Accept the Terms and Privacy Policy to sign up.')
   const { codeVerifier, codeChallenge } = await client.generateCodeVerifierAsync()
   const flow = { purpose: 'google-signin', state: crypto.randomBytes(32).toString('base64url'), nonce: crypto.randomBytes(32).toString('base64url'), verifier: codeVerifier, intent: input.intent, plan: input.plan, remember: input.remember, returnTo: safeGoogleReturn(input.returnTo), legal: LEGAL_VERSIONS, expires: Date.now() + 600000 }
+<<<<<<< HEAD
   return { cookie: encrypt(JSON.stringify(flow)), url: client.generateAuthUrl({ scope: ['openid', 'email', 'profile'], access_type: 'online', prompt: 'select_account', state: flow.state, nonce: flow.nonce, code_challenge: codeChallenge, code_challenge_method: 'S256', include_granted_scopes: false }) }
+=======
+  return {
+    cookie: encrypt(JSON.stringify(flow)),
+    url: client.generateAuthUrl({ scope: ['openid', 'email', 'profile'], access_type: 'online', prompt: 'select_account', state: flow.state, nonce: flow.nonce, code_challenge: codeChallenge, code_challenge_method: 'S256', include_granted_scopes: false }),
+  }
+>>>>>>> feat/gmail-integration
 }
 function readFlow(cookie, state) {
   try {
@@ -39,8 +46,13 @@ async function userForIdentity(identity, flow, meta) {
     }
     user = await tx.user.findUnique({ where: { email: identity.email } })
     if (user) {
+<<<<<<< HEAD
       // Prevent pre-registration hijacking and unsafe linking of external email identities.
       if (user.deletedAt || user.googleSubject || !user.emailVerifiedAt || !identity.authoritative || user.lockedUntil && user.lockedUntil > new Date()) throw googleError('GOOGLE_LINK_REQUIRED', 'Use email sign-in. Verify your email or reset your password first; existing external Google email addresses require email sign-in.', 409)
+=======
+      // Do not silently take over a pre-registered unverified account or trust an external Google email.
+      if (user.deletedAt || user.googleSubject || !user.emailVerifiedAt || !identity.authoritative || user.lockedUntil && user.lockedUntil > new Date()) throw googleError('GOOGLE_LINK_REQUIRED', 'Sign in with your email and password. Verify your email or reset your password before using Google; existing non-Google mailboxes require email sign-in.', 409)
+>>>>>>> feat/gmail-integration
       user = await tx.user.update({ where: { id: user.id, googleSubject: null, email: identity.email, deletedAt: null }, data: { googleSubject: identity.subject } })
       await recordAudit(tx, { userId: user.id, ip: meta.ip, userAgent: meta.userAgent }, { action: 'auth.google_linked', entityType: 'user', entityId: user.id })
       return user
@@ -61,6 +73,10 @@ export async function finishGoogle(query, cookie, meta) {
   try { user = await userForIdentity(identity, flow, meta) }
   catch (error) { if (error.code === 'P2002') throw googleError('GOOGLE_LINK_REQUIRED', 'An account already exists. Please sign in again.', 409); throw error }
   if (!user.emailVerifiedAt) await resendVerification(user.id).catch(() => {})
+<<<<<<< HEAD
+=======
+  // Neither Google tokens nor our access token go into URLs or browser storage.
+>>>>>>> feat/gmail-integration
   return createUserToken(user.id, 'google_signin', 300000, { subject: identity.subject, email: identity.email, remember: flow.remember, returnTo: flow.returnTo })
 }
 export async function completeGoogle(ticket, meta) {

@@ -243,7 +243,11 @@ export async function login({ email, password, remember }, meta) {
   return completeLogin({ ...user, passwordHash: found.passwordHash }, { ...meta, remember })
 }
 
+<<<<<<< HEAD
 /** Federated proof still requires account locks, local 2FA and current membership/onboarding. */
+=======
+/** Federated proof does not bypass account locks, local 2FA or membership/onboarding gates. */
+>>>>>>> feat/gmail-integration
 export async function completeExternalLogin(userId, remember, meta) {
   const row = await prisma.user.findFirst({ where: { id: userId, deletedAt: null }, select: { ...userSelect, lockedUntil: true } })
   if (!row) throw ApiError.unauthorized('This account is unavailable.', 'INVALID_TOKEN')

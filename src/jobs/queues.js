@@ -14,6 +14,10 @@ const standard = {
 }
 
 export const QUEUES = {
+  // Recovery is driven by durable state; never let pg-boss blindly retry a possible send.
+  'gmail.send': { ...standard, retryLimit: 0, expireInSeconds: 120 },
+  'gmail.sync': { ...standard, retryLimit: 0, expireInSeconds: 180 },
+  'gmail.maintain': { ...standard, retryLimit: 0, expireInSeconds: 180 },
   'facebook.delete': { ...standard, retryLimit: 0, expireInSeconds: 180 },
   'facebook.privacy_recover': { ...standard, expireInSeconds: 120 },
   'facebook.lead': { ...standard, retryLimit: 0, expireInSeconds: 90 },

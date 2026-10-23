@@ -24,7 +24,12 @@ const clearCookie = (res, name) => { const { maxAge: _age, ...options } = google
 router.get('/config', (_req, res) => res.json({ success: true, data: googleConfiguration() }))
 router.post('/start', validate(startSchema), guarded(async (req, res) => {
   const result = await startGoogle(req.body)
+<<<<<<< HEAD
   clearCookie(res, RESULT_COOKIE); res.cookie(FLOW_COOKIE, result.cookie, googleCookieOptions())
+=======
+  clearCookie(res, RESULT_COOKIE)
+  res.cookie(FLOW_COOKIE, result.cookie, googleCookieOptions())
+>>>>>>> feat/gmail-integration
   res.json({ success: true, data: { url: result.url } })
 }))
 router.get('/callback', async (req, res) => {
@@ -33,9 +38,17 @@ router.get('/callback', async (req, res) => {
   catch (error) {
     const safe = ['GOOGLE_FLOW_EXPIRED', 'GOOGLE_CANCELLED', 'GOOGLE_AUTH_FAILED', 'GOOGLE_IDENTITY_INVALID', 'GOOGLE_ACCOUNT_UNAVAILABLE', 'GOOGLE_LINK_REQUIRED', 'GOOGLE_SIGNUP_REQUIRED', 'GOOGLE_NOT_CONFIGURED', 'TERMS_OUTDATED']
     const code = safe.includes(error.code) ? error.code : 'GOOGLE_AUTH_UNAVAILABLE'
+<<<<<<< HEAD
     clearCookie(res, RESULT_COOKIE); target.searchParams.set('error', code); logger.warn({ code }, 'Google sign-in did not complete')
   }
   clearCookie(res, FLOW_COOKIE); res.redirect(303, target.toString())
+=======
+    clearCookie(res, RESULT_COOKIE); target.searchParams.set('error', code)
+    logger.warn({ code }, 'Google sign-in did not complete')
+  }
+  clearCookie(res, FLOW_COOKIE)
+  res.redirect(303, target.toString())
+>>>>>>> feat/gmail-integration
 })
 router.post('/complete', guarded(async (req, res) => {
   clearCookie(res, RESULT_COOKIE)
