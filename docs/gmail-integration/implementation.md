@@ -68,3 +68,11 @@ No Playwright dependency was added to the shipped application. The scripts accep
 - DSN coverage is intentionally narrow; acceptance never guarantees delivery, and unsupported or ambiguous bounces are not inferred. Suppression review/removal currently needs an operator; a review UI is recommended next.
 - No measured production performance or latency SLA. Gmail queries, history traversal and contact-address scans are bounded per job; a large tenant may need several continuation jobs. Current timeline refresh is 60 seconds for lead/contact pages and expanded conversations refresh every 30 seconds; this is not a live shared inbox.
 - Deferred roadmap: suppression review UI and stronger operational dashboards first, then scheduled send/reminders if pilot demand supports them. Tracking, sequences, shared inbox, Outlook, generic SMTP/IMAP and AI drafts remain outside this MVP.
+
+## OAuth configuration follow-up
+
+The backend now recognizes generic `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` as well as the dedicated Gmail pair, supplies a localhost development callback, validates callback URLs, and returns safe setup diagnostics without credentials. Production still requires an explicit HTTPS callback, and KMS encryption remains required. The user confirmed that no KMS key exists yet, so Gmail was left disabled and the real Google callback is not claimed as tested.
+
+The connection UI shows administrator setup and callback details. OAuth return pages display safe actionable failures. Popup completion polls authenticated server state to handle Google COOP severing the opener, preserving the draft and requiring an explicit Send action.
+
+Follow-up verification: 17 backend configuration/provider/content unit tests and 17 HTTP/database Gmail tests pass (34 total); 26 frontend behavior tests and both builds pass. The Gmail browser harness now includes administrator diagnostics, a synthetic Google OAuth popup with a severed opener, and draft preservation without auto-send (18 scenarios total). All provider interactions remain synthetic; current environment verification prints only recognized-key booleans, missing-setting categories, and the public callback URI.

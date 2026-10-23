@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 const fixture = vi.hoisted(() => ({ payload: {}, refresh: vi.fn() }))
-vi.mock('../../src/config/env.js', () => ({ env: { GMAIL_ENABLED: true, GOOGLE_GMAIL_CLIENT_ID: 'fixture', GOOGLE_GMAIL_CLIENT_SECRET: 'fixture', GOOGLE_GMAIL_REDIRECT_URI: 'https://fixture.invalid/callback', GMAIL_KMS_KEY_NAME: 'fixture', GMAIL_PUBSUB_AUDIENCE: 'https://fixture.invalid/push', GMAIL_PUBSUB_SERVICE_ACCOUNT: 'push@fixture.iam.gserviceaccount.com' } }))
+vi.mock('../../src/config/env.js', () => ({ env: { GMAIL_ENABLED: true, GOOGLE_GMAIL_CLIENT_ID: 'fixture', GOOGLE_GMAIL_CLIENT_SECRET: 'fixture', GOOGLE_GMAIL_REDIRECT_URI: 'https://fixture.invalid/api/integrations/gmail/callback', GMAIL_KMS_KEY_NAME: 'fixture', GMAIL_PUBSUB_AUDIENCE: 'https://fixture.invalid/push', GMAIL_PUBSUB_SERVICE_ACCOUNT: 'push@fixture.iam.gserviceaccount.com' } }))
 vi.mock('google-auth-library', () => ({ GoogleAuth: class {}, OAuth2Client: class {
   async verifyIdToken() { return { getPayload: () => fixture.payload } }
   setCredentials() {}

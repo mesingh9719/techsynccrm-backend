@@ -10,7 +10,7 @@ import { enqueue } from '../../jobs/queue.js'
 import { provider, oauthClient } from './provider.js'
 import { newEnvelope, seal, open } from './vault.js'
 import { managedAccount, permitEmail, ownAccount } from './access.js'
-import { settings, requireConfiguration, ACTIVE, SCOPES, CONSENT_VERSION, gmailError } from './config.js'
+import { settings, configurationStatus, requireConfiguration, ACTIVE, SCOPES, CONSENT_VERSION, gmailError } from './config.js'
 import { cleanHtml } from './content.js'
 
 export const validReturn = (value) => /^\/app\/(?:leads\/[0-9a-f-]{36}|contacts\/[0-9a-f-]{36}|settings\/gmail)$/.test(value || '') ? value : '/app/settings/gmail'
@@ -25,7 +25,8 @@ export function accountStatus(row) {
 export async function gmailMe(ctx) {
   const row = await prisma.gmailAccount.findFirst({ where: { organizationId: ctx.orgId, userId: ctx.userId }, orderBy: [{ consentAt: 'desc' }, { createdAt: 'desc' }], select: { ...statusSelect, signatureHtml: true, excludedAddresses: true, excludedDomains: true } })
   const c = settings()
-  return { enabled: c.enabled && Boolean(c.clientId && c.clientSecret && c.redirectUri && c.kmsKey), syncEnabled: c.syncEnabled, entitled: planHasFeature(ctx.plan, 'emailSync'), consentVersion: CONSENT_VERSION, account: accountStatus(row) }
+  const setup = configurationStatus(c)
+  return { enabled: setup.ready, setup, syncEnabled: c.syncEnabled, entitled: planHasFeature(ctx.plan, 'emailSync'), consentVersion: CONSENT_VERSION, account: accountStatus(row) }
 }
 export async function startLogin(ctx, input) {
   requireConfiguration(); permitEmail(ctx, 'email.connect')

@@ -24,7 +24,7 @@ export async function callback(req, res) {
   let result, code
   try { result = await connection.finishLogin(req.query, req.cookies?.[cookieName]) }
   catch (error) {
-    code = ['GMAIL_OAUTH_CANCELLED', 'GMAIL_OAUTH_EXPIRED', 'GMAIL_OAUTH_INVALID', 'GMAIL_SCOPES_MISSING', 'GMAIL_RECONNECT_REQUIRED', 'GMAIL_ACCOUNT_UNAVAILABLE', 'GMAIL_NOT_CONFIGURED', 'GMAIL_DELETION_PENDING'].includes(error.code) ? error.code : 'GMAIL_OAUTH_FAILED'
+    code = ['GMAIL_OAUTH_CANCELLED', 'GMAIL_OAUTH_EXPIRED', 'GMAIL_OAUTH_INVALID', 'GMAIL_SCOPES_MISSING', 'GMAIL_RECONNECT_REQUIRED', 'GMAIL_ACCOUNT_UNAVAILABLE', 'GMAIL_NOT_CONFIGURED', 'GMAIL_ENCRYPTION_UNAVAILABLE', 'GMAIL_DELETION_PENDING'].includes(error.code) ? error.code : 'GMAIL_OAUTH_FAILED'
     logger.warn({ code }, 'Gmail connection was not completed')
   }
   const { maxAge: _maxAge, ...options } = cookieOptions(); res.clearCookie(cookieName, options)

@@ -2,6 +2,16 @@
 
 Scope A is implemented on backend/frontend branches `feat/gmail-integration`. Google Cloud is **not configured**. Both Gmail switches default to false. The local tests use fake providers and a disposable database; no real email was read or sent.
 
+## Existing Google client keys
+
+The backend accepts your existing `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`; no renaming is required. Optional `GOOGLE_GMAIL_CLIENT_ID` / `GOOGLE_GMAIL_CLIENT_SECRET` override them **as a pair**, so credentials from two clients cannot be mixed. Keep these values only in backend environment settings.
+
+For local development, the callback defaults to `http://localhost:5000/api/integrations/gmail/callback` (or your configured `PORT`). Register that exact URI on the Google OAuth **web application** client. Production requires an explicit HTTPS `GOOGLE_GMAIL_REDIRECT_URI`; `GOOGLE_REDIRECT_URI` is also accepted. Never infer a production callback from an incoming request.
+
+The client keys are recognized in the current local backend. Remaining setup: create a symmetric KMS key, give the API/worker identity encrypt/decrypt access, set `GMAIL_KMS_KEY_NAME`, then set `GMAIL_ENABLED=true` and `GMAIL_SYNC_ENABLED=true`. Restart both processes after editing their environment. Until then Gmail stays disabled; keys alone cannot securely persist the mailbox refresh token. No credentials were changed or printed during verification.
+
+After setup, open a lead → **Email** or **Settings → Gmail**, accept work-mailbox sharing, click **Connect Gmail**, choose a Google account, and allow the requested permissions. The popup returns to CRM and the open draft is retained; connection never sends it automatically. If Google severs the popup opener, CRM checks the authenticated connection status instead. Administrators see missing setup and the exact callback URL in the connection prompt. There is no employee app-password step.
+
 ## Keep the current local application working
 
 Existing manual activity logging and email-app links work without Google setup. The lead header’s **Email** action opens the composer with an inline setup explanation. The timeline’s **Log email** action records an email sent elsewhere. Gmail settings are at `/app/settings/gmail`.
@@ -82,8 +92,8 @@ Inject the following into **both API and worker** using the secret/environment m
 |---|---|
 | `GMAIL_ENABLED` | `true` only when OAuth and KMS are ready |
 | `GMAIL_SYNC_ENABLED` | `true` for inbound polling, delivery-report checks, and watch renewal |
-| `GOOGLE_GMAIL_CLIENT_ID` | OAuth web-client ID |
-| `GOOGLE_GMAIL_CLIENT_SECRET` | OAuth web-client secret; backend only |
+| `GOOGLE_CLIENT_ID` | OAuth web-client ID; optional dedicated `GOOGLE_GMAIL_CLIENT_ID` override |
+| `GOOGLE_CLIENT_SECRET` | OAuth web-client secret; backend only; optional dedicated `GOOGLE_GMAIL_CLIENT_SECRET` override |
 | `GOOGLE_GMAIL_REDIRECT_URI` | Exact registered callback URI |
 | `GMAIL_KMS_KEY_NAME` | CryptoKey resource from step 2 |
 | `GMAIL_PUBSUB_TOPIC` | `projects/YOUR_PROJECT/topics/YOUR_TOPIC`, or empty for polling only |
