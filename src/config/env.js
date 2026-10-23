@@ -72,6 +72,19 @@ export const env = Object.freeze({
   /** AES-256-GCM key for secrets stored in the database (2FA secrets, integration credentials). */
   DATA_ENCRYPTION_KEY: encryptionKey,
 
+  /** Gmail is opt-in; no worker connects to a mailbox until configuration and user consent exist. */
+  GMAIL_ENABLED: process.env.GMAIL_ENABLED === 'true',
+  GMAIL_SYNC_ENABLED: process.env.GMAIL_SYNC_ENABLED === 'true',
+  GOOGLE_GMAIL_CLIENT_ID: process.env.GOOGLE_GMAIL_CLIENT_ID || '',
+  GOOGLE_GMAIL_CLIENT_SECRET: process.env.GOOGLE_GMAIL_CLIENT_SECRET || '',
+  GOOGLE_GMAIL_REDIRECT_URI: process.env.GOOGLE_GMAIL_REDIRECT_URI || '',
+  GMAIL_KMS_KEY_NAME: process.env.GMAIL_KMS_KEY_NAME || '',
+  GMAIL_PUBSUB_TOPIC: process.env.GMAIL_PUBSUB_TOPIC || '',
+  GMAIL_PUBSUB_AUDIENCE: process.env.GMAIL_PUBSUB_AUDIENCE || '',
+  GMAIL_PUBSUB_SERVICE_ACCOUNT: process.env.GMAIL_PUBSUB_SERVICE_ACCOUNT || '',
+  GMAIL_POLL_SECONDS: Math.max(60, positiveInteger('GMAIL_POLL_SECONDS', 300)),
+  GMAIL_MESSAGE_RETENTION_DAYS: Math.min(365, positiveInteger('GMAIL_MESSAGE_RETENTION_DAYS', 365)),
+
   /** Optional Meta Lead Ads integration. Secrets stay on the backend. */
   FACEBOOK_APP_ID: process.env.FACEBOOK_APP_ID || '',
   FACEBOOK_APP_SECRET: process.env.FACEBOOK_APP_SECRET || '',

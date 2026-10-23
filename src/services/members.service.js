@@ -1,3 +1,4 @@
+import { disableMemberMailboxes } from '../integrations/gmail/hooks.js'
 import { hasPermission } from '../config/permissions.js'
 import { planHasFeature } from '../config/plans.js'
 import { prisma } from '../db/prisma.js'
@@ -135,6 +136,7 @@ export async function deactivateMember(ctx, userId, { reassignToUserId }) {
 
   await prisma.$transaction(async (tx) => {
     await tx.membership.update({ where: { id: target.id }, data: { status: 'deactivated', deactivatedAt: new Date() } })
+    await disableMemberMailboxes(tx, userId, ctx.orgId)
     await tx.teamMember.deleteMany({ where: { userId, team: { organizationId: ctx.orgId } } })
     await tx.user.updateMany({ where: { id: userId, lastActiveOrganizationId: ctx.orgId }, data: { lastActiveOrganizationId: null } })
     await emit(tx, ctx, 'member.deactivated', { entityType: 'user', entityId: userId }, { reassignToUserId })

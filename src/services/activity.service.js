@@ -90,7 +90,7 @@ async function present(rows) {
     participants: participants.map((p) => (p.userId ? { userId: p.userId, name: users.get(p.userId)?.fullName ?? 'Member' } : { contactId: p.contactId, name: contactMap.get(p.contactId) ?? 'Contact' })),
     mentions: mentions.map((m) => ({ userId: m.userId, name: users.get(m.userId)?.fullName ?? 'Member' })),
     editableUntil: a.type === 'system' ? null : new Date(a.createdAt.getTime() + EDIT_WINDOW_MS),
-    canEditNow: a.type !== 'system' && now - a.createdAt.getTime() < EDIT_WINDOW_MS,
+    canEditNow: a.type !== 'system' && a.meta?.provider !== 'gmail' && now - a.createdAt.getTime() < EDIT_WINDOW_MS,
   }))
   return Array.isArray(rows) ? out : out[0]
 }
@@ -205,6 +205,7 @@ const isAdmin = (ctx) => ctx.permissions.includes('settings.workspace.manage')
 /** Author only, within 24 hours (shown as "edited"). System activities can't be edited. */
 export async function updateActivity(ctx, id, input) {
   const activity = await getOwnActivity(ctx, id)
+  if (activity.meta?.provider === 'gmail') throw new ApiError(403, 'Synced email is read-only. Manage its history from Gmail settings.', { code: 'FORBIDDEN' })
   if (activity.type === 'system') throw new ApiError(403, 'System entries can’t be edited.', { code: 'FORBIDDEN' })
   if (activity.actorId !== ctx.userId) throw new ApiError(403, 'Only the person who wrote this can edit it.', { code: 'FORBIDDEN' })
   if (Date.now() - activity.createdAt.getTime() > EDIT_WINDOW_MS) throw new ApiError(403, 'Entries can only be edited for 24 hours.', { code: 'EDIT_WINDOW_CLOSED' })
@@ -242,6 +243,7 @@ export async function updateActivity(ctx, id, input) {
 /** The author or an admin. */
 export async function deleteActivity(ctx, id) {
   const activity = await getOwnActivity(ctx, id)
+  if (activity.meta?.provider === 'gmail') throw new ApiError(403, 'Synced email is read-only. Manage its history from Gmail settings.', { code: 'FORBIDDEN' })
   if (activity.type === 'system') throw new ApiError(403, 'System entries can’t be deleted.', { code: 'FORBIDDEN' })
   if (activity.actorId !== ctx.userId && !isAdmin(ctx)) throw new ApiError(403, 'Only the author or an admin can delete this.', { code: 'FORBIDDEN' })
   await prisma.$transaction(async (tx) => {
