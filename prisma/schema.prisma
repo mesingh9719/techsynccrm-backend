@@ -35,7 +35,9 @@ model User {
   fullName        String    @map("full_name")
   /// Always stored lowercased by the API, so uniqueness is case-insensitive.
   email           String    @unique
-  passwordHash    String    @map("password_hash")
+  passwordHash    String?   @map("password_hash")
+  /// Stable Google identity; email alone is never a provider identity.
+  googleSubject   String?   @unique @map("google_subject") @db.VarChar(255)
   /// The plan picked on the pricing/signup page, used when onboarding creates the first workspace
   /// (then cleared). The workspace's plan (organizations.plan) is what applies.
   signupPlan      Plan?     @map("signup_plan")

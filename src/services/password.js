@@ -8,6 +8,7 @@ import { ApiError } from '../utils/ApiError.js'
  */
 export async function assertPassword(userId, password, field = 'password') {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { passwordHash: true } })
+  if (user && !user.passwordHash) throw new ApiError(400, 'Set a password through the password reset email before using this action.', { code: 'PASSWORD_NOT_SET' })
   const ok = user && (await bcrypt.compare(password ?? '', user.passwordHash))
   if (!ok) {
     throw new ApiError(400, 'That password is incorrect.', { code: 'INVALID_PASSWORD', details: { fields: { [field]: 'That password is incorrect' } } })

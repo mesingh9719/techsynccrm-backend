@@ -1,3 +1,4 @@
+import googleAuthRoutes from './googleAuth.routes.js'
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import { env } from '../config/env.js'
@@ -17,6 +18,7 @@ import { switchOrganizationSchema } from '../validators/organization.validators.
 import { acceptInvitationSchema, signupWithInviteSchema } from '../validators/team.validators.js'
 
 const router = Router()
+router.use('/google', googleAuthRoutes)
 
 /**
  * Stricter per-IP limits on credential and email-sending endpoints, to slow brute force and spam.

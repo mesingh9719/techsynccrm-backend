@@ -104,7 +104,7 @@ export async function confirmEmailChange(token, meta) {
 
   try {
     await prisma.$transaction(async (tx) => {
-      await tx.user.update({ where: { id: userId }, data: { email: payload.email, pendingEmail: null, emailVerifiedAt: new Date() } })
+      await tx.user.update({ where: { id: userId }, data: { email: payload.email, googleSubject: null, pendingEmail: null, emailVerifiedAt: new Date() } })
       await recordAudit(tx, auditCtx(userId, meta), { action: 'auth.email_changed', entityType: 'user', entityId: userId, changes: { email: [user.email, payload.email] } })
     })
   } catch (err) {
@@ -127,7 +127,7 @@ export async function cancelEmailChange(token, meta) {
   try {
     await prisma.user.update({
       where: { id: userId },
-      data: { pendingEmail: null, ...(reverted && { email: payload.oldEmail, emailVerifiedAt: new Date() }) },
+      data: { pendingEmail: null, ...(reverted && { email: payload.oldEmail, googleSubject: null, emailVerifiedAt: new Date() }) },
     })
   } catch (err) {
     if (err.code === UNIQUE_VIOLATION) throw new ApiError(409, 'We couldn’t restore your old email — please contact support.', { code: 'EMAIL_TAKEN' })
@@ -200,6 +200,7 @@ export async function deleteAccount(userId, { password }, meta) {
       data: {
         email: `deleted-${userId}@deleted.invalid`,
         fullName: 'Deleted user',
+        googleSubject: null,
         passwordHash: await bcrypt.hash(crypto.randomBytes(32).toString('base64url'), 4),
         phone: null,
         jobRole: null,

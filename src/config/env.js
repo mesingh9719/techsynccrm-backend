@@ -1,4 +1,5 @@
 /** Reads and validates environment variables once at startup. Fails fast on anything missing. */
+import { googleAuthEnvironment } from './googleAuth.js'
 
 const NODE_ENV = process.env.NODE_ENV ?? 'development'
 const isProduction = NODE_ENV === 'production'
@@ -40,6 +41,7 @@ if (Buffer.from(encryptionKey, 'base64').length !== 32) {
 const helloInbox = process.env.HELLO_INBOX || process.env.SMTP_USER || null
 
 export const env = Object.freeze({
+  ...googleAuthEnvironment(),
   NODE_ENV,
   isProduction,
   PORT: number('PORT', 5000),

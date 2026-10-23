@@ -22,7 +22,7 @@ export const clearRefreshCookie = (res) => res.clearCookie(REFRESH_COOKIE, cooki
 export const requestMeta = (req) => ({ userAgent: req.get('user-agent'), ip: req.ip, sessionId: req.user?.sid ?? null, orgId: req.user?.orgId ?? null })
 
 /** Sets the refresh cookie and returns the access token + user in the body. */
-function sendSession(res, status, session, extra = {}) {
+export function sendSession(res, status, session, extra = {}) {
   res.cookie(REFRESH_COOKIE, session.refreshToken, cookieOptions(session.refreshExpiresAt))
   res.status(status).json({
     success: true,
