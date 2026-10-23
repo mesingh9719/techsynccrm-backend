@@ -95,6 +95,10 @@ model User {
   notificationReceipts   NotificationReceipt[]
   notificationBatches    NotificationEmailBatch[]
   notificationTickets    NotificationStreamTicket[]
+  gmailAccounts GmailAccount[]
+  gmailOAuthStates GmailOAuthState[]
+  emailAuditActions EmailAuditLog[] @relation("EmailAuditActor")
+  emailAuditTargets EmailAuditLog[] @relation("EmailAuditTarget")
   facebookConnections FacebookConnection[]
   facebookOAuthStates FacebookOAuthState[]
   facebookAssignedForms FacebookForm[]
@@ -191,6 +195,11 @@ model Organization {
   importRecords ImportRecord[]
   importMappings ImportMapping[]
   exportJobs ExportJob[]
+  gmailAccounts GmailAccount[]
+  gmailOAuthStates GmailOAuthState[]
+  emailSettings TenantEmailSettings?
+  emailAuditLogs EmailAuditLog[]
+  emailRevocations EmailTokenRevocation[]
   facebookConnection FacebookConnection?
   facebookOAuthStates FacebookOAuthState[]
   facebookPages FacebookPage[]
@@ -1583,11 +1592,18 @@ model FacebookDeletionRequest {
 
 // ---------- Gmail: per-employee, tenant-scoped commercial correspondence ----------
 
+// Existing GmailAccount is the EmailAccount in the foundation API. Status strings and packed
+// AES-GCM credentials are retained for compatibility with the existing send/sync modules.
 model GmailAccount {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organizationId String @map("organization_id") @db.Uuid
   userId String? @map("user_id") @db.Uuid
   googleSubject String @map("google_subject")
+  displayName String? @map("display_name")
+  connectedAt DateTime? @map("connected_at") @db.Timestamptz(6)
+  lastUsedAt DateTime? @map("last_used_at") @db.Timestamptz(6)
+  lastErrorAt DateTime? @map("last_error_at") @db.Timestamptz(6)
+  disconnectedAt DateTime? @map("disconnected_at") @db.Timestamptz(6)
   email String
   scopes String[] @default([])
   status String @default("connected")
@@ -1605,12 +1621,15 @@ model GmailAccount {
   lastError String? @map("last_error")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "gmail_accounts_organization_fk")
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "gmail_accounts_user_fk")
   state GmailSyncState?
   messages EmailMessage[]
   copies EmailMailboxCopy[]
   @@unique([organizationId, id])
   @@index([organizationId, userId, createdAt(sort: Desc)])
   @@index([organizationId, status])
+  @@index([organizationId, email])
   @@map("gmail_accounts")
 }
 
@@ -1624,12 +1643,15 @@ model GmailOAuthState {
   verifierEnc String @map("verifier_enc")
   nonce String
   returnTo String @map("return_to")
+  usedAt DateTime? @map("used_at") @db.Timestamptz(6)
   backfillDays Int @default(0) @map("backfill_days")
   excludedAddresses String[] @default([]) @map("excluded_addresses")
   excludedDomains String[] @default([]) @map("excluded_domains")
   expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
   @@index([organizationId, userId])
   @@index([expiresAt])
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "gmail_oauth_states_organization_fk")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "gmail_oauth_states_user_fk")
   @@map("gmail_oauth_states")
 }
 
@@ -1763,4 +1785,67 @@ model EmailSuppression {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   @@unique([organizationId, recipientKey])
   @@map("email_suppressions")
+}
+
+
+// ---------- Email connection foundation (Prompt 1) ----------
+enum EmailVisibility {
+  OWNER_ONLY
+  LEAD_ACCESS
+}
+
+enum EmailAuditAction {
+  CONNECTED
+  DISCONNECTED
+  DISCONNECTED_BY_ADMIN
+  NEEDS_RECONNECT
+  REMINDER_SENT
+  SETTINGS_UPDATED
+}
+
+model TenantEmailSettings {
+  organizationId String @id @map("organization_id") @db.Uuid
+  emailEnabled Boolean @default(true) @map("email_enabled")
+  emailVisibility EmailVisibility @default(LEAD_ACCESS) @map("email_visibility")
+  defaultSignatureHtml String @default("") @map("default_signature_html")
+  allowEmployeeCustomSignature Boolean @default(true) @map("allow_employee_custom_signature")
+  requireConnectedEmailToSend Boolean @default(true) @map("require_connected_email_to_send")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@map("tenant_email_settings")
+}
+
+model EmailAuditLog {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  actorUserId String? @map("actor_user_id") @db.Uuid
+  targetUserId String? @map("target_user_id") @db.Uuid
+  action EmailAuditAction
+  metadata Json @default("{}")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor User? @relation("EmailAuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  target User? @relation("EmailAuditTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+  @@index([organizationId, createdAt])
+  @@index([organizationId, targetUserId, action, createdAt])
+  @@map("email_audit_logs")
+}
+
+/// Durable encrypted revocation outbox. Deleted after Google revokes the grant. No user FK:
+/// account deletion must not destroy the credential before the worker can revoke it.
+model EmailTokenRevocation {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  accountId String @map("account_id") @db.Uuid
+  credentialEnc String @map("credential_enc")
+  wrappedKey String @map("wrapped_key")
+  keyVersion String @map("key_version")
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  leaseUntil DateTime? @map("lease_until") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@index([organizationId, nextAttemptAt])
+  @@map("email_token_revocations")
 }
