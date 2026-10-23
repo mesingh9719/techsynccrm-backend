@@ -202,3 +202,7 @@ applied migration or drop the column to roll back the UI.
 Five new qualification tests pass, including HTTP/Prisma persistence, validation, stale-write
 rejection and tenant/role isolation. See the [frontend QA notes](../frontend/docs/lead-detail-v2-qa.md)
 for browser coverage, known unrelated suite failures and deployment assumptions.
+
+## Employee Gmail
+
+The local Gmail MVP is implemented and disabled by default. See [Google Cloud setup and release instructions](docs/gmail-integration/setup.md), [implementation and verification evidence](docs/gmail-integration/implementation.md), and the [research/PRD/design package](docs/gmail-integration/README.md). Google Cloud and live-mail validation remain pending; existing manual email logging still works.
