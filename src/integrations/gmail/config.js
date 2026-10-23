@@ -1,8 +1,8 @@
 import { env } from '../../config/env.js'
 import { ApiError } from '../../utils/ApiError.js'
 
-export const SCOPES = ['openid', 'email', 'https://www.googleapis.com/auth/gmail.send', 'https://www.googleapis.com/auth/gmail.readonly']
-export const CONSENT_VERSION = '2026-10-23-team-history-v1'
+export { GOOGLE_EMAIL_SCOPES as SCOPES } from '../../email-integration/config/googleOAuth.js'
+export { SEND_ONLY_CONSENT_VERSION as CONSENT_VERSION } from '../../email-integration/config/googleOAuth.js'
 export const ACTIVE = ['connected', 'syncing', 'delayed', 'reconnect_required', 'paused']
 export const gmailError = (code, message, status = 409) => new ApiError(status, message, { code })
 export const settings = () => ({
@@ -20,13 +20,13 @@ export function configurationStatus(c = settings()) {
   try {
     const url = new URL(c.redirectUri)
     redirectValid = !url.username && !url.password && !url.search && !url.hash &&
-      url.pathname === '/api/integrations/gmail/callback' &&
+      ['/api/integrations/gmail/callback', '/api/email/connect/google/callback'].includes(url.pathname) &&
       (url.protocol === 'https:' || !env.isProduction && url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname))
   } catch { /* Missing or malformed callback is a setup issue. */ }
   const missing = [
     ...(!c.enabled ? ['enabled'] : []), ...(!c.clientId ? ['clientId'] : []),
     ...(!c.clientSecret ? ['clientSecret'] : []), ...(!redirectValid ? ['redirectUri'] : []),
-    ...(!c.kmsKey ? ['encryption'] : []),
+    ...(!c.kmsKey && !process.env.EMAIL_TOKEN_ENCRYPTION_KEY ? ['encryption'] : []),
   ]
   return { ready: missing.length === 0, missing, redirectUri: redirectValid ? c.redirectUri : null }
 }
@@ -37,4 +37,4 @@ export function requireConfiguration() {
   return c
 }
 export const cookieName = 'techsync_gmail_oauth'
-export const cookieOptions = () => ({ httpOnly: true, secure: env.isProduction || settings().redirectUri.startsWith('https:'), sameSite: 'lax', path: '/api/integrations/gmail', maxAge: 600000 })
+export const cookieOptions = () => ({ httpOnly: true, secure: env.isProduction || settings().redirectUri.startsWith('https:'), sameSite: 'lax', path: '/api', maxAge: 600000 })

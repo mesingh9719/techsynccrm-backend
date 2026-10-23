@@ -1,3 +1,4 @@
+import { canSyncAccount } from '../../email-integration/config/googleOAuth.js'
 import { prisma } from '../../db/prisma.js'
 import { emit } from '../../events/outbox.js'
 import { provider } from './provider.js'
@@ -10,6 +11,7 @@ import { addresses, headerMap, permanentDeliveryFailure } from './content.js'
 export async function checkDeliveryReports(message) {
   const account = await prisma.gmailAccount.findFirst({ where: { id: message.accountId, organizationId: message.organizationId, status: { in: ['connected', 'syncing', 'delayed'] }, credentialEnc: { not: null } } })
   if (!account || !/^<[\w-]+@mail\.techsynccrm\.invalid>$/.test(message.rfcMessageId)) return
+  if (!canSyncAccount(account)) return
   const ctx = await accountContext(account), token = await accessToken(account), original = await contentOf(message)
   if (!original) return
   const result = await provider.api(token, 'messages', { query: { q: `after:${Math.floor(message.occurredAt.getTime() / 1000)} -in:spam -in:trash from:mailer-daemon@googlemail.com "${message.rfcMessageId.slice(1, -1)}"`, maxResults: 5 }, fields: 'messages(id)' })

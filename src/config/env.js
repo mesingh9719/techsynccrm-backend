@@ -2,6 +2,7 @@
 <<<<<<< HEAD
 =======
 import { gmailOAuthEnvironment } from './gmailOAuth.js'
+import { keyring } from '../email-integration/crypto/tokenCrypto.js'
 >>>>>>> feat/gmail-integration
 import { googleAuthEnvironment } from './googleAuth.js'
 
@@ -79,7 +80,7 @@ export const env = Object.freeze({
   DATA_ENCRYPTION_KEY: encryptionKey,
 
   /** Gmail is opt-in; no worker connects to a mailbox until configuration and user consent exist. */
-  GMAIL_ENABLED: process.env.GMAIL_ENABLED === 'true',
+  GMAIL_ENABLED: (process.env.EMAIL_FEATURE_ENABLED ?? process.env.GMAIL_ENABLED) === 'true',
   GMAIL_SYNC_ENABLED: process.env.GMAIL_SYNC_ENABLED === 'true',
   ...gmailOAuthEnvironment(),
   ...googleAuthEnvironment(),
@@ -115,7 +116,7 @@ export const env = Object.freeze({
   MAX_UPLOAD_MB: number('MAX_UPLOAD_MB', 25),
 
   /** Public URL of the frontend — used to build links in emails. */
-  FRONTEND_URL: (isProduction ? required('FRONTEND_URL') : (process.env.FRONTEND_URL ?? 'http://localhost:5173')).replace(/\/$/, ''),
+  FRONTEND_URL: (isProduction ? (process.env.APP_BASE_URL || required('FRONTEND_URL')) : (process.env.APP_BASE_URL ?? process.env.FRONTEND_URL ?? 'http://localhost:5173')).replace(/\/$/, ''),
 
   /** Outgoing email (SMTP). Without SMTP_HOST in development, emails are printed to the console instead. */
   SMTP_HOST: isProduction ? required('SMTP_HOST') : process.env.SMTP_HOST,
@@ -153,3 +154,18 @@ export const env = Object.freeze({
 
 // The storage SDK reads these directly from process.env; check them here so startup fails clearly.
 for (const name of ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_ENDPOINT_URL_S3']) required(name)
+
+// Explicit foundation opt-in fails fast; legacy GMAIL_ENABLED keeps its existing setup diagnostics.
+if (process.env.EMAIL_FEATURE_ENABLED === 'true') {
+  for (const [name, value] of Object.entries({ GOOGLE_CLIENT_ID: env.GOOGLE_GMAIL_CLIENT_ID, GOOGLE_CLIENT_SECRET: env.GOOGLE_GMAIL_CLIENT_SECRET, GOOGLE_OAUTH_REDIRECT_URI: process.env.GOOGLE_OAUTH_REDIRECT_URI || process.env.GOOGLE_GMAIL_REDIRECT_URI || process.env.GOOGLE_REDIRECT_URI, APP_BASE_URL: process.env.APP_BASE_URL || process.env.FRONTEND_URL })) {
+    if (!value) throw new Error(`Missing required email configuration: ${name}`)
+  }
+  if (!env.GMAIL_KMS_KEY_NAME) keyring()
+  else if (!/^projects\/[^/]+\/locations\/[^/]+\/keyRings\/[^/]+\/cryptoKeys\/[^/]+(?:\/cryptoKeyVersions\/\d+)?$/.test(env.GMAIL_KMS_KEY_NAME)) throw new Error('Invalid Gmail KMS key resource')
+  if (!['/api/email/connect/google/callback', '/api/integrations/gmail/callback'].includes(new URL(env.GOOGLE_GMAIL_REDIRECT_URI).pathname)) throw new Error('Invalid email OAuth callback path')
+  if (new URL(env.FRONTEND_URL).pathname !== '/') throw new Error('APP_BASE_URL must be the frontend origin')
+  for (const value of [env.GOOGLE_GMAIL_REDIRECT_URI, env.FRONTEND_URL]) {
+    const url = new URL(value)
+    if (url.username || url.password || url.search || url.hash || !(url.protocol === 'https:' || !isProduction && url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname))) throw new Error('Invalid email OAuth URL')
+  }
+}

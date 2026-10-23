@@ -1,3 +1,5 @@
+import { canSyncAccount } from '../../email-integration/config/googleOAuth.js'
+import { auditEmail } from '../../email-integration/service.js'
 import crypto from 'node:crypto'
 import { prisma, DB_NULL } from '../../db/prisma.js'
 import { enqueue } from '../../jobs/queue.js'
@@ -16,6 +18,7 @@ import { addresses, normalizeEmail, headerMap, decodeMessage, cleanHtml, content
 
 const log = logger.child({ component: 'gmail' })
 const accessTokens = new Map()
+const refreshes = new Map()
 export function safeFailure(error) {
   const allowed = new Set(['GMAIL_RECONNECT_REQUIRED', 'GMAIL_RATE_LIMITED', 'GMAIL_HISTORY_EXPIRED', 'GMAIL_ENCRYPTION_UNAVAILABLE', 'GMAIL_MEMBER_INACTIVE', 'FEATURE_NOT_IN_PLAN', 'FORBIDDEN', 'NOT_FOUND', 'EMAIL_RECIPIENT_INVALID', 'EMAIL_SUPPRESSED', 'EMAIL_ATTACHMENT_INVALID', 'EMAIL_ATTACHMENT_TOO_LARGE', 'EMAIL_RECORD_CLOSED', 'GMAIL_MESSAGE_TOO_LARGE', 'EMAIL_SEND_UNKNOWN', 'EMAIL_SEND_REJECTED'])
   return allowed.has(error?.code) ? error.code : 'GMAIL_TEMPORARILY_UNAVAILABLE'
@@ -33,6 +36,16 @@ async function stillActive(account) {
   return ctx
 }
 export async function accessToken(account) {
+  // Never use a stale caller snapshot or cached token after admin disconnect/deactivation.
+  const { row } = await currentAccount(account.organizationId, account.id)
+  if (row.generation !== account.generation) throw gmailError('GMAIL_RECONNECT_REQUIRED', 'Mailbox configuration changed.')
+  const lock = `${row.organizationId}:${row.id}:${row.generation}`
+  if (refreshes.has(lock)) return refreshes.get(lock)
+  const pending = refreshAccessToken(row)
+  refreshes.set(lock, pending)
+  try { return await pending } finally { refreshes.delete(lock) }
+}
+async function refreshAccessToken(account) {
   const cached = accessTokens.get(account.id)
   if (cached?.generation === account.generation && cached.expiresAt > Date.now() + 60000) return cached.token
   const refreshUntil = new Date(Date.now() + 45000)
@@ -49,7 +62,10 @@ export async function accessToken(account) {
     accessTokens.set(account.id, { generation: account.generation, token: tokens.access_token, expiresAt: tokens.expiry_date || Date.now() + 300000 })
     return tokens.access_token
   } catch (error) {
-    if (error.code === 'GMAIL_RECONNECT_REQUIRED') await prisma.gmailAccount.updateMany({ where: { organizationId: account.organizationId, id: account.id, generation: account.generation }, data: { status: 'reconnect_required', lastError: 'GMAIL_RECONNECT_REQUIRED' } })
+    if (error.code === 'GMAIL_RECONNECT_REQUIRED') await prisma.$transaction(async (tx) => {
+      const changed = await tx.gmailAccount.updateMany({ where: { organizationId: account.organizationId, id: account.id, generation: account.generation, status: { in: ['connected', 'syncing', 'delayed'] } }, data: { status: 'reconnect_required', lastError: 'GMAIL_RECONNECT_REQUIRED', lastErrorAt: new Date() } })
+      if (changed.count) await auditEmail(tx, account.organizationId, null, account.userId, 'NEEDS_RECONNECT', { accountId: account.id })
+    })
     throw error
   } finally { await prisma.gmailSyncState.updateMany({ where: { organizationId: account.organizationId, accountId: account.id, refreshLeaseUntil: refreshUntil }, data: { refreshLeaseUntil: null } }) }
 }
@@ -84,11 +100,13 @@ async function accepted(account, message, result) {
     const row = await tx.emailMessage.update({ where: { id: message.id, organizationId: account.organizationId }, data: { status: 'provider_accepted', acceptedAt: new Date(), leaseUntil: null, lastError: null } })
     await tx.emailMailboxCopy.upsert({ where: { organizationId_accountId_gmailMessageId: { organizationId: account.organizationId, accountId: account.id, gmailMessageId: result.id } }, create: { organizationId: account.organizationId, accountId: account.id, messageId: message.id, gmailMessageId: result.id, gmailThreadId: result.threadId }, update: {} })
     await attachActivity(tx, ctx, row)
+    await tx.gmailAccount.updateMany({ where: { organizationId: account.organizationId, id: account.id, generation: account.generation }, data: { lastUsedAt: new Date() } })
     await tx.emailThread.update({ where: { id: row.threadId, organizationId: account.organizationId }, data: { lastMessageAt: row.acceptedAt } })
   })
 }
 export async function reconcileUnknown(message) {
   const { row: account } = await currentAccount(message.organizationId, message.accountId)
+  if (!canSyncAccount(account)) return
   const result = await provider.api(await accessToken(account), 'messages', { query: { q: `in:sent rfc822msgid:${message.rfcMessageId}`, maxResults: 2 }, fields: 'messages(id,threadId)' })
   if (result.messages?.length === 1) await accepted(account, message, result.messages[0])
 }
@@ -167,6 +185,7 @@ async function candidateRecord(account, ctx, headers, tokenDate) {
   return { entityType: 'lead', entityId: match.leadId, outbound, email }
 }
 export async function ingestCandidate(account, ctx, token, gmailId) {
+  if (!canSyncAccount(account)) return false
   if (await prisma.emailMailboxCopy.count({ where: { organizationId: ctx.orgId, accountId: account.id, gmailMessageId: gmailId } })) return false
   const candidate = async (options) => {
     try { return await provider.api(token, `messages/${encodeURIComponent(gmailId)}`, options) }
@@ -240,7 +259,9 @@ export async function syncMailbox({ organizationId, accountId }) {
   const claimed = await prisma.gmailSyncState.updateMany({ where: { organizationId, accountId, OR: [{ leaseUntil: null }, { leaseUntil: { lt: new Date() } }] }, data: { leaseUntil: until, leaseToken: lease } })
   if (!claimed.count) return
   try {
-    const { row: account, ctx } = await currentAccount(organizationId, accountId), token = await accessToken(account)
+    const { row: account, ctx } = await currentAccount(organizationId, accountId)
+    if (!canSyncAccount(account)) return
+    const token = await accessToken(account)
     const state = await prisma.gmailSyncState.findUnique({ where: { organizationId_accountId: { organizationId, accountId } } })
     let scan = state.scanState
     if (!scan) {

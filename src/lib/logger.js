@@ -1,3 +1,4 @@
+import { redactEmailSecrets } from '../email-integration/redaction.js'
 import pino from 'pino'
 
 const isProduction = process.env.NODE_ENV === 'production'
@@ -9,6 +10,7 @@ const isProduction = process.env.NODE_ENV === 'production'
 export const logger = pino({
   level: process.env.LOG_LEVEL ?? (isProduction ? 'info' : 'debug'),
   base: { service: process.env.SERVICE_NAME ?? 'api' },
+  formatters: { log: redactEmailSecrets },
   redact: {
     paths: [
       'req.headers.authorization',
@@ -32,7 +34,10 @@ export const logger = pino({
       '*.id_token',
       '*.client_secret',
       '*.otp',
-      '*.code',
+      '*.code', '*.state', '*.codeVerifier', '*.verifierEnc', '*.wrappedKey',
+      '*.refreshTokenCiphertext', '*.refreshTokenIv', '*.refreshTokenAuthTag',
+      'token', 'accessToken', 'access_token', 'refreshToken', 'refresh_token', 'code', 'state',
+      'authorization', '*.authorization', 'req.query', 'req.body', 'err.config', 'err.response.config',
     ],
     censor: '[redacted]',
   },

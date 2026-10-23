@@ -1,3 +1,4 @@
+import { encryptToken, decryptToken } from '../../email-integration/crypto/tokenCrypto.js'
 import { GoogleAuth, OAuth2Client } from 'google-auth-library'
 import { settings, requireConfiguration, gmailError } from './config.js'
 
@@ -22,8 +23,17 @@ async function kms(action, data, keyName = settings().kmsKey) {
 }
 /** Replaced by module mocks in tests, never by a production test-mode switch. */
 export const provider = {
-  async wrapKey(key) { const r = await kms('encrypt', { plaintext: key.toString('base64') }); return { wrappedKey: r.ciphertext, keyVersion: r.name || settings().kmsKey } },
+  async wrapKey(key) {
+    if (!settings().kmsKey) { const record = encryptToken(key.toString('base64'), 'gmail-envelope'); return { wrappedKey: JSON.stringify(record), keyVersion: `local:${record.keyVersion}` } }
+    const r = await kms('encrypt', { plaintext: key.toString('base64') }); return { wrappedKey: r.ciphertext, keyVersion: r.name || settings().kmsKey } },
   async unwrapKey(account) {
+    if (account.keyVersion?.startsWith('local:')) {
+      const record = JSON.parse(account.wrappedKey)
+      if (`local:${record.keyVersion}` !== account.keyVersion) throw new GmailProviderError('GMAIL_ENCRYPTION_UNAVAILABLE')
+      const key = Buffer.from(decryptToken(record, 'gmail-envelope'), 'base64')
+      if (key.length !== 32) throw new GmailProviderError('GMAIL_ENCRYPTION_UNAVAILABLE')
+      return key
+    }
     const r = await kms('decrypt', { ciphertext: account.wrappedKey }, account.keyVersion || settings().kmsKey), key = Buffer.from(r.plaintext, 'base64')
     if (key.length !== 32) throw new GmailProviderError('GMAIL_ENCRYPTION_UNAVAILABLE')
     return key
@@ -36,7 +46,7 @@ export const provider = {
     try {
       const c = settings(), ticket = await oauthClient().verifyIdToken({ idToken, audience: c.clientId }), p = ticket.getPayload()
       if (!p?.sub || !p.email_verified || p.nonce !== nonce) throw new Error('invalid')
-      return { subject: p.sub, email: p.email.toLowerCase() }
+      return { subject: p.sub, email: p.email.toLowerCase(), ...(p.name && { displayName: p.name }) }
     } catch { throw new GmailProviderError('GMAIL_OAUTH_INVALID', { status: 400 }) }
   },
   async refresh(refreshToken) {
@@ -48,7 +58,10 @@ export const provider = {
       throw new GmailProviderError(err.response?.data?.error === 'invalid_grant' ? 'GMAIL_RECONNECT_REQUIRED' : 'GMAIL_REFRESH_DELAYED')
     }
   },
-  async revoke(token) { try { await oauthClient({ allowDisabled: true }).revokeToken(token) } catch { /* Local access is already disabled. */ } },
+  async revoke(token) {
+    try { await oauthClient({ allowDisabled: true }).revokeToken(token) }
+    catch (error) { if (![400, 404].includes(error.response?.status)) throw new GmailProviderError('GMAIL_REVOCATION_DELAYED') }
+  },
   async verifyPush(jwt) {
     try {
       const c = settings(), ticket = await new OAuth2Client().verifyIdToken({ idToken: jwt, audience: c.audience }), p = ticket.getPayload()

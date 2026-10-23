@@ -1,3 +1,5 @@
+import { scheduleRevocation } from '../../email-integration/revocation.js'
+import { auditEmail } from '../../email-integration/service.js'
 import { registerConversionHook, registerMergeHook } from '../../lib/merge.js'
 
 registerConversionHook(async (tx, ctx, { leadId, contactId }) => {
@@ -14,6 +16,15 @@ registerMergeHook('contact', async (tx, ctx, { primaryId, ids }) => {
 
 /** Run within membership/account deactivation transactions; no provider calls or credentials in jobs. */
 export async function disableMemberMailboxes(tx, userId, organizationId) {
-  await tx.gmailAccount.updateMany({ where: { userId, ...(organizationId && { organizationId }), status: { notIn: ['disconnected', 'deleting'] } }, data: { status: 'disconnected', credentialEnc: null, generation: { increment: 1 }, lastError: 'GMAIL_MEMBER_INACTIVE' } })
+  const accounts = await tx.gmailAccount.findMany({ where: { userId, ...(organizationId && { organizationId }), credentialEnc: { not: null } } })
+  for (const account of accounts) {
+    await tx.$queryRaw`SELECT id FROM gmail_accounts WHERE id = ${account.id}::uuid AND organization_id = ${account.organizationId}::uuid FOR UPDATE`
+    const current = await tx.gmailAccount.findFirst({ where: { id: account.id, organizationId: account.organizationId } })
+    if (current?.credentialEnc) {
+      await scheduleRevocation(tx, current)
+      await auditEmail(tx, current.organizationId, null, userId, 'DISCONNECTED', { accountId: current.id, reason: 'membership_inactive' })
+    }
+  }
+  await tx.gmailAccount.updateMany({ where: { userId, ...(organizationId && { organizationId }), status: { notIn: ['disconnected', 'deleting'] } }, data: { status: 'disconnected', credentialEnc: null, disconnectedAt: new Date(), generation: { increment: 1 }, lastError: 'GMAIL_MEMBER_INACTIVE' } })
   await tx.emailMessage.updateMany({ where: { actorId: userId, ...(organizationId && { organizationId }), status: 'queued' }, data: { status: 'cancelled', lastError: 'GMAIL_MEMBER_INACTIVE' } })
 }

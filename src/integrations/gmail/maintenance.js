@@ -1,3 +1,7 @@
+import { processRevocations } from '../../email-integration/revocation.js'
+import { checkEmailConnections } from '../../email-integration/connectionHealth.js'
+import { disableMemberMailboxes } from './hooks.js'
+import { canSyncAccount, LEGACY_SYNC_CONSENT_VERSION } from '../../email-integration/config/googleOAuth.js'
 import { prisma } from '../../db/prisma.js'
 import { enqueue } from '../../jobs/queue.js'
 import { logger } from '../../lib/logger.js'
@@ -29,6 +33,7 @@ export async function purgeMessages(where, limit = 100) {
   return rows.length
 }
 export async function maintainGmail(now = new Date()) {
+  await processRevocations(now)
   // Privacy cleanup is independent of the rollout switches.
   await prisma.gmailOAuthState.deleteMany({ where: { expiresAt: { lt: now } } })
   await purgeMessages({ expiresAt: { lte: now } })
@@ -46,30 +51,33 @@ export async function maintainGmail(now = new Date()) {
     try { await accountContext(account) }
     catch (error) {
       const inactive = error.code === 'GMAIL_MEMBER_INACTIVE'
+      if (inactive && account.userId) { await prisma.$transaction((tx) => disableMemberMailboxes(tx, account.userId, account.organizationId)); continue }
       await prisma.gmailAccount.updateMany({ where: { id: account.id, organizationId: account.organizationId, generation: account.generation }, data: { status: inactive ? 'disconnected' : 'paused', ...(inactive && { credentialEnc: null }), generation: { increment: 1 }, lastError: inactive ? 'GMAIL_MEMBER_INACTIVE' : 'FEATURE_NOT_IN_PLAN' } })
       await prisma.emailMessage.updateMany({ where: { organizationId: account.organizationId, accountId: account.id, status: 'queued' }, data: { status: 'cancelled', lastError: inactive ? 'GMAIL_MEMBER_INACTIVE' : 'FEATURE_NOT_IN_PLAN' } })
     }
   }
   if (!settings().enabled) return
+  await checkEmailConnections(now)
   const pending = await prisma.emailMessage.findMany({ where: { status: 'queued', nextAttemptAt: { lte: now }, account: { status: { in: ['connected', 'syncing', 'delayed'] } } }, select: { organizationId: true, id: true }, orderBy: { nextAttemptAt: 'asc' }, take: 50 })
   for (const row of pending) await enqueue('gmail.send', { organizationId: row.organizationId, messageId: row.id })
-  const unknown = await prisma.emailMessage.findMany({ where: { status: 'unknown', nextAttemptAt: { lte: now }, account: { status: { in: ['connected', 'syncing', 'delayed'] } } }, orderBy: { nextAttemptAt: 'asc' }, take: 5 })
+  const unknown = await prisma.emailMessage.findMany({ where: { status: 'unknown', nextAttemptAt: { lte: now }, account: { status: { in: ['connected', 'syncing', 'delayed'] }, scopes: { has: 'https://www.googleapis.com/auth/gmail.readonly' }, consentVersion: LEGACY_SYNC_CONSENT_VERSION } }, orderBy: { nextAttemptAt: 'asc' }, take: 5 })
   for (const message of unknown) {
     await reconcileUnknown(message).catch((error) => log.warn({ messageId: message.id, code: safeFailure(error) }, 'Gmail reconciliation delayed'))
     await prisma.emailMessage.updateMany({ where: { organizationId: message.organizationId, id: message.id, status: 'unknown' }, data: { nextAttemptAt: new Date(now.getTime() + 300000) } })
   }
   if (!settings().syncEnabled) return
-  const deliveries = await prisma.emailMessage.findMany({ where: { status: 'provider_accepted', direction: 'outbound', occurredAt: { gt: new Date(now.getTime() - 30 * 86400000) }, nextAttemptAt: { lte: now }, account: { status: { in: ['connected', 'syncing', 'delayed'] } } }, orderBy: { nextAttemptAt: 'asc' }, take: 5 })
+  const deliveries = await prisma.emailMessage.findMany({ where: { status: 'provider_accepted', direction: 'outbound', occurredAt: { gt: new Date(now.getTime() - 30 * 86400000) }, nextAttemptAt: { lte: now }, account: { status: { in: ['connected', 'syncing', 'delayed'] }, scopes: { has: 'https://www.googleapis.com/auth/gmail.readonly' }, consentVersion: LEGACY_SYNC_CONSENT_VERSION } }, orderBy: { nextAttemptAt: 'asc' }, take: 5 })
   for (const message of deliveries) {
     await checkDeliveryReports(message).catch((error) => log.warn({ messageId: message.id, code: safeFailure(error) }, 'Gmail delivery report check delayed'))
     await prisma.emailMessage.updateMany({ where: { organizationId: message.organizationId, id: message.id, status: 'provider_accepted' }, data: { nextAttemptAt: new Date(now.getTime() + 1800000) } })
   }
 
-  const due = await prisma.gmailSyncState.findMany({ where: { nextAttemptAt: { lte: now }, account: { status: { in: ['connected', 'syncing', 'delayed'] } } }, orderBy: { nextAttemptAt: 'asc' }, take: 50 })
+  const due = await prisma.gmailSyncState.findMany({ where: { nextAttemptAt: { lte: now }, account: { status: { in: ['connected', 'syncing', 'delayed'] }, scopes: { has: 'https://www.googleapis.com/auth/gmail.readonly' }, consentVersion: LEGACY_SYNC_CONSENT_VERSION } }, orderBy: { nextAttemptAt: 'asc' }, take: 50 })
   for (const row of due) await enqueue('gmail.sync', { organizationId: row.organizationId, accountId: row.accountId })
   if (!settings().topic) return // Polling continues if push configuration is unavailable.
-  const renewals = await prisma.gmailSyncState.findMany({ where: { watchRenewAt: { lte: now }, account: { status: { in: ['connected', 'syncing', 'delayed'] } } }, include: { account: true }, orderBy: { watchRenewAt: 'asc' }, take: 5 })
+  const renewals = await prisma.gmailSyncState.findMany({ where: { watchRenewAt: { lte: now }, account: { status: { in: ['connected', 'syncing', 'delayed'] }, scopes: { has: 'https://www.googleapis.com/auth/gmail.readonly' }, consentVersion: LEGACY_SYNC_CONSENT_VERSION } }, include: { account: true }, orderBy: { watchRenewAt: 'asc' }, take: 5 })
   for (const row of renewals) {
+    if (!canSyncAccount(row.account)) continue
     try {
       await accountContext(row.account)
       const result = await provider.api(await accessToken(row.account), 'watch', { method: 'POST', body: { topicName: settings().topic, labelFilterBehavior: 'exclude', labelIds: ['SPAM', 'TRASH'] } })
@@ -85,8 +93,16 @@ export async function acceptPush(authorization, body) {
   let payload
   try { payload = JSON.parse(Buffer.from(body.message?.data || '', 'base64').toString('utf8')) } catch { return }
   if (typeof payload.emailAddress !== 'string' || !/^\d{1,30}$/.test(payload.historyId || '')) return
-  const account = await prisma.gmailAccount.findFirst({ where: { email: payload.emailAddress.toLowerCase(), status: { in: ['connected', 'syncing', 'delayed'] } } })
-  if (!account) return
-  await prisma.gmailSyncState.updateMany({ where: { organizationId: account.organizationId, accountId: account.id }, data: { nextAttemptAt: new Date(), pendingHistoryId: payload.historyId } })
-  await enqueue('gmail.sync', { organizationId: account.organizationId, accountId: account.id }).catch(() => {}) // due state is durable
+  // The same Google mailbox may belong to different customers. A verified provider event
+  // is fanned out as tenant-scoped work; message access is checked independently per tenant.
+  let cursor
+  for (;;) {
+    const accounts = await prisma.gmailAccount.findMany({ where: { email: payload.emailAddress.toLowerCase(), status: { in: ['connected', 'syncing', 'delayed'] }, scopes: { has: 'https://www.googleapis.com/auth/gmail.readonly' }, consentVersion: LEGACY_SYNC_CONSENT_VERSION }, orderBy: { id: 'asc' }, take: 100, ...(cursor && { cursor: { id: cursor }, skip: 1 }) })
+    if (!accounts.length) return
+    for (const account of accounts) {
+      await prisma.gmailSyncState.updateMany({ where: { organizationId: account.organizationId, accountId: account.id }, data: { nextAttemptAt: new Date(), pendingHistoryId: payload.historyId } })
+      await enqueue('gmail.sync', { organizationId: account.organizationId, accountId: account.id }).catch(() => {})
+    }
+    cursor = accounts.at(-1).id
+  }
 }
