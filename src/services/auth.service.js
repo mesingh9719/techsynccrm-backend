@@ -26,6 +26,7 @@ export const userSelect = {
   id: true,
   fullName: true,
   email: true,
+  passwordHash: true,
   emailVerifiedAt: true,
   jobRole: true,
   phone: true,
@@ -58,6 +59,7 @@ export async function presentUser(row, active = null) {
     termsVersion,
     privacyVersion,
     twoFactorEnabledAt,
+    passwordHash,
     ...rest
   } = row
   return {
@@ -67,6 +69,7 @@ export async function presentUser(row, active = null) {
     avatarFileId,
     avatarUrl: await avatarUrl(avatarFileId),
     twoFactorEnabled: Boolean(twoFactorEnabledAt),
+    hasPassword: Boolean(passwordHash),
     /** False when the Terms or Privacy Policy changed since the user last accepted them. */
     termsUpToDate: termsVersion === LEGAL_VERSIONS.terms && privacyVersion === LEGAL_VERSIONS.privacy,
     organization: active ? presentOrganizationSummary(active.organization, active.role) : null,
@@ -138,7 +141,7 @@ export function formatWhen(date, timezone = 'Asia/Kolkata') {
 // ---------- Sign up / log in / sessions ----------
 
 /** Consent record for the current Terms and Privacy Policy versions. */
-const consentFields = () => ({ termsAcceptedAt: new Date(), termsVersion: LEGAL_VERSIONS.terms, privacyVersion: LEGAL_VERSIONS.privacy })
+export const consentFields = () => ({ termsAcceptedAt: new Date(), termsVersion: LEGAL_VERSIONS.terms, privacyVersion: LEGAL_VERSIONS.privacy })
 
 export async function signup({ fullName, email, password, plan }, meta) {
   const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS)
@@ -237,6 +240,16 @@ export async function login({ email, password, remember }, meta) {
     const challengeToken = await createUserToken(user.id, 'login_challenge', LOGIN_CHALLENGE_TTL_MS, { remember: Boolean(remember) })
     return { twoFactorRequired: true, challengeToken }
   }
+  return completeLogin({ ...user, passwordHash: found.passwordHash }, { ...meta, remember })
+}
+
+/** Federated proof does not bypass account locks, local 2FA or membership/onboarding gates. */
+export async function completeExternalLogin(userId, remember, meta) {
+  const row = await prisma.user.findFirst({ where: { id: userId, deletedAt: null }, select: { ...userSelect, lockedUntil: true } })
+  if (!row) throw ApiError.unauthorized('This account is unavailable.', 'INVALID_TOKEN')
+  if (row.lockedUntil && row.lockedUntil > new Date()) throw lockedError(row.lockedUntil)
+  const { lockedUntil: _lock, ...user } = row
+  if (user.twoFactorEnabledAt) return { twoFactorRequired: true, challengeToken: await createUserToken(user.id, 'login_challenge', LOGIN_CHALLENGE_TTL_MS, { remember: Boolean(remember) }) }
   return completeLogin(user, { ...meta, remember })
 }
 

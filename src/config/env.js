@@ -1,5 +1,6 @@
 /** Reads and validates environment variables once at startup. Fails fast on anything missing. */
 import { gmailOAuthEnvironment } from './gmailOAuth.js'
+import { googleAuthEnvironment } from './googleAuth.js'
 
 const NODE_ENV = process.env.NODE_ENV ?? 'development'
 const isProduction = NODE_ENV === 'production'
@@ -77,6 +78,7 @@ export const env = Object.freeze({
   GMAIL_ENABLED: process.env.GMAIL_ENABLED === 'true',
   GMAIL_SYNC_ENABLED: process.env.GMAIL_SYNC_ENABLED === 'true',
   ...gmailOAuthEnvironment(),
+  ...googleAuthEnvironment(),
   GMAIL_KMS_KEY_NAME: process.env.GMAIL_KMS_KEY_NAME || '',
   GMAIL_PUBSUB_TOPIC: process.env.GMAIL_PUBSUB_TOPIC || '',
   GMAIL_PUBSUB_AUDIENCE: process.env.GMAIL_PUBSUB_AUDIENCE || '',
