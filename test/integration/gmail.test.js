@@ -45,12 +45,12 @@ function apiResponse(_token, path, options = {}) {
   if (item) { if (options.query?.format === 'full') fullReads.push(id); return item }
   throw new Error('Unexpected synthetic provider route')
 }
-async function connect() {
-  const started = await request('/integrations/gmail/oauth/start', { method: 'POST', values: { shareWithTeam: true, consentVersion: '2026-10-23-team-history-v1', returnTo: `/app/leads/${lead.id}`, backfillDays: 0 } })
+async function connect(expected = 'connected') {
+  const started = await request('/integrations/gmail/oauth/start', { method: 'POST', values: { shareWithTeam: true, consentVersion: '2026-10-23-send-only-v1', returnTo: `/app/leads/${lead.id}`, backfillDays: 0 } })
   expect(started.status).toBe(200)
   const state = new URL(started.data.data.url).searchParams.get('state'), cookie = started.headers.get('set-cookie').split(';')[0]
   const result = await request(`/integrations/gmail/callback?state=${state}&code=fixture-code`, { headers: { cookie }, redirect: 'manual' })
-  expect(result.status).toBe(303); expect(result.headers.get('location')).toContain('gmail=connected')
+  expect(result.status).toBe(303); expect(result.headers.get('location')).toContain(`gmail=${expected}`)
   return { state, cookie }
 }
 function incoming(id, { from = 'customer@example.test', to = 'rep@example.test', references = '', messageId = `<${id}@example.test>` } = {}) {
@@ -95,8 +95,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('Gmail HTTP, queue and real data
   })
   it('rejects absent consent, viewers, bad browser binding, replay and expired OAuth state', async () => {
     expect((await request('/integrations/gmail/oauth/start', { method: 'POST', values: {} })).status).toBe(400)
-    expect((await request('/integrations/gmail/oauth/start', { method: 'POST', user: 1, values: { shareWithTeam: true, consentVersion: '2026-10-23-team-history-v1' } })).status).toBe(403)
-    const started = await request('/integrations/gmail/oauth/start', { method: 'POST', values: { shareWithTeam: true, consentVersion: '2026-10-23-team-history-v1' } })
+    expect((await request('/integrations/gmail/oauth/start', { method: 'POST', user: 1, values: { shareWithTeam: true, consentVersion: '2026-10-23-send-only-v1' } })).status).toBe(403)
+    const started = await request('/integrations/gmail/oauth/start', { method: 'POST', values: { shareWithTeam: true, consentVersion: '2026-10-23-send-only-v1' } })
     const state = new URL(started.data.data.url).searchParams.get('state')
     const bad = await request(`/integrations/gmail/callback?state=${state}&code=fixture`, { headers: { cookie: 'techsync_gmail_oauth=wrong' }, redirect: 'manual' })
     expect(bad.headers.get('location')).toContain('GMAIL_OAUTH_INVALID'); expect(fixture.provider.exchange).not.toHaveBeenCalled()
@@ -108,21 +108,23 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('Gmail HTTP, queue and real data
     const replay = await request(`/integrations/gmail/callback?state=${connected.state}&code=fixture`, { headers: { cookie: connected.cookie }, redirect: 'manual' })
     expect(replay.headers.get('location')).toContain('GMAIL_OAUTH_EXPIRED')
     account = await prisma.gmailAccount.findFirst({ where: { organizationId: org.id } })
+    // Simulate a pre-existing two-way mailbox; new connections remain send-only.
+    account = await prisma.gmailAccount.update({ where: { id: account.id }, data: { consentVersion: '2026-10-23-team-history-v1' } })
     expect(account.credentialEnc).not.toContain('fixture-refresh-token')
     expect(JSON.stringify((await request('/integrations/gmail/me')).data)).not.toMatch(/credentialEnc|wrappedKey|refresh.token/i)
   })
   it('handles Google denial, missing scopes and cross-workspace identity binding without disclosing credentials', async () => {
     async function attempt({ tenant, error } = {}) {
-      const started = await request('/integrations/gmail/oauth/start', { method: 'POST', ...(tenant && { tenant }), values: { shareWithTeam: true, consentVersion: '2026-10-23-team-history-v1' } })
+      const started = await request('/integrations/gmail/oauth/start', { method: 'POST', ...(tenant && { tenant }), values: { shareWithTeam: true, consentVersion: '2026-10-23-send-only-v1' } })
       const state = new URL(started.data.data.url).searchParams.get('state'), cookie = started.headers.get('set-cookie').split(';')[0]
       return request(`/integrations/gmail/callback?state=${state}&${error ? 'error=access_denied' : 'code=fixture-code'}`, { headers: { cookie }, redirect: 'manual' })
     }
     const denied = await attempt({ error: true }); expect(denied.headers.get('location')).toContain('GMAIL_OAUTH_CANCELLED'); expect(fixture.provider.exchange).not.toHaveBeenCalled()
-    fixture.provider.exchange.mockResolvedValueOnce({ refresh_token: 'fixture', id_token: 'fixture', scope: 'https://www.googleapis.com/auth/gmail.send' })
+    fixture.provider.exchange.mockResolvedValueOnce({ refresh_token: 'fixture', id_token: 'fixture', scope: 'https://www.googleapis.com/auth/gmail.readonly' })
     expect((await attempt()).headers.get('location')).toContain('GMAIL_SCOPES_MISSING')
     const crossWorkspace = await attempt({ tenant: other.id })
-    expect(crossWorkspace.headers.get('location')).toContain('GMAIL_ACCOUNT_UNAVAILABLE')
-    expect(await prisma.gmailAccount.count({ where: { organizationId: other.id } })).toBe(0)
+    expect(crossWorkspace.headers.get('location')).toContain('gmail=connected')
+    expect(await prisma.gmailAccount.count({ where: { organizationId: other.id } })).toBe(1)
   })
   it('queues an immutable idempotent composition and logs only accepted Gmail sends', async () => {
     const key = crypto.randomUUID()
@@ -197,12 +199,12 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('Gmail HTTP, queue and real data
     expect((await request('/email-templates', { tenant: other.id })).data.data.items).toEqual([])
     expect((await request(`/email-templates/${saved.data.data.template.id}`, { method: 'DELETE', user: 2 })).status).toBe(404)
   })
-  it('keeps stored refresh credentials when Google omits a new refresh token on reconnect', async () => {
+  it('rejects a reconnect without a new refresh token and preserves existing credentials', async () => {
     const before = await prisma.gmailAccount.findUnique({ where: { id: account.id } })
     const checkpoint = new Date(Date.now() - 3600000)
     await prisma.gmailSyncState.updateMany({ where: { accountId: account.id }, data: { searchFrom: checkpoint } })
     fixture.provider.exchange.mockResolvedValueOnce({ id_token: 'fixture-id-token', scope: 'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly' })
-    await connect()
+    await connect('GMAIL_RECONNECT_REQUIRED')
     account = await prisma.gmailAccount.findUnique({ where: { id: account.id } })
     expect(account.id).toBe(before.id); expect(account.credentialEnc).not.toBeNull()
     expect(account.syncFrom).toEqual(before.syncFrom)
