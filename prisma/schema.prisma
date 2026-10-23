@@ -649,6 +649,7 @@ model Contact {
   @@index([organizationId, createdAt(sort: Desc)])
   @@map("contacts")
   @@index([organizationId, importId])
+  @@unique([organizationId, id])
 }
 
 /// Every phone of every contact, for duplicate lookup and search. Kept in sync by contact.service.
@@ -876,6 +877,7 @@ model Lead {
   @@index([organizationId, campaignId])
   @@map("leads")
   @@index([organizationId, importId])
+  @@unique([organizationId, id])
 }
 
 /// Workspace marketing campaigns. Metrics are aggregated from attributed CRM records.
@@ -1159,6 +1161,7 @@ model Activity {
 
   @@index([organizationId, entityType, entityId, occurredAt(sort: Desc)])
   @@map("activities")
+  @@unique([organizationId, id])
 }
 
 /// Every record an activity shows on (its primary record plus related ones) — the timeline index.
@@ -1574,4 +1577,188 @@ model FacebookDeletionRequest {
   @@index([status, nextAttemptAt, leaseUntil])
   @@index([completedAt])
   @@map("facebook_deletion_requests")
+}
+
+// ---------- Gmail: per-employee, tenant-scoped commercial correspondence ----------
+
+model GmailAccount {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  userId String? @map("user_id") @db.Uuid
+  googleSubject String @map("google_subject")
+  email String
+  scopes String[] @default([])
+  status String @default("connected")
+  credentialEnc String? @map("credential_enc")
+  wrappedKey String @map("wrapped_key")
+  keyVersion String @map("key_version")
+  generation Int @default(1)
+  signatureHtml String @default("") @map("signature_html")
+  excludedAddresses String[] @default([]) @map("excluded_addresses")
+  excludedDomains String[] @default([]) @map("excluded_domains")
+  consentVersion String @map("consent_version")
+  consentAt DateTime @default(now()) @map("consent_at") @db.Timestamptz(6)
+  syncFrom DateTime @default(now()) @map("sync_from") @db.Timestamptz(6)
+  deletionRequestedAt DateTime? @map("deletion_requested_at") @db.Timestamptz(6)
+  lastError String? @map("last_error")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  state GmailSyncState?
+  messages EmailMessage[]
+  copies EmailMailboxCopy[]
+  @@unique([organizationId, id])
+  @@index([organizationId, userId, createdAt(sort: Desc)])
+  @@index([organizationId, status])
+  @@map("gmail_accounts")
+}
+
+model GmailOAuthState {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  sessionId String @map("session_id") @db.Uuid
+  stateHash String @unique @map("state_hash")
+  browserHash String @map("browser_hash")
+  verifierEnc String @map("verifier_enc")
+  nonce String
+  returnTo String @map("return_to")
+  backfillDays Int @default(0) @map("backfill_days")
+  excludedAddresses String[] @default([]) @map("excluded_addresses")
+  excludedDomains String[] @default([]) @map("excluded_domains")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  @@index([organizationId, userId])
+  @@index([expiresAt])
+  @@map("gmail_oauth_states")
+}
+
+model EmailThread {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  rootKey String @map("root_key")
+  lastMessageAt DateTime @default(now()) @map("last_message_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  messages EmailMessage[]
+  records EmailRecordLink[]
+  @@unique([organizationId, id])
+  @@unique([organizationId, rootKey])
+  @@index([organizationId, lastMessageAt(sort: Desc), id])
+  @@map("email_threads")
+}
+
+model EmailRecordLink {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  threadId String @map("thread_id") @db.Uuid
+  leadId String? @map("lead_id") @db.Uuid
+  contactId String? @map("contact_id") @db.Uuid
+  thread EmailThread @relation(fields: [organizationId, threadId], references: [organizationId, id], onDelete: Cascade)
+  @@unique([organizationId, threadId, leadId])
+  @@unique([organizationId, threadId, contactId])
+  @@index([organizationId, leadId, threadId])
+  @@index([organizationId, contactId, threadId])
+  @@map("email_record_links")
+}
+
+model EmailMessage {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  accountId String @map("account_id") @db.Uuid
+  threadId String @map("thread_id") @db.Uuid
+  activityId String? @unique @map("activity_id") @db.Uuid
+  actorId String? @map("actor_id") @db.Uuid
+  direction String
+  status String @default("queued")
+  contentEnc String? @map("content_enc")
+  fingerprint String?
+  rfcMessageId String @map("rfc_message_id")
+  idempotencyKey String? @map("idempotency_key")
+  requestHash String? @map("request_hash")
+  generation Int
+  attachmentFileIds String[] @default([]) @map("attachment_file_ids") @db.Uuid
+  occurredAt DateTime @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  acceptedAt DateTime? @map("accepted_at") @db.Timestamptz(6)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  leaseUntil DateTime? @map("lease_until") @db.Timestamptz(6)
+  attempts Int @default(0)
+  lastError String? @map("last_error")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  account GmailAccount @relation(fields: [organizationId, accountId], references: [organizationId, id], onDelete: Cascade)
+  thread EmailThread @relation(fields: [organizationId, threadId], references: [organizationId, id], onDelete: Cascade)
+  copies EmailMailboxCopy[]
+  @@unique([organizationId, id])
+  @@unique([organizationId, fingerprint])
+  @@unique([organizationId, actorId, idempotencyKey])
+  @@index([organizationId, threadId, occurredAt, id])
+  @@index([organizationId, accountId, status])
+  @@index([status, nextAttemptAt])
+  @@index([organizationId, expiresAt])
+  @@index([organizationId, rfcMessageId])
+  @@map("email_messages")
+}
+
+model EmailMailboxCopy {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  accountId String @map("account_id") @db.Uuid
+  messageId String @map("message_id") @db.Uuid
+  gmailMessageId String @map("gmail_message_id")
+  gmailThreadId String @map("gmail_thread_id")
+  observedAt DateTime @default(now()) @map("observed_at") @db.Timestamptz(6)
+  account GmailAccount @relation(fields: [organizationId, accountId], references: [organizationId, id], onDelete: Cascade)
+  message EmailMessage @relation(fields: [organizationId, messageId], references: [organizationId, id], onDelete: Cascade)
+  @@unique([organizationId, accountId, gmailMessageId])
+  @@index([organizationId, accountId, gmailThreadId])
+  @@index([organizationId, messageId])
+  @@map("email_mailbox_copies")
+}
+
+model EmailTemplate {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  ownerId String? @map("owner_id") @db.Uuid
+  shared Boolean @default(false)
+  name String
+  subject String
+  bodyHtml String @map("body_html")
+  version Int @default(1)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  @@index([organizationId, shared, ownerId, updatedAt(sort: Desc), id])
+  @@map("email_templates")
+}
+
+model GmailSyncState {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  accountId String @map("account_id") @db.Uuid
+  historyId String? @map("history_id")
+  watchExpiresAt DateTime? @map("watch_expires_at") @db.Timestamptz(6)
+  watchRenewAt DateTime @default(now()) @map("watch_renew_at") @db.Timestamptz(6)
+  lastSyncedAt DateTime? @map("last_synced_at") @db.Timestamptz(6)
+  searchFrom DateTime @default(now()) @map("search_from") @db.Timestamptz(6)
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  leaseUntil DateTime? @map("lease_until") @db.Timestamptz(6)
+  leaseToken String? @map("lease_token") @db.Uuid
+  refreshLeaseUntil DateTime? @map("refresh_lease_until") @db.Timestamptz(6)
+  failures Int @default(0)
+  coverageGap Boolean @default(false) @map("coverage_gap")
+  pendingHistoryId String? @map("pending_history_id")
+  scanState Json? @map("scan_state")
+  account GmailAccount @relation(fields: [organizationId, accountId], references: [organizationId, id], onDelete: Cascade)
+  @@unique([organizationId, accountId])
+  @@index([organizationId, nextAttemptAt])
+  @@index([nextAttemptAt])
+  @@map("gmail_sync_states")
+}
+
+model EmailSuppression {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  recipientKey String @map("recipient_key")
+  reason String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  @@unique([organizationId, recipientKey])
+  @@map("email_suppressions")
 }
