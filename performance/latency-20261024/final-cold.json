@@ -1,0 +1,182 @@
+[
+  {
+    "bootMs": 913.318377,
+    "requestMs": 170.44969099999992,
+    "totalMs": 1083.7680679999999,
+    "queries": 3
+  },
+  {
+    "bootMs": 850.627658,
+    "requestMs": 162.2858789999999,
+    "totalMs": 1012.9135369999999,
+    "queries": 3
+  },
+  {
+    "bootMs": 853.595039,
+    "requestMs": 158.60731500000009,
+    "totalMs": 1012.2023540000001,
+    "queries": 3
+  },
+  {
+    "bootMs": 867.332689,
+    "requestMs": 164.47123399999998,
+    "totalMs": 1031.803923,
+    "queries": 3
+  },
+  {
+    "bootMs": 848.2513180000001,
+    "requestMs": 167.24217299999998,
+    "totalMs": 1015.4934910000001,
+    "queries": 3
+  },
+  {
+    "bootMs": 864.299132,
+    "requestMs": 174.66917499999988,
+    "totalMs": 1038.9683069999999,
+    "queries": 3
+  },
+  {
+    "bootMs": 900.427155,
+    "requestMs": 173.3001619999999,
+    "totalMs": 1073.7273169999999,
+    "queries": 3
+  },
+  {
+    "bootMs": 854.3160200000001,
+    "requestMs": 159.1651760000001,
+    "totalMs": 1013.4811960000002,
+    "queries": 3
+  },
+  {
+    "bootMs": 851.961934,
+    "requestMs": 161.002159,
+    "totalMs": 1012.964093,
+    "queries": 3
+  },
+  {
+    "bootMs": 841.5090190000001,
+    "requestMs": 162.0503319999999,
+    "totalMs": 1003.559351,
+    "queries": 3
+  },
+  {
+    "bootMs": 851.363657,
+    "requestMs": 151.85194,
+    "totalMs": 1003.215597,
+    "queries": 3
+  },
+  {
+    "bootMs": 874.850334,
+    "requestMs": 171.84369199999992,
+    "totalMs": 1046.694026,
+    "queries": 3
+  },
+  {
+    "bootMs": 888.120946,
+    "requestMs": 167.25108999999998,
+    "totalMs": 1055.372036,
+    "queries": 3
+  },
+  {
+    "bootMs": 844.671271,
+    "requestMs": 160.36323399999992,
+    "totalMs": 1005.034505,
+    "queries": 3
+  },
+  {
+    "bootMs": 887.691601,
+    "requestMs": 168.383464,
+    "totalMs": 1056.075065,
+    "queries": 3
+  },
+  {
+    "bootMs": 854.879551,
+    "requestMs": 161.4978299999999,
+    "totalMs": 1016.3773809999999,
+    "queries": 3
+  },
+  {
+    "bootMs": 838.314064,
+    "requestMs": 158.3138859999999,
+    "totalMs": 996.6279499999999,
+    "queries": 3
+  },
+  {
+    "bootMs": 865.430833,
+    "requestMs": 170.7162189999999,
+    "totalMs": 1036.1470519999998,
+    "queries": 3
+  },
+  {
+    "bootMs": 903.8660639999999,
+    "requestMs": 169.94825800000012,
+    "totalMs": 1073.8143220000002,
+    "queries": 3
+  },
+  {
+    "bootMs": 843.317327,
+    "requestMs": 159.6766469999999,
+    "totalMs": 1002.9939739999999,
+    "queries": 3
+  },
+  {
+    "bootMs": 837.3494400000001,
+    "requestMs": 159.617746,
+    "totalMs": 996.9671860000001,
+    "queries": 3
+  },
+  {
+    "bootMs": 850.000304,
+    "requestMs": 150.558942,
+    "totalMs": 1000.559246,
+    "queries": 3
+  },
+  {
+    "bootMs": 916.121727,
+    "requestMs": 166.48956199999998,
+    "totalMs": 1082.611289,
+    "queries": 3
+  },
+  {
+    "bootMs": 847.705491,
+    "requestMs": 170.033861,
+    "totalMs": 1017.739352,
+    "queries": 3
+  },
+  {
+    "bootMs": 933.820419,
+    "requestMs": 177.17847600000005,
+    "totalMs": 1110.9988950000002,
+    "queries": 3
+  },
+  {
+    "bootMs": 852.224473,
+    "requestMs": 149.37587200000007,
+    "totalMs": 1001.6003450000001,
+    "queries": 3
+  },
+  {
+    "bootMs": 849.16751,
+    "requestMs": 155.88903599999992,
+    "totalMs": 1005.0565459999999,
+    "queries": 3
+  },
+  {
+    "bootMs": 854.174361,
+    "requestMs": 157.92212200000006,
+    "totalMs": 1012.096483,
+    "queries": 3
+  },
+  {
+    "bootMs": 836.126946,
+    "requestMs": 154.05405800000005,
+    "totalMs": 990.181004,
+    "queries": 3
+  },
+  {
+    "bootMs": 870.256289,
+    "requestMs": 165.4172329999999,
+    "totalMs": 1035.673522,
+    "queries": 3
+  }
+]

@@ -17,7 +17,9 @@ import { consumeUserTokenRecord, cooldownRemaining, createUserToken } from './us
 
 export const BCRYPT_ROUNDS = 12
 // Compared against when the email doesn't exist, so response time doesn't reveal registered emails.
-const DUMMY_HASH = bcrypt.hashSync('timing-safe-dummy-password', BCRYPT_ROUNDS)
+// Precomputed cost-12 hash of the non-secret dummy password. Generating it during
+// import blocks every cold API process; comparisons still perform the full bcrypt work.
+const DUMMY_HASH = '$2b$12$kcoAD/yu7b1ZkL.dUgq2r.oZZhMoXTO7lXnJ8IE3NU6ytcAoWx4iS'
 
 const LOGIN_CHALLENGE_TTL_MS = 5 * 60_000
 const LOGIN_CHALLENGE_MAX_ATTEMPTS = 5
