@@ -1,0 +1,24 @@
+[
+  {
+    "endpoint": "GET /leads?limit=1&counts=true&createdFrom=2026-10-15&createdTo=2026-10-22",
+    "concurrency": 1,
+    "n": 100,
+    "p50": 7.634665999999925,
+    "p95": 10.287882000000081,
+    "queries": 10,
+    "bytes": 1829,
+    "dbP50": 6.2,
+    "authP50": 1.37
+  },
+  {
+    "endpoint": "GET /leads?limit=1&counts=true&createdFrom=2026-10-15&createdTo=2026-10-22",
+    "concurrency": 10,
+    "n": 100,
+    "p50": 32.20983299999989,
+    "p95": 44.54859400000032,
+    "queries": 10,
+    "bytes": 1829,
+    "dbP50": 47.22,
+    "authP50": 6.23
+  }
+]

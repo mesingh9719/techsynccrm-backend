@@ -15,6 +15,8 @@ Object.assign(process.env, {
 const label = process.argv[2] || 'before'
 assert(/^[a-z0-9-]+$/.test(label))
 const mode = process.argv[3] || 'warm'
+const sampleCount = Number(process.env.PERF_SAMPLES || 30)
+assert(Number.isSafeInteger(sampleCount) && sampleCount >= 30)
 const output = new URL('../performance/latency-20261024/', import.meta.url)
 await fs.mkdir(output, { recursive: true })
 if (mode === 'cold') {
@@ -72,7 +74,7 @@ try {
       [`/leads/${lead.id}`, 'PATCH', { requirement: 'Performance update fixture' }],
     ]
     const metrics = [], contracts = {}, raw = []
-    for (const args of cases) {
+    for (const args of cases.filter(([path]) => !process.env.PERF_ONLY || path === process.env.PERF_ONLY)) {
       const [path, method = 'GET'] = args
       console.error(`${label}: ${method} ${path}`)
       const key = `${method} ${path}`
@@ -86,10 +88,10 @@ try {
       for (let i = 0; i < 3; i++) await run()
       for (const concurrency of [1, 10]) {
         const samples = []
-        for (let i = 0; i < 30; i += concurrency) samples.push(...await Promise.all(Array.from({ length: Math.min(concurrency, 30-i) }, () => run())))
+        for (let i = 0; i < sampleCount; i += concurrency) samples.push(...await Promise.all(Array.from({ length: Math.min(concurrency, sampleCount-i) }, () => run())))
         const times = samples.map(s => s.ms).sort((a,b) => a-b)
         assert(samples.every(s => Number.isFinite(s.queries) && s.queries > 0))
-        metrics.push({ endpoint: key, concurrency, n: samples.length, p50: times[14], p95: times[28], queries: samples[0].queries, bytes: samples[0].bytes, dbP50: samples.map(s=>s.dbMs).sort((a,b)=>a-b)[14], authP50: samples.map(s=>s.authMs).sort((a,b)=>a-b)[14] })
+        metrics.push({ endpoint: key, concurrency, n: samples.length, p50: times[Math.ceil(sampleCount*.5)-1], p95: times[Math.ceil(sampleCount*.95)-1], queries: samples[0].queries, bytes: samples[0].bytes, dbP50: samples.map(s=>s.dbMs).sort((a,b)=>a-b)[14], authP50: samples.map(s=>s.authMs).sort((a,b)=>a-b)[14] })
         raw.push({ endpoint: key, concurrency, samples: samples.map(({body, ...s}) => s) })
       }
     }
@@ -101,7 +103,10 @@ try {
     await fs.writeFile(new URL(`${label}-samples.json`, output), JSON.stringify(raw, null, 2))
     await fs.writeFile(`/tmp/techsync-${label}-queries.json`, JSON.stringify(queries))
     await fs.writeFile(`/tmp/techsync-latency-${label}-contracts.json`, JSON.stringify(contracts))
-    if (label !== 'before') assert.deepEqual(contracts, JSON.parse(await fs.readFile('/tmp/techsync-latency-before-contracts.json', 'utf8')))
+    if (label !== 'before') {
+      const original = JSON.parse(await fs.readFile('/tmp/techsync-latency-before-contracts.json', 'utf8'))
+      for (const [key, value] of Object.entries(contracts)) assert.deepEqual(value, original[key])
+    }
     console.log(JSON.stringify({ label, metrics, parity: label !== 'before', memory: process.memoryUsage() }, null, 2))
   }
 } finally {
