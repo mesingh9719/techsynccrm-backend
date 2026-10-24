@@ -1,8 +1,13 @@
 import { EventEmitter } from 'node:events'
 import { describe, expect, it, vi } from 'vitest'
-import { observeQuery, requestPerformance } from '../../src/lib/performance.js'
+import { measureAuth, observeQuery, requestPerformance } from '../../src/lib/performance.js'
 
 describe('request performance metrics', () => {
+  it('preserves return values and errors when metrics are off', async () => {
+    expect(measureAuth(() => 12)).toBe(12)
+    await expect(measureAuth(async () => 13)).resolves.toBe(13)
+    expect(() => measureAuth(() => { throw new Error('auth failed') })).toThrow('auth failed')
+  })
   it('isolates concurrent requests and never logs SQL or parameters', async () => {
     const logs = [], log = { warn: vi.fn() }
     const responses = await Promise.all([1, 3].map((count) => new Promise((resolve) => {
@@ -15,6 +20,7 @@ describe('request performance metrics', () => {
       requestPerformance(req, res, async () => {
         for (let i = 0; i < count; i++) {
           await new Promise((done) => setTimeout(done, 1))
+          await measureAuth(() => new Promise(done => setTimeout(done, 1)))
           observeQuery({ duration: 3, query: 'secret SQL', params: 'secret params' }, log, 2)
         }
         res.end('{"ok":true}')
@@ -24,6 +30,8 @@ describe('request performance metrics', () => {
         expect.stringContaining('db;dur=3.00, queries;desc="1"'), expect.stringContaining('db;dur=9.00, queries;desc="3"'),
       ])
       expect(logs.map((entry) => entry.performance.responseBytes)).toEqual([11, 11])
+      expect(logs.every(entry => entry.performance.authMs > 0)).toBe(true)
+      expect(responses.every(header => /auth;dur=[\d.]+/.test(header))).toBe(true)
       expect(JSON.stringify(log.warn.mock.calls)).not.toContain('secret')
   })
 })

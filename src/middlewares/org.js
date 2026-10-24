@@ -1,3 +1,4 @@
+import { measureAuth } from '../lib/performance.js'
 import { hasPermission, permissionsFor } from '../config/permissions.js'
 import { planDefinition, planHasFeature } from '../config/plans.js'
 import { prisma } from '../db/prisma.js'
@@ -37,7 +38,11 @@ async function keepsAccessDuringSeatSelection(orgId, userId, role) {
  *     entitlements (config/plans.js definition), timezone, currency,
  *     country, locale, fiscalYearStartMonth, actorType, ip, userAgent }
  */
-export async function loadOrgContext(req, _res, next) {
+export function loadOrgContext(req, res, next) {
+  return measureAuth(() => loadContext(req, res, next))
+}
+
+async function loadContext(req, _res, next) {
   const orgId = req.user.orgId
   if (!orgId) return next(ORG_REQUIRED())
 

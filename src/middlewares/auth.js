@@ -1,3 +1,4 @@
+import { measureAuth } from '../lib/performance.js'
 import { prisma } from '../db/prisma.js'
 import { verifyAccessToken } from '../services/token.service.js'
 import { ApiError } from '../utils/ApiError.js'
@@ -9,7 +10,11 @@ import { ApiError } from '../utils/ApiError.js'
  * /api/auth/refresh. Workspace routes add `requireOrg` (middlewares/org.js), which verifies the
  * membership against the database.
  */
-export function requireAuth(req, _res, next) {
+export function requireAuth(req, res, next) {
+  return measureAuth(() => authenticate(req, res, next))
+}
+
+function authenticate(req, _res, next) {
   const header = req.get('authorization') ?? ''
   const [scheme, token] = header.split(' ')
   if (scheme?.toLowerCase() !== 'bearer' || !token) {
