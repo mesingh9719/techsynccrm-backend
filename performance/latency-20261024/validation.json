@@ -1,0 +1,34 @@
+{
+  "contracts": {
+    "label": "after",
+    "contracts": 122,
+    "parity": true,
+    "roles": 5,
+    "tenants": 5,
+    "revocation": true,
+    "roleChange": true,
+    "expiredToken": true,
+    "emptyTenant": true
+  },
+  "offline": {
+    "passed": 286,
+    "skipped": 131
+  },
+  "scoped": {
+    "passed": 71
+  },
+  "full": {
+    "passed": 408,
+    "failed": 7,
+    "skipped": 2
+  },
+  "preexistingFailuresReproduced": {
+    "googleAuth": 5,
+    "notificationDigest": 1,
+    "gmailPurgeIntermittent": 1
+  },
+  "contractHashes": {
+    "before": "4c1a0796d9bc29c215a725197128fb1d1b125781fc5fa1145fb7d4c87ecb3e57",
+    "after": "4c1a0796d9bc29c215a725197128fb1d1b125781fc5fa1145fb7d4c87ecb3e57"
+  }
+}

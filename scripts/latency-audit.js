@@ -91,7 +91,7 @@ try {
         for (let i = 0; i < sampleCount; i += concurrency) samples.push(...await Promise.all(Array.from({ length: Math.min(concurrency, sampleCount-i) }, () => run())))
         const times = samples.map(s => s.ms).sort((a,b) => a-b)
         assert(samples.every(s => Number.isFinite(s.queries) && s.queries > 0))
-        metrics.push({ endpoint: key, concurrency, n: samples.length, p50: times[Math.ceil(sampleCount*.5)-1], p95: times[Math.ceil(sampleCount*.95)-1], queries: samples[0].queries, bytes: samples[0].bytes, dbP50: samples.map(s=>s.dbMs).sort((a,b)=>a-b)[14], authP50: samples.map(s=>s.authMs).sort((a,b)=>a-b)[14] })
+        metrics.push({ endpoint: key, concurrency, n: samples.length, p50: times[Math.ceil(sampleCount*.5)-1], p95: times[Math.ceil(sampleCount*.95)-1], queries: samples[0].queries, bytes: samples[0].bytes, dbP50: samples.map(s=>s.dbMs).sort((a,b)=>a-b)[Math.ceil(sampleCount*.5)-1], authP50: samples.map(s=>s.authMs).sort((a,b)=>a-b)[Math.ceil(sampleCount*.5)-1] })
         raw.push({ endpoint: key, concurrency, samples: samples.map(({body, ...s}) => s) })
       }
     }

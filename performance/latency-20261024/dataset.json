@@ -1,0 +1,1 @@
+{"tenants" : 5, "users" : 100, "leads" : 125000, "activities" : 375000, "activityLinks" : 375000, "tasks" : 375000, "deals" : 15000, "experimentalIndexAbsent" : true, "serverVersion" : "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)", "sharedBuffers" : "128MB", "maxConnections" : "100", "databaseBytes" : 555596823}

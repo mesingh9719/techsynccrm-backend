@@ -7,8 +7,8 @@
     "p95": 9.643116000000191,
     "queries": 10,
     "bytes": 1829,
-    "dbP50": 5.61,
-    "authP50": 1.2
+    "dbP50": 6.41,
+    "authP50": 1.48
   },
   {
     "endpoint": "GET /leads?limit=1&counts=true&createdFrom=2026-10-15&createdTo=2026-10-22",
@@ -18,7 +18,7 @@
     "p95": 39.87487800000008,
     "queries": 10,
     "bytes": 1829,
-    "dbP50": 46.72,
-    "authP50": 6.61
+    "dbP50": 50.67,
+    "authP50": 7.18
   }
 ]
