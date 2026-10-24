@@ -1,0 +1,6398 @@
+[
+  {
+    "endpoint": "GET /auth/me",
+    "concurrency": 1,
+    "samples": [
+      {
+        "ms": 4.473285000000033,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.25,
+        "authMs": 0.27
+      },
+      {
+        "ms": 5.867095999999947,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.75,
+        "authMs": 0.45
+      },
+      {
+        "ms": 4.655180999999857,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.45,
+        "authMs": 0.37
+      },
+      {
+        "ms": 3.7327070000001186,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.17,
+        "authMs": 0.29
+      },
+      {
+        "ms": 4.081920999999966,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.22,
+        "authMs": 0.32
+      },
+      {
+        "ms": 4.319974000000002,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.27,
+        "authMs": 0.34
+      },
+      {
+        "ms": 3.611026000000038,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.17,
+        "authMs": 0.22
+      },
+      {
+        "ms": 3.3874009999999544,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.25,
+        "authMs": 0.24
+      },
+      {
+        "ms": 2.9891130000000885,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.07,
+        "authMs": 0.2
+      },
+      {
+        "ms": 3.0984710000000177,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.18,
+        "authMs": 0.21
+      },
+      {
+        "ms": 2.8819899999998597,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.06,
+        "authMs": 0.19
+      },
+      {
+        "ms": 3.742817000000059,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.29,
+        "authMs": 0.28
+      },
+      {
+        "ms": 3.2583250000000135,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.08,
+        "authMs": 0.21
+      },
+      {
+        "ms": 3.271680999999944,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.3,
+        "authMs": 0.21
+      },
+      {
+        "ms": 2.9102139999999963,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.05,
+        "authMs": 0.21
+      },
+      {
+        "ms": 2.8470230000000356,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.06,
+        "authMs": 0.2
+      },
+      {
+        "ms": 2.8368239999999787,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.12,
+        "authMs": 0.19
+      },
+      {
+        "ms": 2.7407109999999193,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 0.99,
+        "authMs": 0.19
+      },
+      {
+        "ms": 2.7848050000000057,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.02,
+        "authMs": 0.2
+      },
+      {
+        "ms": 2.820532999999841,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1,
+        "authMs": 0.19
+      },
+      {
+        "ms": 3.1396700000000237,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.22,
+        "authMs": 0.24
+      },
+      {
+        "ms": 2.629429000000073,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 0.99,
+        "authMs": 0.21
+      },
+      {
+        "ms": 2.5854159999998956,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 0.97,
+        "authMs": 0.17
+      },
+      {
+        "ms": 2.6302100000000337,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.05,
+        "authMs": 0.19
+      },
+      {
+        "ms": 3.595696999999973,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.22,
+        "authMs": 0.18
+      },
+      {
+        "ms": 5.253709000000072,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.67,
+        "authMs": 0.38
+      },
+      {
+        "ms": 3.380247000000054,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1.15,
+        "authMs": 0.34
+      },
+      {
+        "ms": 2.6174670000000333,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 0.95,
+        "authMs": 0.19
+      },
+      {
+        "ms": 2.594684000000143,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 1,
+        "authMs": 0.2
+      },
+      {
+        "ms": 2.481156999999939,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 0.93,
+        "authMs": 0.18
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /auth/me",
+    "concurrency": 10,
+    "samples": [
+      {
+        "ms": 8.885093999999981,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 4.06,
+        "authMs": 0.26
+      },
+      {
+        "ms": 30.83085099999994,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 20.51,
+        "authMs": 0.2
+      },
+      {
+        "ms": 33.08131100000014,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 21.98,
+        "authMs": 0.2
+      },
+      {
+        "ms": 27.20504700000015,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 15.43,
+        "authMs": 0.18
+      },
+      {
+        "ms": 36.85355299999992,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 24.86,
+        "authMs": 0.17
+      },
+      {
+        "ms": 38.87186100000008,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 18.77,
+        "authMs": 0.29
+      },
+      {
+        "ms": 38.91433099999995,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 15.97,
+        "authMs": 0.32
+      },
+      {
+        "ms": 35.81025900000009,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 7.32,
+        "authMs": 0.3
+      },
+      {
+        "ms": 37.083851000000095,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 7.05,
+        "authMs": 0.4
+      },
+      {
+        "ms": 37.67157899999984,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 5.43,
+        "authMs": 0.24
+      },
+      {
+        "ms": 15.90940999999998,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 10.86,
+        "authMs": 0.29
+      },
+      {
+        "ms": 16.142131999999947,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 10.67,
+        "authMs": 0.19
+      },
+      {
+        "ms": 16.36937499999999,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 10.25,
+        "authMs": 0.17
+      },
+      {
+        "ms": 16.516634000000067,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 10.03,
+        "authMs": 0.16
+      },
+      {
+        "ms": 16.61888900000008,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 9.77,
+        "authMs": 0.15
+      },
+      {
+        "ms": 17.245521000000053,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 9.77,
+        "authMs": 0.15
+      },
+      {
+        "ms": 20.102311999999984,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 13.83,
+        "authMs": 0.14
+      },
+      {
+        "ms": 20.82916399999999,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 13.13,
+        "authMs": 0.22
+      },
+      {
+        "ms": 21.969242000000122,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 14.62,
+        "authMs": 0.22
+      },
+      {
+        "ms": 21.22724100000005,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 12.32,
+        "authMs": 0.2
+      },
+      {
+        "ms": 19.59961700000008,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 13.66,
+        "authMs": 0.29
+      },
+      {
+        "ms": 19.608543999999938,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 13.46,
+        "authMs": 0.26
+      },
+      {
+        "ms": 19.69824399999993,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 13.11,
+        "authMs": 0.2
+      },
+      {
+        "ms": 19.83687800000007,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 12.85,
+        "authMs": 0.2
+      },
+      {
+        "ms": 19.92521499999998,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 12.11,
+        "authMs": 0.23
+      },
+      {
+        "ms": 19.993646000000126,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 11.72,
+        "authMs": 0.18
+      },
+      {
+        "ms": 20.061635000000024,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 11.28,
+        "authMs": 0.19
+      },
+      {
+        "ms": 20.122229999999945,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 10.68,
+        "authMs": 0.25
+      },
+      {
+        "ms": 21.066916999999876,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 12.7,
+        "authMs": 0.25
+      },
+      {
+        "ms": 20.770894,
+        "status": 200,
+        "bytes": 1541,
+        "queries": 3,
+        "dbMs": 11.56,
+        "authMs": 0.23
+      }
+    ]
+  },
+  {
+    "endpoint": "POST /auth/login",
+    "concurrency": 1,
+    "samples": [
+      {
+        "ms": 282.03077099999973,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 13.05,
+        "authMs": 0
+      },
+      {
+        "ms": 278.60387500000024,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 12.99,
+        "authMs": 0
+      },
+      {
+        "ms": 271.23949300000004,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 4.22,
+        "authMs": 0
+      },
+      {
+        "ms": 280.16096600000037,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 13.32,
+        "authMs": 0
+      },
+      {
+        "ms": 280.4360690000003,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 12.97,
+        "authMs": 0
+      },
+      {
+        "ms": 280.5251580000004,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 12.99,
+        "authMs": 0
+      },
+      {
+        "ms": 286.6835380000002,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 13.37,
+        "authMs": 0
+      },
+      {
+        "ms": 289.16743099999985,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 13.61,
+        "authMs": 0
+      },
+      {
+        "ms": 277.9916810000004,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 3.34,
+        "authMs": 0
+      },
+      {
+        "ms": 272.27987099999973,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 3.39,
+        "authMs": 0
+      },
+      {
+        "ms": 275.08552599999985,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 3.71,
+        "authMs": 0
+      },
+      {
+        "ms": 281.2162720000006,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 12.35,
+        "authMs": 0
+      },
+      {
+        "ms": 292.1864509999996,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 13.02,
+        "authMs": 0
+      },
+      {
+        "ms": 283.43658499999947,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 13.36,
+        "authMs": 0
+      },
+      {
+        "ms": 284.50268099999994,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 13.53,
+        "authMs": 0
+      },
+      {
+        "ms": 273.27278899999965,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 3.35,
+        "authMs": 0
+      },
+      {
+        "ms": 281.1691929999997,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 12.81,
+        "authMs": 0
+      },
+      {
+        "ms": 286.5527689999999,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 13.38,
+        "authMs": 0
+      },
+      {
+        "ms": 285.2569050000002,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 13.03,
+        "authMs": 0
+      },
+      {
+        "ms": 277.0381290000005,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 3.52,
+        "authMs": 0
+      },
+      {
+        "ms": 285.83340099999987,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 12.54,
+        "authMs": 0
+      },
+      {
+        "ms": 282.87423500000114,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 3.74,
+        "authMs": 0
+      },
+      {
+        "ms": 275.27474600000096,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 4.05,
+        "authMs": 0
+      },
+      {
+        "ms": 283.1870689999996,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 12.48,
+        "authMs": 0
+      },
+      {
+        "ms": 277.4599900000012,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 12.32,
+        "authMs": 0
+      },
+      {
+        "ms": 276.3561809999992,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 12.75,
+        "authMs": 0
+      },
+      {
+        "ms": 274.6329760000008,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 12.29,
+        "authMs": 0
+      },
+      {
+        "ms": 276.5714509999998,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 12.76,
+        "authMs": 0
+      },
+      {
+        "ms": 276.9930230000009,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 12.25,
+        "authMs": 0
+      },
+      {
+        "ms": 277.2912789999991,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 12.38,
+        "authMs": 0
+      }
+    ]
+  },
+  {
+    "endpoint": "POST /auth/login",
+    "concurrency": 10,
+    "samples": [
+      {
+        "ms": 2164.320082,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 1322.99,
+        "authMs": 0
+      },
+      {
+        "ms": 2429.7323450000004,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 1425.97,
+        "authMs": 0
+      },
+      {
+        "ms": 2598.102983999999,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 1489.82,
+        "authMs": 0
+      },
+      {
+        "ms": 2683.324833999999,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 1391.71,
+        "authMs": 0
+      },
+      {
+        "ms": 2685.042139000001,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 1211.41,
+        "authMs": 0
+      },
+      {
+        "ms": 2686.607005,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 945.95,
+        "authMs": 0
+      },
+      {
+        "ms": 2688.4946130000008,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 680.79,
+        "authMs": 0
+      },
+      {
+        "ms": 2688.688872999999,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 421.18,
+        "authMs": 0
+      },
+      {
+        "ms": 2689.5506019999993,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 252.48,
+        "authMs": 0
+      },
+      {
+        "ms": 2690.9422079999986,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 169.15,
+        "authMs": 0
+      },
+      {
+        "ms": 2706.005209000001,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 94.8,
+        "authMs": 0
+      },
+      {
+        "ms": 2708.3882399999984,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 199.86,
+        "authMs": 0
+      },
+      {
+        "ms": 2708.0194680000004,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 300.61,
+        "authMs": 0
+      },
+      {
+        "ms": 2706.44816,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 396.89,
+        "authMs": 0
+      },
+      {
+        "ms": 2704.9982439999985,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 494.43,
+        "authMs": 0
+      },
+      {
+        "ms": 2705.6224700000002,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 596.25,
+        "authMs": 0
+      },
+      {
+        "ms": 2705.0795080000007,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 696.2,
+        "authMs": 0
+      },
+      {
+        "ms": 2705.8370189999987,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 797.8,
+        "authMs": 0
+      },
+      {
+        "ms": 2707.177818000002,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 900.24,
+        "authMs": 0
+      },
+      {
+        "ms": 2705.435483999998,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 1834.56,
+        "authMs": 0
+      },
+      {
+        "ms": 2766.8784320000013,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 127.51,
+        "authMs": 0
+      },
+      {
+        "ms": 2765.360235,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 223.62,
+        "authMs": 0
+      },
+      {
+        "ms": 2766.2846819999977,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 328.25,
+        "authMs": 0
+      },
+      {
+        "ms": 2763.6512460000013,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 421.72,
+        "authMs": 0
+      },
+      {
+        "ms": 2764.5321409999997,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 523.63,
+        "authMs": 0
+      },
+      {
+        "ms": 2765.769533999999,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 625.65,
+        "authMs": 0
+      },
+      {
+        "ms": 2764.5030750000005,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 723.12,
+        "authMs": 0
+      },
+      {
+        "ms": 2764.580804000001,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 824.24,
+        "authMs": 0
+      },
+      {
+        "ms": 2763.9144160000033,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 923.01,
+        "authMs": 0
+      },
+      {
+        "ms": 2762.76484,
+        "status": 200,
+        "bytes": 2032,
+        "queries": 6,
+        "dbMs": 920.61,
+        "authMs": 0
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /leads?limit=1&counts=true",
+    "concurrency": 1,
+    "samples": [
+      {
+        "ms": 5.319915000000037,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 4.84,
+        "authMs": 1.28
+      },
+      {
+        "ms": 5.173546999998507,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 4.81,
+        "authMs": 1.12
+      },
+      {
+        "ms": 5.918183000001591,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 5.1,
+        "authMs": 1.5
+      },
+      {
+        "ms": 5.958408999998937,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 5.71,
+        "authMs": 1.75
+      },
+      {
+        "ms": 9.19750799999747,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 8.36,
+        "authMs": 2.81
+      },
+      {
+        "ms": 6.04870099999971,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 5.92,
+        "authMs": 1.84
+      },
+      {
+        "ms": 6.195410000000265,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 5.55,
+        "authMs": 1.44
+      },
+      {
+        "ms": 5.265631999998732,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 4.94,
+        "authMs": 1.22
+      },
+      {
+        "ms": 5.633352000000741,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 5.43,
+        "authMs": 1.51
+      },
+      {
+        "ms": 5.074108000000706,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 4.8,
+        "authMs": 1.19
+      },
+      {
+        "ms": 6.562378000002354,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 6.37,
+        "authMs": 1.27
+      },
+      {
+        "ms": 7.344836000000214,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 7.16,
+        "authMs": 2.01
+      },
+      {
+        "ms": 5.652847999997903,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 5.12,
+        "authMs": 1.31
+      },
+      {
+        "ms": 6.13458399999945,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 5.2,
+        "authMs": 1.21
+      },
+      {
+        "ms": 6.364911999997275,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 6.38,
+        "authMs": 1.57
+      },
+      {
+        "ms": 5.200218000001769,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 4.96,
+        "authMs": 1.24
+      },
+      {
+        "ms": 5.089156000001822,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 4.87,
+        "authMs": 1.22
+      },
+      {
+        "ms": 6.814336999999796,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 6.73,
+        "authMs": 1.8
+      },
+      {
+        "ms": 5.608243999999104,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 4.93,
+        "authMs": 1.35
+      },
+      {
+        "ms": 5.4299339999997756,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 4.86,
+        "authMs": 1.37
+      },
+      {
+        "ms": 4.987112000002526,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 4.62,
+        "authMs": 1.17
+      },
+      {
+        "ms": 5.731167000001733,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 5.07,
+        "authMs": 1.2
+      },
+      {
+        "ms": 5.217821000002004,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 5.07,
+        "authMs": 1.2
+      },
+      {
+        "ms": 4.984236999996938,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 4.91,
+        "authMs": 1.09
+      },
+      {
+        "ms": 6.821570000000065,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 7.68,
+        "authMs": 1.62
+      },
+      {
+        "ms": 6.6610749999999825,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 6.36,
+        "authMs": 1.9
+      },
+      {
+        "ms": 5.10074899999745,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 4.64,
+        "authMs": 1.27
+      },
+      {
+        "ms": 5.196189999998751,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 4.89,
+        "authMs": 1.13
+      },
+      {
+        "ms": 7.133975000000646,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 6.61,
+        "authMs": 1.61
+      },
+      {
+        "ms": 7.063290000001871,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 6.89,
+        "authMs": 1.53
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /leads?limit=1&counts=true",
+    "concurrency": 10,
+    "samples": [
+      {
+        "ms": 44.879282999998395,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 86.52,
+        "authMs": 17.24
+      },
+      {
+        "ms": 44.425671000000875,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 83.58,
+        "authMs": 17.07
+      },
+      {
+        "ms": 46.175006999998004,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 81.93,
+        "authMs": 15.66
+      },
+      {
+        "ms": 45.80754800000068,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 79.52,
+        "authMs": 15.27
+      },
+      {
+        "ms": 47.147144999999,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 79.58,
+        "authMs": 14.93
+      },
+      {
+        "ms": 46.065989000002446,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 76.39,
+        "authMs": 14.89
+      },
+      {
+        "ms": 46.480727999998635,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 74.54,
+        "authMs": 17.19
+      },
+      {
+        "ms": 45.16145899999901,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 71.37,
+        "authMs": 14.05
+      },
+      {
+        "ms": 46.49746999999843,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 75.05,
+        "authMs": 14.25
+      },
+      {
+        "ms": 45.85514900000271,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 71.26,
+        "authMs": 16.28
+      },
+      {
+        "ms": 37.90454200000022,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 64.85,
+        "authMs": 9.85
+      },
+      {
+        "ms": 38.1247199999998,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 64.25,
+        "authMs": 9.51
+      },
+      {
+        "ms": 37.80681600000025,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 62.84,
+        "authMs": 9.34
+      },
+      {
+        "ms": 38.0819679999986,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 62.55,
+        "authMs": 10.02
+      },
+      {
+        "ms": 38.558616000002075,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 63.35,
+        "authMs": 10.05
+      },
+      {
+        "ms": 38.0487260000009,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 60.91,
+        "authMs": 9.98
+      },
+      {
+        "ms": 38.8498290000025,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 63.49,
+        "authMs": 10.02
+      },
+      {
+        "ms": 38.5871389999993,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 62.31,
+        "authMs": 10.06
+      },
+      {
+        "ms": 37.981197000000975,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 59.41,
+        "authMs": 10.05
+      },
+      {
+        "ms": 38.20203699999911,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 47.99,
+        "authMs": 6.5
+      },
+      {
+        "ms": 39.69356300000072,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 54.79,
+        "authMs": 7.08
+      },
+      {
+        "ms": 41.42498500000147,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 58.23,
+        "authMs": 6.68
+      },
+      {
+        "ms": 39.64641400000255,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 52.79,
+        "authMs": 6.66
+      },
+      {
+        "ms": 40.88190200000099,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 51.93,
+        "authMs": 7.36
+      },
+      {
+        "ms": 40.62696800000049,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 53.13,
+        "authMs": 7.4
+      },
+      {
+        "ms": 40.3453929999996,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 51.91,
+        "authMs": 7.48
+      },
+      {
+        "ms": 40.82586600000286,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 52.05,
+        "authMs": 8.43
+      },
+      {
+        "ms": 41.51032799999666,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 54.18,
+        "authMs": 8.53
+      },
+      {
+        "ms": 41.24987200000032,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 45.85,
+        "authMs": 5.95
+      },
+      {
+        "ms": 40.943028999998205,
+        "status": 200,
+        "bytes": 1830,
+        "queries": 10,
+        "dbMs": 37.33,
+        "authMs": 4.8
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /leads?limit=1&counts=true&createdFrom=2026-10-15&createdTo=2026-10-22",
+    "concurrency": 1,
+    "samples": [
+      {
+        "ms": 7.486354000000574,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 6.32,
+        "authMs": 1.55
+      },
+      {
+        "ms": 7.758140999998432,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 6.99,
+        "authMs": 1.51
+      },
+      {
+        "ms": 6.213804999999411,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 5.92,
+        "authMs": 1.28
+      },
+      {
+        "ms": 6.058168999999907,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 5.62,
+        "authMs": 1.2
+      },
+      {
+        "ms": 6.086742999999842,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 5.86,
+        "authMs": 1.28
+      },
+      {
+        "ms": 7.7554459999992105,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 5.49,
+        "authMs": 1.21
+      },
+      {
+        "ms": 8.336921999998594,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 8.19,
+        "authMs": 1.35
+      },
+      {
+        "ms": 7.536388999997143,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 6.87,
+        "authMs": 1.55
+      },
+      {
+        "ms": 6.429614999997284,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 6.09,
+        "authMs": 1.25
+      },
+      {
+        "ms": 6.9307279999993625,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 6.04,
+        "authMs": 1.66
+      },
+      {
+        "ms": 6.265143000000535,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 5.55,
+        "authMs": 1.38
+      },
+      {
+        "ms": 5.72045700000308,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 5.35,
+        "authMs": 1.15
+      },
+      {
+        "ms": 7.492615999999543,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 6.99,
+        "authMs": 1.35
+      },
+      {
+        "ms": 7.582918000000063,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 6.42,
+        "authMs": 1.99
+      },
+      {
+        "ms": 6.874730999999883,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 6.31,
+        "authMs": 1.5
+      },
+      {
+        "ms": 6.244462999999087,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 5.67,
+        "authMs": 1.42
+      },
+      {
+        "ms": 6.334294000000227,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 5.8,
+        "authMs": 1.42
+      },
+      {
+        "ms": 6.125576999998884,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 5.65,
+        "authMs": 1.36
+      },
+      {
+        "ms": 8.40580300000147,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 8.37,
+        "authMs": 2.38
+      },
+      {
+        "ms": 6.978198999997403,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 6.18,
+        "authMs": 1.57
+      },
+      {
+        "ms": 6.963039999998728,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 8.25,
+        "authMs": 2.24
+      },
+      {
+        "ms": 6.830617999999959,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 6.38,
+        "authMs": 1.28
+      },
+      {
+        "ms": 6.265873999996984,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 5.8,
+        "authMs": 1.41
+      },
+      {
+        "ms": 8.193229000000429,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 7.58,
+        "authMs": 1.36
+      },
+      {
+        "ms": 7.783249000000069,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 7.58,
+        "authMs": 1.65
+      },
+      {
+        "ms": 6.698315999998158,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 6.25,
+        "authMs": 1.37
+      },
+      {
+        "ms": 8.66445499999827,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 7.39,
+        "authMs": 1.34
+      },
+      {
+        "ms": 7.814749000001029,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 6.73,
+        "authMs": 2.29
+      },
+      {
+        "ms": 7.57577400000082,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 6.65,
+        "authMs": 1.54
+      },
+      {
+        "ms": 8.530038999997487,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 7.48,
+        "authMs": 2.06
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /leads?limit=1&counts=true&createdFrom=2026-10-15&createdTo=2026-10-22",
+    "concurrency": 10,
+    "samples": [
+      {
+        "ms": 38.65484799999831,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 67.75,
+        "authMs": 8.95
+      },
+      {
+        "ms": 38.001265000002604,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 66.15,
+        "authMs": 8.92
+      },
+      {
+        "ms": 37.599482000001444,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 68.35,
+        "authMs": 8.93
+      },
+      {
+        "ms": 38.60815900000307,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 66.34,
+        "authMs": 9.05
+      },
+      {
+        "ms": 37.915162000001146,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 66.82,
+        "authMs": 9.26
+      },
+      {
+        "ms": 38.23547099999996,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 67.84,
+        "authMs": 9.45
+      },
+      {
+        "ms": 38.833638000000064,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 64.29,
+        "authMs": 12.6
+      },
+      {
+        "ms": 39.31480300000112,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 64.57,
+        "authMs": 9.57
+      },
+      {
+        "ms": 39.02056399999856,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 64.34,
+        "authMs": 10.06
+      },
+      {
+        "ms": 38.74655300000086,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 63.6,
+        "authMs": 13.98
+      },
+      {
+        "ms": 31.85732300000018,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 55.79,
+        "authMs": 7.31
+      },
+      {
+        "ms": 31.474484999998822,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 53.75,
+        "authMs": 7.34
+      },
+      {
+        "ms": 31.93733499999871,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 53.85,
+        "authMs": 7.24
+      },
+      {
+        "ms": 31.690115000001242,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 52.76,
+        "authMs": 7.2
+      },
+      {
+        "ms": 32.91345100000035,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 55,
+        "authMs": 7.29
+      },
+      {
+        "ms": 31.88162999999986,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 53.77,
+        "authMs": 7.62
+      },
+      {
+        "ms": 32.92871000000014,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 55.83,
+        "authMs": 9.85
+      },
+      {
+        "ms": 32.489024999998946,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 51.03,
+        "authMs": 7.55
+      },
+      {
+        "ms": 33.14438999999766,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 52.93,
+        "authMs": 7.85
+      },
+      {
+        "ms": 32.902030000001105,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 54.73,
+        "authMs": 9.94
+      },
+      {
+        "ms": 32.3821910000006,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 56.83,
+        "authMs": 7.13
+      },
+      {
+        "ms": 31.689094000001205,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 55.01,
+        "authMs": 7.27
+      },
+      {
+        "ms": 31.885746999996627,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 54.54,
+        "authMs": 7.84
+      },
+      {
+        "ms": 32.5127100000027,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 56.26,
+        "authMs": 8.05
+      },
+      {
+        "ms": 32.20577599999888,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 54.07,
+        "authMs": 8.25
+      },
+      {
+        "ms": 32.570448999998916,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 56.97,
+        "authMs": 8.42
+      },
+      {
+        "ms": 33.919944999997824,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 55.94,
+        "authMs": 10.83
+      },
+      {
+        "ms": 33.35710499999914,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 54.8,
+        "authMs": 8.33
+      },
+      {
+        "ms": 33.529372000000876,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 56.16,
+        "authMs": 8.7
+      },
+      {
+        "ms": 33.9789669999991,
+        "status": 200,
+        "bytes": 1829,
+        "queries": 10,
+        "dbMs": 56.54,
+        "authMs": 11.32
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /leads?limit=50&count=true&counts=true",
+    "concurrency": 1,
+    "samples": [
+      {
+        "ms": 7.433684999999969,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 5.67,
+        "authMs": 1.37
+      },
+      {
+        "ms": 8.092988000000332,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 5.98,
+        "authMs": 1.48
+      },
+      {
+        "ms": 6.9032960000004095,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 5.49,
+        "authMs": 1.11
+      },
+      {
+        "ms": 7.35107699999935,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 6.42,
+        "authMs": 1.33
+      },
+      {
+        "ms": 6.47270799999751,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 5.7,
+        "authMs": 1.2
+      },
+      {
+        "ms": 7.898579000000609,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 9.39,
+        "authMs": 1.18
+      },
+      {
+        "ms": 7.138863999996829,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 6.15,
+        "authMs": 1.27
+      },
+      {
+        "ms": 6.980481999999029,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 6.11,
+        "authMs": 1.25
+      },
+      {
+        "ms": 7.68989099999817,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 6.86,
+        "authMs": 1.65
+      },
+      {
+        "ms": 11.238338999999542,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 13.19,
+        "authMs": 1.24
+      },
+      {
+        "ms": 8.923045999999886,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 8.52,
+        "authMs": 1.64
+      },
+      {
+        "ms": 14.03729999999996,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 12.23,
+        "authMs": 1.64
+      },
+      {
+        "ms": 8.766708999999537,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 7.35,
+        "authMs": 1.93
+      },
+      {
+        "ms": 6.462738999998692,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 5.62,
+        "authMs": 1.22
+      },
+      {
+        "ms": 6.407954000002064,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 5.64,
+        "authMs": 1.09
+      },
+      {
+        "ms": 6.57128499999817,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 5.61,
+        "authMs": 1.27
+      },
+      {
+        "ms": 6.997766000000411,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 5.58,
+        "authMs": 1.12
+      },
+      {
+        "ms": 10.46477799999775,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 9.6,
+        "authMs": 2.29
+      },
+      {
+        "ms": 8.420210000000225,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 7.04,
+        "authMs": 1.44
+      },
+      {
+        "ms": 8.297656999999163,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 6.7,
+        "authMs": 1.67
+      },
+      {
+        "ms": 8.262350000000879,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 6.93,
+        "authMs": 1.28
+      },
+      {
+        "ms": 11.593844999999419,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 13.06,
+        "authMs": 1.34
+      },
+      {
+        "ms": 7.293376999998145,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 6.11,
+        "authMs": 1.35
+      },
+      {
+        "ms": 6.699298999999883,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 5.65,
+        "authMs": 1.1
+      },
+      {
+        "ms": 6.9704339999989315,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 6.14,
+        "authMs": 1.1
+      },
+      {
+        "ms": 8.01229500000045,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 6.78,
+        "authMs": 1.38
+      },
+      {
+        "ms": 8.556298999999854,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 7.26,
+        "authMs": 1.36
+      },
+      {
+        "ms": 8.591715999998996,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 7.08,
+        "authMs": 1.43
+      },
+      {
+        "ms": 9.953836999997293,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 8.88,
+        "authMs": 1.53
+      },
+      {
+        "ms": 7.92282399999749,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 6.62,
+        "authMs": 1.35
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /leads?limit=50&count=true&counts=true",
+    "concurrency": 10,
+    "samples": [
+      {
+        "ms": 53.51416100000279,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 72.46,
+        "authMs": 7.45
+      },
+      {
+        "ms": 63.44883100000152,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 86.77,
+        "authMs": 7.16
+      },
+      {
+        "ms": 58.942652999998245,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 80.88,
+        "authMs": 7.25
+      },
+      {
+        "ms": 57.81362699999954,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 74.74,
+        "authMs": 7.03
+      },
+      {
+        "ms": 58.250678000000335,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 72.99,
+        "authMs": 7.2
+      },
+      {
+        "ms": 64.01329400000031,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 81.01,
+        "authMs": 7.43
+      },
+      {
+        "ms": 64.31855500000165,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 82.73,
+        "authMs": 9.52
+      },
+      {
+        "ms": 58.98788000000059,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 78.33,
+        "authMs": 7.42
+      },
+      {
+        "ms": 59.334538000002794,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 81.27,
+        "authMs": 7.68
+      },
+      {
+        "ms": 63.00152100000196,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 77.32,
+        "authMs": 11.61
+      },
+      {
+        "ms": 48.399647000002005,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 66.66,
+        "authMs": 7.16
+      },
+      {
+        "ms": 48.598033999998734,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 68.82,
+        "authMs": 6.57
+      },
+      {
+        "ms": 51.82919799999945,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 69.15,
+        "authMs": 6.34
+      },
+      {
+        "ms": 48.917099999998754,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 66.35,
+        "authMs": 6.2
+      },
+      {
+        "ms": 54.117378999999346,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 68.44,
+        "authMs": 6.23
+      },
+      {
+        "ms": 54.442205999999715,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 77.94,
+        "authMs": 6.26
+      },
+      {
+        "ms": 55.65368999999919,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 82.96,
+        "authMs": 8.01
+      },
+      {
+        "ms": 55.101409999999305,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 73.94,
+        "authMs": 5.91
+      },
+      {
+        "ms": 53.35628100000031,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 63.99,
+        "authMs": 6.26
+      },
+      {
+        "ms": 54.51333199999863,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 75.45,
+        "authMs": 9.08
+      },
+      {
+        "ms": 47.47809399999824,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 69.62,
+        "authMs": 7.08
+      },
+      {
+        "ms": 54.416496999998344,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 73,
+        "authMs": 6.71
+      },
+      {
+        "ms": 53.85842599999887,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 68.85,
+        "authMs": 6.58
+      },
+      {
+        "ms": 57.27910999999949,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 70.61,
+        "authMs": 6.55
+      },
+      {
+        "ms": 54.56446800000049,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 66.47,
+        "authMs": 6.7
+      },
+      {
+        "ms": 58.82502999999997,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 74.99,
+        "authMs": 6.49
+      },
+      {
+        "ms": 57.564683000000514,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 73.6,
+        "authMs": 7.98
+      },
+      {
+        "ms": 56.060052000000724,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 68.16,
+        "authMs": 6.14
+      },
+      {
+        "ms": 57.90628300000026,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 77.15,
+        "authMs": 6.26
+      },
+      {
+        "ms": 59.10427100000015,
+        "status": 200,
+        "bytes": 65105,
+        "queries": 10,
+        "dbMs": 83.5,
+        "authMs": 9.08
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /leads?limit=50&count=true&counts=true&status=new&tag=0c8d4a9b-446d-480a-82b3-724a0ed0085a&cf.segment=retail",
+    "concurrency": 1,
+    "samples": [
+      {
+        "ms": 138.67742999999973,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 142.47,
+        "authMs": 1.27
+      },
+      {
+        "ms": 133.73988199999803,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 131.83,
+        "authMs": 2.11
+      },
+      {
+        "ms": 129.1392539999979,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 126.95,
+        "authMs": 1.44
+      },
+      {
+        "ms": 131.48927299999923,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 122.18,
+        "authMs": 1.48
+      },
+      {
+        "ms": 136.07247700000153,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 135.53,
+        "authMs": 1.29
+      },
+      {
+        "ms": 141.62810100000206,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 143.11,
+        "authMs": 1.22
+      },
+      {
+        "ms": 144.58202699999674,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 139.67,
+        "authMs": 1.42
+      },
+      {
+        "ms": 152.2035680000008,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 145.76,
+        "authMs": 1.46
+      },
+      {
+        "ms": 159.96055799999885,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 142.22,
+        "authMs": 2.26
+      },
+      {
+        "ms": 153.5679420000015,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 164.02,
+        "authMs": 1.68
+      },
+      {
+        "ms": 152.71337800000038,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 163.93,
+        "authMs": 1.24
+      },
+      {
+        "ms": 141.61342199999854,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 140.21,
+        "authMs": 1.4
+      },
+      {
+        "ms": 143.61361599999873,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 144.21,
+        "authMs": 1.38
+      },
+      {
+        "ms": 142.4064810000018,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 144.07,
+        "authMs": 1.71
+      },
+      {
+        "ms": 142.25064400000338,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 142.55,
+        "authMs": 1.31
+      },
+      {
+        "ms": 144.46706800000175,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 151.97,
+        "authMs": 1.53
+      },
+      {
+        "ms": 158.74692100000175,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 169.32,
+        "authMs": 1.31
+      },
+      {
+        "ms": 143.67359000000215,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 149.65,
+        "authMs": 1.87
+      },
+      {
+        "ms": 146.88611800000217,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 140.37,
+        "authMs": 1.38
+      },
+      {
+        "ms": 140.16980799999874,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 134.57,
+        "authMs": 1.77
+      },
+      {
+        "ms": 144.11211399999956,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 142.91,
+        "authMs": 1.49
+      },
+      {
+        "ms": 142.54363100000046,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 146.07,
+        "authMs": 1.31
+      },
+      {
+        "ms": 138.19123599999875,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 138.13,
+        "authMs": 1.49
+      },
+      {
+        "ms": 130.85151000000042,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 127.67,
+        "authMs": 1.31
+      },
+      {
+        "ms": 137.0857939999987,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 130.99,
+        "authMs": 1.27
+      },
+      {
+        "ms": 141.84230800000296,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 145.07,
+        "authMs": 1.34
+      },
+      {
+        "ms": 139.58208999999988,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 137.19,
+        "authMs": 1.3
+      },
+      {
+        "ms": 139.3402810000007,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 139.84,
+        "authMs": 1.79
+      },
+      {
+        "ms": 133.22062500000175,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 131.62,
+        "authMs": 1.33
+      },
+      {
+        "ms": 127.50594899999851,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 121.35,
+        "authMs": 1.38
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /leads?limit=50&count=true&counts=true&status=new&tag=0c8d4a9b-446d-480a-82b3-724a0ed0085a&cf.segment=retail",
+    "concurrency": 10,
+    "samples": [
+      {
+        "ms": 703.8567980000007,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 655.98,
+        "authMs": 1.84
+      },
+      {
+        "ms": 857.2812779999986,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1073.35,
+        "authMs": 1.86
+      },
+      {
+        "ms": 877.8707869999998,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1093.35,
+        "authMs": 38.41
+      },
+      {
+        "ms": 875.0189949999985,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1259.57,
+        "authMs": 81.7
+      },
+      {
+        "ms": 1015.2079379999996,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1104.7,
+        "authMs": 65.68
+      },
+      {
+        "ms": 878.0308619999996,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1066.98,
+        "authMs": 36.07
+      },
+      {
+        "ms": 877.1925469999987,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1058.64,
+        "authMs": 73.38
+      },
+      {
+        "ms": 878.3086900000017,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1005.47,
+        "authMs": 52.66
+      },
+      {
+        "ms": 959.8817219999983,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 969.12,
+        "authMs": 115.31
+      },
+      {
+        "ms": 971.6614299999965,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 974.66,
+        "authMs": 296.81
+      },
+      {
+        "ms": 1005.9615680000024,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1419.06,
+        "authMs": 7.73
+      },
+      {
+        "ms": 983.1481299999978,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1362.83,
+        "authMs": 7.21
+      },
+      {
+        "ms": 1005.9896110000009,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1380.13,
+        "authMs": 6.89
+      },
+      {
+        "ms": 1034.148322000001,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1040.92,
+        "authMs": 6.5
+      },
+      {
+        "ms": 1008.1077189999996,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1517.6,
+        "authMs": 6.17
+      },
+      {
+        "ms": 1008.4492979999995,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1470.96,
+        "authMs": 5.99
+      },
+      {
+        "ms": 1011.5106190000006,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1183.5,
+        "authMs": 6.88
+      },
+      {
+        "ms": 1009.0625739999996,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1220.3,
+        "authMs": 5.43
+      },
+      {
+        "ms": 1008.5515730000006,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1333.75,
+        "authMs": 5.41
+      },
+      {
+        "ms": 1013.147821999999,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1144.28,
+        "authMs": 5.47
+      },
+      {
+        "ms": 979.6368250000014,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1505.62,
+        "authMs": 7.56
+      },
+      {
+        "ms": 989.5291130000005,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1443.92,
+        "authMs": 6.9
+      },
+      {
+        "ms": 992.6994209999975,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1589.1,
+        "authMs": 6.46
+      },
+      {
+        "ms": 991.814828999999,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1439.56,
+        "authMs": 6.13
+      },
+      {
+        "ms": 992.0423009999977,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1406.17,
+        "authMs": 6.03
+      },
+      {
+        "ms": 1005.6059019999993,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1236.68,
+        "authMs": 5.91
+      },
+      {
+        "ms": 1015.4568830000026,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1151.14,
+        "authMs": 7.07
+      },
+      {
+        "ms": 1005.7152900000001,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1172.8,
+        "authMs": 5.47
+      },
+      {
+        "ms": 1012.8313099999978,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1146.13,
+        "authMs": 5.51
+      },
+      {
+        "ms": 1017.0327389999984,
+        "status": 200,
+        "bytes": 59731,
+        "queries": 11,
+        "dbMs": 1097.89,
+        "authMs": 6.22
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /leads?limit=50&q=Synthetic%20lead%202",
+    "concurrency": 1,
+    "samples": [
+      {
+        "ms": 8.734668000000966,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 5.67,
+        "authMs": 1.34
+      },
+      {
+        "ms": 6.9564769999997225,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 3.92,
+        "authMs": 1.32
+      },
+      {
+        "ms": 6.33967400000256,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 3.76,
+        "authMs": 1.19
+      },
+      {
+        "ms": 6.275933000000805,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 3.75,
+        "authMs": 1.08
+      },
+      {
+        "ms": 6.510228999999526,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 3.85,
+        "authMs": 1.21
+      },
+      {
+        "ms": 7.081805000001623,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 3.9,
+        "authMs": 1.3
+      },
+      {
+        "ms": 8.300130999999965,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 4.76,
+        "authMs": 2.03
+      },
+      {
+        "ms": 6.597474999998667,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 3.97,
+        "authMs": 1.21
+      },
+      {
+        "ms": 6.157597999997961,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 3.68,
+        "authMs": 1.06
+      },
+      {
+        "ms": 7.818415999998251,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 4.35,
+        "authMs": 1.24
+      },
+      {
+        "ms": 6.581934999998339,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 3.95,
+        "authMs": 1.19
+      },
+      {
+        "ms": 8.502566999999544,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 5.42,
+        "authMs": 1.18
+      },
+      {
+        "ms": 11.542967000001227,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 11.94,
+        "authMs": 2.07
+      },
+      {
+        "ms": 6.7241049999975075,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 4.1,
+        "authMs": 1.36
+      },
+      {
+        "ms": 6.167686999997386,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 3.76,
+        "authMs": 1.14
+      },
+      {
+        "ms": 6.714316999998118,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 4.12,
+        "authMs": 1.14
+      },
+      {
+        "ms": 8.16632799999934,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 5.12,
+        "authMs": 1.13
+      },
+      {
+        "ms": 7.447249999997439,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 4.39,
+        "authMs": 1.67
+      },
+      {
+        "ms": 6.27509099999952,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 3.86,
+        "authMs": 1.26
+      },
+      {
+        "ms": 6.2361369999998715,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 3.9,
+        "authMs": 1.03
+      },
+      {
+        "ms": 6.258228999999119,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 3.83,
+        "authMs": 1.21
+      },
+      {
+        "ms": 6.852609999998094,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 3.75,
+        "authMs": 1.39
+      },
+      {
+        "ms": 9.372260000000097,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 5.22,
+        "authMs": 1.77
+      },
+      {
+        "ms": 6.647019,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 4.05,
+        "authMs": 1.29
+      },
+      {
+        "ms": 6.4023530000013125,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 3.72,
+        "authMs": 1.12
+      },
+      {
+        "ms": 7.708608000000822,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 4.45,
+        "authMs": 1.28
+      },
+      {
+        "ms": 6.327821999999287,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 3.89,
+        "authMs": 1.25
+      },
+      {
+        "ms": 7.02809299999717,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 4.34,
+        "authMs": 1.17
+      },
+      {
+        "ms": 6.725237999999081,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 4.04,
+        "authMs": 1.28
+      },
+      {
+        "ms": 7.362068000002182,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 4.42,
+        "authMs": 1.15
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /leads?limit=50&q=Synthetic%20lead%202",
+    "concurrency": 10,
+    "samples": [
+      {
+        "ms": 37.744447000000946,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 46.6,
+        "authMs": 6.58
+      },
+      {
+        "ms": 38.01193499999863,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 47.14,
+        "authMs": 6.26
+      },
+      {
+        "ms": 44.20490100000097,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 54.67,
+        "authMs": 6.15
+      },
+      {
+        "ms": 46.78912499999933,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 59.97,
+        "authMs": 9.26
+      },
+      {
+        "ms": 49.10372599999755,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 67.74,
+        "authMs": 9.49
+      },
+      {
+        "ms": 47.01896100000158,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 64.05,
+        "authMs": 9.57
+      },
+      {
+        "ms": 47.336636,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 64.72,
+        "authMs": 9.6
+      },
+      {
+        "ms": 47.6415049999996,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 65.26,
+        "authMs": 9.64
+      },
+      {
+        "ms": 47.94066399999792,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 65.63,
+        "authMs": 9.68
+      },
+      {
+        "ms": 48.32126799999969,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 73.26,
+        "authMs": 10.84
+      },
+      {
+        "ms": 43.29238600000099,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 50.5,
+        "authMs": 6.76
+      },
+      {
+        "ms": 43.53969599999982,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 54.85,
+        "authMs": 6.31
+      },
+      {
+        "ms": 43.768049999998766,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 54.77,
+        "authMs": 6.12
+      },
+      {
+        "ms": 42.472375999997894,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 46.42,
+        "authMs": 6.84
+      },
+      {
+        "ms": 45.961200000001554,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 58.52,
+        "authMs": 6.75
+      },
+      {
+        "ms": 50.76858100000027,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 65.46,
+        "authMs": 6.66
+      },
+      {
+        "ms": 46.18617799999993,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 58.5,
+        "authMs": 6.76
+      },
+      {
+        "ms": 44.89980300000025,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 53.7,
+        "authMs": 6.75
+      },
+      {
+        "ms": 45.27146899999934,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 54.06,
+        "authMs": 6.8
+      },
+      {
+        "ms": 46.35331600000063,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 51.78,
+        "authMs": 4.54
+      },
+      {
+        "ms": 41.37305600000036,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 52.97,
+        "authMs": 6.96
+      },
+      {
+        "ms": 40.268104999999196,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 48.77,
+        "authMs": 6.45
+      },
+      {
+        "ms": 40.61139800000092,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 48.77,
+        "authMs": 6.27
+      },
+      {
+        "ms": 41.293956000001344,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 54.01,
+        "authMs": 6.11
+      },
+      {
+        "ms": 44.88912199999686,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 56.57,
+        "authMs": 6.05
+      },
+      {
+        "ms": 43.599889999997686,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 52.56,
+        "authMs": 6.09
+      },
+      {
+        "ms": 45.60660600000119,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 59.42,
+        "authMs": 7.43
+      },
+      {
+        "ms": 43.8669280000031,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 50.71,
+        "authMs": 5.73
+      },
+      {
+        "ms": 44.18653600000107,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 50.7,
+        "authMs": 5.82
+      },
+      {
+        "ms": 44.981267000002845,
+        "status": 200,
+        "bytes": 64989,
+        "queries": 9,
+        "dbMs": 54.78,
+        "authMs": 8.85
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /leads?limit=50&q=%25_%27",
+    "concurrency": 1,
+    "samples": [
+      {
+        "ms": 23.140909999998257,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 22.04,
+        "authMs": 1.27
+      },
+      {
+        "ms": 24.833208000000013,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 23.87,
+        "authMs": 1.39
+      },
+      {
+        "ms": 24.59341200000199,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 23.57,
+        "authMs": 1.26
+      },
+      {
+        "ms": 23.20275699999911,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 21.86,
+        "authMs": 1.32
+      },
+      {
+        "ms": 24.35049000000072,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 23.39,
+        "authMs": 1.22
+      },
+      {
+        "ms": 23.50452199999927,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 22.3,
+        "authMs": 1.24
+      },
+      {
+        "ms": 24.492259999999078,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 23.52,
+        "authMs": 1.23
+      },
+      {
+        "ms": 23.49441200000001,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 22.33,
+        "authMs": 1.26
+      },
+      {
+        "ms": 24.031863999996858,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 22.97,
+        "authMs": 1.26
+      },
+      {
+        "ms": 22.82554099999834,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 21.72,
+        "authMs": 1.22
+      },
+      {
+        "ms": 23.776559000001726,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 22.86,
+        "authMs": 1.58
+      },
+      {
+        "ms": 24.399373000000196,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 22.97,
+        "authMs": 1.42
+      },
+      {
+        "ms": 23.45459699999992,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 22.24,
+        "authMs": 1.28
+      },
+      {
+        "ms": 23.695615000000544,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 22.71,
+        "authMs": 1.27
+      },
+      {
+        "ms": 22.85116900000139,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 21.8,
+        "authMs": 1.3
+      },
+      {
+        "ms": 24.431173000000854,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 23.4,
+        "authMs": 1.22
+      },
+      {
+        "ms": 24.499534000002313,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 23.32,
+        "authMs": 1.25
+      },
+      {
+        "ms": 23.980225999999675,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 22.6,
+        "authMs": 1.28
+      },
+      {
+        "ms": 25.293533000000025,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 24.07,
+        "authMs": 1.41
+      },
+      {
+        "ms": 23.227804999998625,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 22.25,
+        "authMs": 1.28
+      },
+      {
+        "ms": 24.70262900000307,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 23.4,
+        "authMs": 1.52
+      },
+      {
+        "ms": 24.19468400000187,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 22.99,
+        "authMs": 1.27
+      },
+      {
+        "ms": 30.678260999997292,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 29.4,
+        "authMs": 2.06
+      },
+      {
+        "ms": 26.365161000001535,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 24.91,
+        "authMs": 2.23
+      },
+      {
+        "ms": 23.50387000000046,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 22.44,
+        "authMs": 1.34
+      },
+      {
+        "ms": 24.654378000002907,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 23.58,
+        "authMs": 1.31
+      },
+      {
+        "ms": 24.838779000001523,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 23.64,
+        "authMs": 1.38
+      },
+      {
+        "ms": 24.639219000000594,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 23.6,
+        "authMs": 1.69
+      },
+      {
+        "ms": 25.03684500000236,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 23.95,
+        "authMs": 1.22
+      },
+      {
+        "ms": 24.075968000001012,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 22.88,
+        "authMs": 1.21
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /leads?limit=50&q=%25_%27",
+    "concurrency": 10,
+    "samples": [
+      {
+        "ms": 55.14918000000034,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 65.3,
+        "authMs": 9.89
+      },
+      {
+        "ms": 53.10016400000313,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 61.31,
+        "authMs": 8.27
+      },
+      {
+        "ms": 54.4437390000021,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 60.87,
+        "authMs": 7.83
+      },
+      {
+        "ms": 56.43595699999787,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 66.83,
+        "authMs": 12.11
+      },
+      {
+        "ms": 55.244832000000315,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 68.8,
+        "authMs": 11.82
+      },
+      {
+        "ms": 53.14707400000043,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 65.5,
+        "authMs": 11.64
+      },
+      {
+        "ms": 52.41973099999814,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 63.66,
+        "authMs": 11.44
+      },
+      {
+        "ms": 54.76168300000063,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 66.34,
+        "authMs": 11.22
+      },
+      {
+        "ms": 53.74659400000019,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 63.49,
+        "authMs": 11.16
+      },
+      {
+        "ms": 54.62148700000034,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 65.31,
+        "authMs": 11.13
+      },
+      {
+        "ms": 47.42793899999742,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 55.19,
+        "authMs": 7.57
+      },
+      {
+        "ms": 44.45214099999794,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 52.69,
+        "authMs": 7.33
+      },
+      {
+        "ms": 46.289724999998725,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 52.74,
+        "authMs": 7.26
+      },
+      {
+        "ms": 50.00245399999767,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 58.56,
+        "authMs": 7.17
+      },
+      {
+        "ms": 49.32475599999816,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 55.93,
+        "authMs": 7.16
+      },
+      {
+        "ms": 48.397532999999385,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 53.53,
+        "authMs": 7.08
+      },
+      {
+        "ms": 48.60587899999882,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 52.58,
+        "authMs": 8.93
+      },
+      {
+        "ms": 48.32764999999927,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 51.74,
+        "authMs": 6.79
+      },
+      {
+        "ms": 48.98559100000057,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 53.21,
+        "authMs": 7.12
+      },
+      {
+        "ms": 49.020486999997956,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 56.64,
+        "authMs": 7.88
+      },
+      {
+        "ms": 44.81333799999993,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 57.45,
+        "authMs": 8.79
+      },
+      {
+        "ms": 46.69361299999946,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 58.41,
+        "authMs": 8.52
+      },
+      {
+        "ms": 44.350728000001254,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 55.7,
+        "authMs": 8.55
+      },
+      {
+        "ms": 41.07862699999896,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 51.1,
+        "authMs": 8.33
+      },
+      {
+        "ms": 40.633200000000215,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 50.3,
+        "authMs": 8.17
+      },
+      {
+        "ms": 45.08118699999977,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 54.46,
+        "authMs": 8.27
+      },
+      {
+        "ms": 48.94228899999871,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 57.09,
+        "authMs": 9.5
+      },
+      {
+        "ms": 44.74059899999702,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 52.78,
+        "authMs": 8.18
+      },
+      {
+        "ms": 47.256053000000975,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 51.74,
+        "authMs": 9.66
+      },
+      {
+        "ms": 49.05217800000173,
+        "status": 200,
+        "bytes": 54,
+        "queries": 6,
+        "dbMs": 52.69,
+        "authMs": 7.41
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /leads/c6d84ac7-102a-4a4c-a5a8-aebccf3bac7e",
+    "concurrency": 1,
+    "samples": [
+      {
+        "ms": 4.539251000001968,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 3.64,
+        "authMs": 1.76
+      },
+      {
+        "ms": 3.638929000000644,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.63,
+        "authMs": 1.21
+      },
+      {
+        "ms": 3.530242000000726,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.68,
+        "authMs": 1.18
+      },
+      {
+        "ms": 3.304583000001003,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.36,
+        "authMs": 1.08
+      },
+      {
+        "ms": 3.5769909999980882,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.52,
+        "authMs": 1.11
+      },
+      {
+        "ms": 5.0252849999997125,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 3.37,
+        "authMs": 1.93
+      },
+      {
+        "ms": 4.353257999999187,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.93,
+        "authMs": 1.59
+      },
+      {
+        "ms": 4.777954999997746,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 3.36,
+        "authMs": 1.54
+      },
+      {
+        "ms": 5.729705000001559,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 4.41,
+        "authMs": 2.03
+      },
+      {
+        "ms": 4.215565999998944,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 3.29,
+        "authMs": 1.54
+      },
+      {
+        "ms": 3.369527000002563,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.5,
+        "authMs": 1.13
+      },
+      {
+        "ms": 3.377671999998711,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.54,
+        "authMs": 1.21
+      },
+      {
+        "ms": 3.613149999997404,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.75,
+        "authMs": 1.26
+      },
+      {
+        "ms": 3.5738060000003316,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.8,
+        "authMs": 1.25
+      },
+      {
+        "ms": 3.304192999999941,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.44,
+        "authMs": 1.09
+      },
+      {
+        "ms": 3.619332000002032,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.77,
+        "authMs": 1.06
+      },
+      {
+        "ms": 3.9307840000001306,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 3.08,
+        "authMs": 1.31
+      },
+      {
+        "ms": 3.973164999999426,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 3.09,
+        "authMs": 1.44
+      },
+      {
+        "ms": 5.8912620000010065,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 4.03,
+        "authMs": 1.91
+      },
+      {
+        "ms": 4.89403499999753,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 3.42,
+        "authMs": 1.7
+      },
+      {
+        "ms": 4.400838000001386,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 3.07,
+        "authMs": 1.38
+      },
+      {
+        "ms": 3.5295509999996284,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.65,
+        "authMs": 1.26
+      },
+      {
+        "ms": 3.4622830000007525,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.53,
+        "authMs": 1.15
+      },
+      {
+        "ms": 3.2832330000019283,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.5,
+        "authMs": 1.09
+      },
+      {
+        "ms": 3.277782000001025,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.43,
+        "authMs": 1.12
+      },
+      {
+        "ms": 3.3051550000018324,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.41,
+        "authMs": 1.07
+      },
+      {
+        "ms": 3.1041220000006433,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.33,
+        "authMs": 1.03
+      },
+      {
+        "ms": 3.00894100000005,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.32,
+        "authMs": 1.02
+      },
+      {
+        "ms": 2.982059999998455,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 2.27,
+        "authMs": 0.99
+      },
+      {
+        "ms": 4.801319000001968,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 3.93,
+        "authMs": 1.7
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /leads/c6d84ac7-102a-4a4c-a5a8-aebccf3bac7e",
+    "concurrency": 10,
+    "samples": [
+      {
+        "ms": 25.926235999999335,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 39.43,
+        "authMs": 8.49
+      },
+      {
+        "ms": 25.941515000002255,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 37.21,
+        "authMs": 7.68
+      },
+      {
+        "ms": 25.953647999998793,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 35.83,
+        "authMs": 7.02
+      },
+      {
+        "ms": 26.730774999999994,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 34.97,
+        "authMs": 6.44
+      },
+      {
+        "ms": 25.883625000002212,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 35.17,
+        "authMs": 6.27
+      },
+      {
+        "ms": 25.91650699999809,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 33.64,
+        "authMs": 6.24
+      },
+      {
+        "ms": 26.58643099999972,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 34.2,
+        "authMs": 7.42
+      },
+      {
+        "ms": 25.866751999998087,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 31.27,
+        "authMs": 5.67
+      },
+      {
+        "ms": 26.54187699999966,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 31.39,
+        "authMs": 5.58
+      },
+      {
+        "ms": 26.626987999999983,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 31.41,
+        "authMs": 7.29
+      },
+      {
+        "ms": 29.57142699999895,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 47.66,
+        "authMs": 7.57
+      },
+      {
+        "ms": 29.59947000000102,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 46.58,
+        "authMs": 7.7
+      },
+      {
+        "ms": 29.651097999998456,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 47.39,
+        "authMs": 7.88
+      },
+      {
+        "ms": 29.718206000001373,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 46.65,
+        "authMs": 7.77
+      },
+      {
+        "ms": 29.783840000000055,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 47.09,
+        "authMs": 7.52
+      },
+      {
+        "ms": 29.86276100000032,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 46.87,
+        "authMs": 7.51
+      },
+      {
+        "ms": 30.83387700000094,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 48.41,
+        "authMs": 8.73
+      },
+      {
+        "ms": 30.446560000000318,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 46.09,
+        "authMs": 7.25
+      },
+      {
+        "ms": 30.251790000002075,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 44.22,
+        "authMs": 7.28
+      },
+      {
+        "ms": 30.4890919999998,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 44.73,
+        "authMs": 9.1
+      },
+      {
+        "ms": 28.08225500000117,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 45.31,
+        "authMs": 8.71
+      },
+      {
+        "ms": 28.112983999999415,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 43.33,
+        "authMs": 8.4
+      },
+      {
+        "ms": 28.18424999999843,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 41.67,
+        "authMs": 8.07
+      },
+      {
+        "ms": 28.27430000000095,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 40.71,
+        "authMs": 7.83
+      },
+      {
+        "ms": 28.413925999997446,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 40.66,
+        "authMs": 7.69
+      },
+      {
+        "ms": 28.535847999999532,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 40.29,
+        "authMs": 7.6
+      },
+      {
+        "ms": 29.8227650000008,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 42.33,
+        "authMs": 8.9
+      },
+      {
+        "ms": 29.422213000001648,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 39.49,
+        "authMs": 7.2
+      },
+      {
+        "ms": 29.157530000000406,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 36.7,
+        "authMs": 7.29
+      },
+      {
+        "ms": 29.491484999998647,
+        "status": 200,
+        "bytes": 1578,
+        "queries": 9,
+        "dbMs": 36.68,
+        "authMs": 8.89
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /deals/board",
+    "concurrency": 1,
+    "samples": [
+      {
+        "ms": 36.896224000000075,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 174.86,
+        "authMs": 1.52
+      },
+      {
+        "ms": 34.58562100000199,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 193.08,
+        "authMs": 1.83
+      },
+      {
+        "ms": 30.104440999999497,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 140.79,
+        "authMs": 1.77
+      },
+      {
+        "ms": 34.95062400000097,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 195.4,
+        "authMs": 1.46
+      },
+      {
+        "ms": 33.32121600000028,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 172.31,
+        "authMs": 1.79
+      },
+      {
+        "ms": 31.72059299999819,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 140.8,
+        "authMs": 1.46
+      },
+      {
+        "ms": 38.00568399999975,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 160.64,
+        "authMs": 1.81
+      },
+      {
+        "ms": 30.213728000002448,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 156.77,
+        "authMs": 1.51
+      },
+      {
+        "ms": 31.996978999999556,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 158.8,
+        "authMs": 2.04
+      },
+      {
+        "ms": 39.27154099999825,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 186.95,
+        "authMs": 1.69
+      },
+      {
+        "ms": 31.51840799999991,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 190.92,
+        "authMs": 1.64
+      },
+      {
+        "ms": 33.08261299999867,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 145.5,
+        "authMs": 1.61
+      },
+      {
+        "ms": 38.68293100000301,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 211.73,
+        "authMs": 1.67
+      },
+      {
+        "ms": 29.372918999997637,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 154.17,
+        "authMs": 1.49
+      },
+      {
+        "ms": 32.26859499999773,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 168.31,
+        "authMs": 1.8
+      },
+      {
+        "ms": 36.10603099999935,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 156.1,
+        "authMs": 1.44
+      },
+      {
+        "ms": 31.423709000002418,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 145.32,
+        "authMs": 1.47
+      },
+      {
+        "ms": 32.823309999999765,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 137.69,
+        "authMs": 1.44
+      },
+      {
+        "ms": 40.504775000001246,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 203.1,
+        "authMs": 1.95
+      },
+      {
+        "ms": 31.815694000000803,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 158.19,
+        "authMs": 1.47
+      },
+      {
+        "ms": 29.51362700000027,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 133.96,
+        "authMs": 1.57
+      },
+      {
+        "ms": 37.88576599999942,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 164.98,
+        "authMs": 2.26
+      },
+      {
+        "ms": 29.579821999999695,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 170.87,
+        "authMs": 1.73
+      },
+      {
+        "ms": 29.106682999998156,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 138.38,
+        "authMs": 1.49
+      },
+      {
+        "ms": 37.153151999998954,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 184.74,
+        "authMs": 1.65
+      },
+      {
+        "ms": 28.933593999998266,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 165.64,
+        "authMs": 1.5
+      },
+      {
+        "ms": 35.17536300000211,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 140.99,
+        "authMs": 2.04
+      },
+      {
+        "ms": 37.58561499999996,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 209.18,
+        "authMs": 1.57
+      },
+      {
+        "ms": 31.95244399999865,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 169.7,
+        "authMs": 1.55
+      },
+      {
+        "ms": 30.844928999998956,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 136.48,
+        "authMs": 1.49
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /deals/board",
+    "concurrency": 10,
+    "samples": [
+      {
+        "ms": 276.13306699999885,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1898.28,
+        "authMs": 6.96
+      },
+      {
+        "ms": 279.0779770000008,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 2143.87,
+        "authMs": 6.42
+      },
+      {
+        "ms": 298.776511,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 2139.65,
+        "authMs": 6.08
+      },
+      {
+        "ms": 301.3273909999989,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 2086.74,
+        "authMs": 12.51
+      },
+      {
+        "ms": 313.4424370000015,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 2094.93,
+        "authMs": 12.42
+      },
+      {
+        "ms": 316.16780899999867,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 2082.88,
+        "authMs": 12.38
+      },
+      {
+        "ms": 336.1362670000017,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 2174.24,
+        "authMs": 12.54
+      },
+      {
+        "ms": 338.8675110000004,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1766.33,
+        "authMs": 12.6
+      },
+      {
+        "ms": 333.45995799999946,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 2308.58,
+        "authMs": 12.73
+      },
+      {
+        "ms": 341.5764310000013,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1625.38,
+        "authMs": 14.12
+      },
+      {
+        "ms": 252.9702959999995,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1903.54,
+        "authMs": 7.98
+      },
+      {
+        "ms": 271.2886860000035,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 2000.95,
+        "authMs": 7.56
+      },
+      {
+        "ms": 275.8664009999993,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 2059.01,
+        "authMs": 7.44
+      },
+      {
+        "ms": 273.50913800000126,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 2086.5,
+        "authMs": 6.89
+      },
+      {
+        "ms": 278.11830199999895,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 2046.44,
+        "authMs": 6.7
+      },
+      {
+        "ms": 280.4120240000011,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1964.93,
+        "authMs": 6.68
+      },
+      {
+        "ms": 294.3471090000021,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1936.79,
+        "authMs": 7.62
+      },
+      {
+        "ms": 282.580707000001,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1963.18,
+        "authMs": 6.3
+      },
+      {
+        "ms": 291.83599499999764,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1939.53,
+        "authMs": 5.92
+      },
+      {
+        "ms": 296.59309900000153,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1377.42,
+        "authMs": 7.33
+      },
+      {
+        "ms": 306.38184199999887,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1834.76,
+        "authMs": 7.31
+      },
+      {
+        "ms": 292.9568560000007,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1874.87,
+        "authMs": 6.61
+      },
+      {
+        "ms": 295.9601569999977,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1879.79,
+        "authMs": 6.39
+      },
+      {
+        "ms": 298.76111200000014,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1842.23,
+        "authMs": 6.02
+      },
+      {
+        "ms": 301.14738900000157,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1878.37,
+        "authMs": 5.87
+      },
+      {
+        "ms": 303.6874400000015,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1979.42,
+        "authMs": 5.77
+      },
+      {
+        "ms": 317.49807800000053,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1896.96,
+        "authMs": 6.72
+      },
+      {
+        "ms": 319.73743599999943,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1943.14,
+        "authMs": 5.12
+      },
+      {
+        "ms": 314.97991000000184,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1886.39,
+        "authMs": 5.05
+      },
+      {
+        "ms": 322.0311679999977,
+        "status": 200,
+        "bytes": 533945,
+        "queries": 37,
+        "dbMs": 1445.56,
+        "authMs": 6.44
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /tasks/summary",
+    "concurrency": 1,
+    "samples": [
+      {
+        "ms": 2.020131000001129,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.88,
+        "authMs": 1.05
+      },
+      {
+        "ms": 2.029740000001766,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.98,
+        "authMs": 1.11
+      },
+      {
+        "ms": 2.0314519999992626,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.92,
+        "authMs": 1.05
+      },
+      {
+        "ms": 2.041862999998557,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.95,
+        "authMs": 1.01
+      },
+      {
+        "ms": 3.211676000002626,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 2.55,
+        "authMs": 1.59
+      },
+      {
+        "ms": 2.448165000001609,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.94,
+        "authMs": 1.24
+      },
+      {
+        "ms": 2.4863570000015898,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 2.12,
+        "authMs": 1.26
+      },
+      {
+        "ms": 2.5985810000020138,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 2.39,
+        "authMs": 1.37
+      },
+      {
+        "ms": 2.0956349999978556,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.98,
+        "authMs": 1.08
+      },
+      {
+        "ms": 2.027715000000171,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.98,
+        "authMs": 1.07
+      },
+      {
+        "ms": 2.112176000002364,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 2.05,
+        "authMs": 1.12
+      },
+      {
+        "ms": 1.9973879999997735,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.81,
+        "authMs": 1.05
+      },
+      {
+        "ms": 1.8921379999992496,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.77,
+        "authMs": 0.97
+      },
+      {
+        "ms": 1.8903239999999641,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.79,
+        "authMs": 0.97
+      },
+      {
+        "ms": 1.9663990000008198,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.93,
+        "authMs": 1.02
+      },
+      {
+        "ms": 1.9254209999999148,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.83,
+        "authMs": 1.01
+      },
+      {
+        "ms": 2.52361799999926,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 2.32,
+        "authMs": 1.5
+      },
+      {
+        "ms": 2.168612999998004,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.91,
+        "authMs": 1.08
+      },
+      {
+        "ms": 2.0568610000009357,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.88,
+        "authMs": 1.04
+      },
+      {
+        "ms": 2.2819390000004205,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 2.03,
+        "authMs": 1.26
+      },
+      {
+        "ms": 2.0022470000003523,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.85,
+        "authMs": 1.03
+      },
+      {
+        "ms": 1.8839919999991253,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.81,
+        "authMs": 1
+      },
+      {
+        "ms": 2.1192899999987276,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 2.09,
+        "authMs": 1.02
+      },
+      {
+        "ms": 2.597319000000425,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 2.23,
+        "authMs": 1.37
+      },
+      {
+        "ms": 2.207146000000648,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.95,
+        "authMs": 1.09
+      },
+      {
+        "ms": 2.2022069999984524,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 2.13,
+        "authMs": 1.12
+      },
+      {
+        "ms": 2.1750360000005458,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.94,
+        "authMs": 1.13
+      },
+      {
+        "ms": 1.9232670000019425,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.78,
+        "authMs": 1
+      },
+      {
+        "ms": 1.961338999997679,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.77,
+        "authMs": 1.04
+      },
+      {
+        "ms": 1.95665100000042,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 1.81,
+        "authMs": 1.01
+      }
+    ]
+  },
+  {
+    "endpoint": "GET /tasks/summary",
+    "concurrency": 10,
+    "samples": [
+      {
+        "ms": 15.497787000000244,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 32.41,
+        "authMs": 5.9
+      },
+      {
+        "ms": 15.560236000001169,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 32.66,
+        "authMs": 5.95
+      },
+      {
+        "ms": 16.93209399999978,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 35.28,
+        "authMs": 5.93
+      },
+      {
+        "ms": 16.608298999999533,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 32.14,
+        "authMs": 5.92
+      },
+      {
+        "ms": 16.667812000003323,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 31.53,
+        "authMs": 6.01
+      },
+      {
+        "ms": 17.60399200000029,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 34.31,
+        "authMs": 6.28
+      },
+      {
+        "ms": 17.68173999999999,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 32.57,
+        "authMs": 8.03
+      },
+      {
+        "ms": 17.215422999997827,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 31.13,
+        "authMs": 6.34
+      },
+      {
+        "ms": 17.233909000002313,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 30.93,
+        "authMs": 6.55
+      },
+      {
+        "ms": 17.56755300000077,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 30.25,
+        "authMs": 8.14
+      },
+      {
+        "ms": 16.297538000002532,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 33.12,
+        "authMs": 6.55
+      },
+      {
+        "ms": 16.29460200000176,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 33.25,
+        "authMs": 6.54
+      },
+      {
+        "ms": 17.28740999999718,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 33.36,
+        "authMs": 6.53
+      },
+      {
+        "ms": 17.35322499999893,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 33.81,
+        "authMs": 6.55
+      },
+      {
+        "ms": 17.429669999997714,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 33.28,
+        "authMs": 6.61
+      },
+      {
+        "ms": 17.503692000002047,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 32.92,
+        "authMs": 6.7
+      },
+      {
+        "ms": 18.108742000000348,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 32.54,
+        "authMs": 8.32
+      },
+      {
+        "ms": 17.79406399999789,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 32.34,
+        "authMs": 6.55
+      },
+      {
+        "ms": 17.863326000002417,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 31.61,
+        "authMs": 6.75
+      },
+      {
+        "ms": 18.088973999998416,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 29.89,
+        "authMs": 8.52
+      },
+      {
+        "ms": 22.284821999997803,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 50.06,
+        "authMs": 6.64
+      },
+      {
+        "ms": 22.311041999997542,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 50.23,
+        "authMs": 6.24
+      },
+      {
+        "ms": 23.34368600000016,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 50.24,
+        "authMs": 6.18
+      },
+      {
+        "ms": 23.39760799999931,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 50.95,
+        "authMs": 6.18
+      },
+      {
+        "ms": 23.452682000002824,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 50.6,
+        "authMs": 6.25
+      },
+      {
+        "ms": 23.508309000000736,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 50.39,
+        "authMs": 6.36
+      },
+      {
+        "ms": 24.063233999997465,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 50.69,
+        "authMs": 7.72
+      },
+      {
+        "ms": 23.768432999997458,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 50.03,
+        "authMs": 6.16
+      },
+      {
+        "ms": 23.83258500000011,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 49.03,
+        "authMs": 6.18
+      },
+      {
+        "ms": 24.028238000002602,
+        "status": 200,
+        "bytes": 58,
+        "queries": 6,
+        "dbMs": 40.32,
+        "authMs": 14.06
+      }
+    ]
+  },
+  {
+    "endpoint": "POST /leads",
+    "concurrency": 1,
+    "samples": [
+      {
+        "ms": 10.631976000004215,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 6.81,
+        "authMs": 1.3
+      },
+      {
+        "ms": 10.816415999994206,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 6.89,
+        "authMs": 1.15
+      },
+      {
+        "ms": 12.614675999997417,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.9,
+        "authMs": 1.21
+      },
+      {
+        "ms": 10.772423000002163,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7,
+        "authMs": 1.28
+      },
+      {
+        "ms": 10.881289000004472,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 6.88,
+        "authMs": 1.2
+      },
+      {
+        "ms": 12.108924000000115,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.57,
+        "authMs": 1.26
+      },
+      {
+        "ms": 11.667325000002165,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.98,
+        "authMs": 2.03
+      },
+      {
+        "ms": 10.828599000000395,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.27,
+        "authMs": 1.25
+      },
+      {
+        "ms": 10.542575999999826,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.1,
+        "authMs": 1.26
+      },
+      {
+        "ms": 10.653447000004235,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.03,
+        "authMs": 1.21
+      },
+      {
+        "ms": 11.448176999998395,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.69,
+        "authMs": 1.27
+      },
+      {
+        "ms": 11.202640000003157,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.48,
+        "authMs": 1.46
+      },
+      {
+        "ms": 10.578293999999005,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.21,
+        "authMs": 1.31
+      },
+      {
+        "ms": 11.505637000002025,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.67,
+        "authMs": 1.5
+      },
+      {
+        "ms": 10.994574999996985,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.23,
+        "authMs": 1.22
+      },
+      {
+        "ms": 10.852415000001201,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.52,
+        "authMs": 1.38
+      },
+      {
+        "ms": 10.356932000002416,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 6.79,
+        "authMs": 1.17
+      },
+      {
+        "ms": 10.588884000004327,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.13,
+        "authMs": 1.22
+      },
+      {
+        "ms": 18.92109700000583,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 14.85,
+        "authMs": 1.92
+      },
+      {
+        "ms": 10.362473000001046,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 6.88,
+        "authMs": 1.29
+      },
+      {
+        "ms": 10.698833000002196,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.27,
+        "authMs": 1.23
+      },
+      {
+        "ms": 11.593494000000646,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.85,
+        "authMs": 1.55
+      },
+      {
+        "ms": 10.686709999994491,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.11,
+        "authMs": 1.37
+      },
+      {
+        "ms": 10.59341200000199,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.21,
+        "authMs": 1.21
+      },
+      {
+        "ms": 11.38598899999488,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.24,
+        "authMs": 1.25
+      },
+      {
+        "ms": 11.483294000005117,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.48,
+        "authMs": 1.76
+      },
+      {
+        "ms": 9.961561000003712,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 6.61,
+        "authMs": 1.15
+      },
+      {
+        "ms": 10.022357000001648,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 6.76,
+        "authMs": 1.16
+      },
+      {
+        "ms": 12.134451999998419,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 8.11,
+        "authMs": 1.14
+      },
+      {
+        "ms": 10.440451000002213,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 7.04,
+        "authMs": 1.23
+      }
+    ]
+  },
+  {
+    "endpoint": "POST /leads",
+    "concurrency": 10,
+    "samples": [
+      {
+        "ms": 27.526158000000578,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 32.49,
+        "authMs": 6.88
+      },
+      {
+        "ms": 34.08376699999644,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 39.39,
+        "authMs": 6.41
+      },
+      {
+        "ms": 41.21484500000224,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 44.86,
+        "authMs": 6.05
+      },
+      {
+        "ms": 48.74684700000216,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 51.35,
+        "authMs": 5.88
+      },
+      {
+        "ms": 55.89088100000663,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 57.55,
+        "authMs": 5.68
+      },
+      {
+        "ms": 64.01084999999875,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 64.55,
+        "authMs": 5.5
+      },
+      {
+        "ms": 78.23967400000402,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 77.69,
+        "authMs": 6.3
+      },
+      {
+        "ms": 71.24344199999905,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 69.71,
+        "authMs": 5.01
+      },
+      {
+        "ms": 85.88098299999547,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 82.48,
+        "authMs": 4.87
+      },
+      {
+        "ms": 92.47749699999986,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 91.04,
+        "authMs": 6.65
+      },
+      {
+        "ms": 26.109104000002844,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 31.41,
+        "authMs": 6.86
+      },
+      {
+        "ms": 32.33647400000336,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 37.9,
+        "authMs": 6.54
+      },
+      {
+        "ms": 39.40841100000398,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 43.67,
+        "authMs": 6.29
+      },
+      {
+        "ms": 45.292319000000134,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 48.55,
+        "authMs": 6.06
+      },
+      {
+        "ms": 52.18167800000083,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 54.35,
+        "authMs": 5.88
+      },
+      {
+        "ms": 64.08862800000497,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 68.44,
+        "authMs": 5.73
+      },
+      {
+        "ms": 76.66972000000533,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 76.86,
+        "authMs": 6.52
+      },
+      {
+        "ms": 70.28029100000276,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 69.37,
+        "authMs": 5.19
+      },
+      {
+        "ms": 82.71008399999846,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 80.37,
+        "authMs": 5.11
+      },
+      {
+        "ms": 89.69950399999652,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 88.5,
+        "authMs": 6.82
+      },
+      {
+        "ms": 26.527508999999554,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 31.89,
+        "authMs": 6.88
+      },
+      {
+        "ms": 32.790688000000955,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 37.41,
+        "authMs": 6.39
+      },
+      {
+        "ms": 38.721425000003364,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 42.05,
+        "authMs": 6.19
+      },
+      {
+        "ms": 45.44373600000108,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 47.5,
+        "authMs": 5.88
+      },
+      {
+        "ms": 52.08693800000037,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 53.24,
+        "authMs": 5.66
+      },
+      {
+        "ms": 59.399060999996436,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 59.21,
+        "authMs": 5.55
+      },
+      {
+        "ms": 72.55332300000009,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 71.49,
+        "authMs": 6.76
+      },
+      {
+        "ms": 66.03186299999652,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 63.9,
+        "authMs": 5.22
+      },
+      {
+        "ms": 78.99287699999695,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 78.25,
+        "authMs": 5.18
+      },
+      {
+        "ms": 84.87581299999874,
+        "status": 201,
+        "bytes": 1403,
+        "queries": 24,
+        "dbMs": 83.79,
+        "authMs": 7.01
+      }
+    ]
+  },
+  {
+    "endpoint": "PATCH /leads/c6d84ac7-102a-4a4c-a5a8-aebccf3bac7e",
+    "concurrency": 1,
+    "samples": [
+      {
+        "ms": 8.932675000003655,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 21,
+        "dbMs": 6.17,
+        "authMs": 1.26
+      },
+      {
+        "ms": 8.328675999997358,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 21,
+        "dbMs": 5.89,
+        "authMs": 1.18
+      },
+      {
+        "ms": 8.802576999994926,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 21,
+        "dbMs": 6.25,
+        "authMs": 1.26
+      },
+      {
+        "ms": 10.470909000003303,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 21,
+        "dbMs": 7.1,
+        "authMs": 1.27
+      },
+      {
+        "ms": 9.240499999999884,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 21,
+        "dbMs": 6.4,
+        "authMs": 1.55
+      },
+      {
+        "ms": 8.324157000002742,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 21,
+        "dbMs": 5.83,
+        "authMs": 1.25
+      },
+      {
+        "ms": 8.263802999994368,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 5.69,
+        "authMs": 1.11
+      },
+      {
+        "ms": 8.61518100000103,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 5.86,
+        "authMs": 1.23
+      },
+      {
+        "ms": 8.705192000001261,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 6.26,
+        "authMs": 1.54
+      },
+      {
+        "ms": 8.307575999999244,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 5.83,
+        "authMs": 1.15
+      },
+      {
+        "ms": 8.740699000001769,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 6.21,
+        "authMs": 1.4
+      },
+      {
+        "ms": 13.090088999997533,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 14.26,
+        "authMs": 1.26
+      },
+      {
+        "ms": 8.92500000000291,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 6.41,
+        "authMs": 1.44
+      },
+      {
+        "ms": 9.144588000002841,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 6.4,
+        "authMs": 1.21
+      },
+      {
+        "ms": 9.176628000001074,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 6.61,
+        "authMs": 1.63
+      },
+      {
+        "ms": 8.182759000002989,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 5.96,
+        "authMs": 1.21
+      },
+      {
+        "ms": 8.755928999999014,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 6.5,
+        "authMs": 1.17
+      },
+      {
+        "ms": 8.955657999998948,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 6.48,
+        "authMs": 1.29
+      },
+      {
+        "ms": 8.950769000002765,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 6.76,
+        "authMs": 1.5
+      },
+      {
+        "ms": 8.434096000004502,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 6.25,
+        "authMs": 1.3
+      },
+      {
+        "ms": 7.884110999999393,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 5.65,
+        "authMs": 1.24
+      },
+      {
+        "ms": 9.485695999996096,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 7.14,
+        "authMs": 1.31
+      },
+      {
+        "ms": 9.046309999997902,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 6.56,
+        "authMs": 1.21
+      },
+      {
+        "ms": 8.653955000001588,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 6.26,
+        "authMs": 1.3
+      },
+      {
+        "ms": 8.177347999997437,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 5.93,
+        "authMs": 1.2
+      },
+      {
+        "ms": 8.627313999997568,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 6.5,
+        "authMs": 1.33
+      },
+      {
+        "ms": 8.272960000002058,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 5.94,
+        "authMs": 1.32
+      },
+      {
+        "ms": 8.728024999996705,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 6.23,
+        "authMs": 1.2
+      },
+      {
+        "ms": 8.720851999998558,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 6.01,
+        "authMs": 1.41
+      },
+      {
+        "ms": 7.949775000000955,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 5.79,
+        "authMs": 1.3
+      }
+    ]
+  },
+  {
+    "endpoint": "PATCH /leads/c6d84ac7-102a-4a4c-a5a8-aebccf3bac7e",
+    "concurrency": 10,
+    "samples": [
+      {
+        "ms": 47.191860999999335,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 59.98,
+        "authMs": 7.57
+      },
+      {
+        "ms": 41.9485810000042,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 51.07,
+        "authMs": 7.2
+      },
+      {
+        "ms": 42.830206999999064,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 51.07,
+        "authMs": 7.03
+      },
+      {
+        "ms": 42.93538699999772,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 49.54,
+        "authMs": 6.49
+      },
+      {
+        "ms": 45.39769900000101,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 51.42,
+        "authMs": 6.31
+      },
+      {
+        "ms": 47.98219299999619,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 54.79,
+        "authMs": 6.29
+      },
+      {
+        "ms": 44.44409599999926,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 47.87,
+        "authMs": 7.45
+      },
+      {
+        "ms": 47.36083200000576,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 50.31,
+        "authMs": 5.77
+      },
+      {
+        "ms": 47.43232700000226,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 50.64,
+        "authMs": 5.83
+      },
+      {
+        "ms": 44.93749399999797,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 50.52,
+        "authMs": 7.23
+      },
+      {
+        "ms": 44.849317000000156,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 53.55,
+        "authMs": 6.54
+      },
+      {
+        "ms": 44.872489999994286,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 53.39,
+        "authMs": 6.31
+      },
+      {
+        "ms": 44.93733400000201,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 53.42,
+        "authMs": 6.26
+      },
+      {
+        "ms": 44.99656600000162,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 52.24,
+        "authMs": 6.11
+      },
+      {
+        "ms": 46.57118099999934,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 54.06,
+        "authMs": 6.12
+      },
+      {
+        "ms": 49.794057999999495,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 57.05,
+        "authMs": 6.23
+      },
+      {
+        "ms": 48.90955699999904,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 54.58,
+        "authMs": 7.56
+      },
+      {
+        "ms": 49.264500999997836,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 54.49,
+        "authMs": 5.99
+      },
+      {
+        "ms": 47.74668500000553,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 54.02,
+        "authMs": 5.99
+      },
+      {
+        "ms": 49.32855300000665,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 58.81,
+        "authMs": 7.83
+      },
+      {
+        "ms": 45.269124999998894,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 57.04,
+        "authMs": 7.21
+      },
+      {
+        "ms": 39.80320099999517,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 47.06,
+        "authMs": 6.74
+      },
+      {
+        "ms": 41.09557899999345,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 46.78,
+        "authMs": 6.57
+      },
+      {
+        "ms": 41.18837599999824,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 46.43,
+        "authMs": 6.4
+      },
+      {
+        "ms": 43.49792599999637,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 50.06,
+        "authMs": 6.25
+      },
+      {
+        "ms": 45.89678800000547,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 54.38,
+        "authMs": 6.16
+      },
+      {
+        "ms": 42.54496500000096,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 46.18,
+        "authMs": 7.21
+      },
+      {
+        "ms": 45.2144599999956,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 51.09,
+        "authMs": 5.69
+      },
+      {
+        "ms": 45.29625600000145,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 49.44,
+        "authMs": 5.59
+      },
+      {
+        "ms": 42.97537300000113,
+        "status": 200,
+        "bytes": 1373,
+        "queries": 20,
+        "dbMs": 47.44,
+        "authMs": 6.85
+      }
+    ]
+  }
+]

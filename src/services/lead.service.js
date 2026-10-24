@@ -198,7 +198,9 @@ export async function rescoreAllLeads() {
 /** Engagement inputs for computeLeadScore: last inbound message (7 d) and completed touches (14 d). */
 export async function leadEngagement(db, orgId, leadId, now = new Date()) {
   const since14 = new Date(now.getTime() - 14 * 86_400_000)
-  const link = { some: { entityType: 'lead', entityId: leadId } }
+  // Tenant first: matches activity_links(organization_id, entity_type, entity_id, occurred_at).
+  // Without it PostgreSQL scans every tenant's links even when this lead has no activity.
+  const link = { some: { organizationId: orgId, entityType: 'lead', entityId: leadId } }
   const [inbound, touches] = await Promise.all([
     db.activity.findFirst({
       where: { organizationId: orgId, deletedAt: null, links: link, direction: 'inbound', type: { in: ['call', 'whatsapp', 'email', 'sms'] } },
