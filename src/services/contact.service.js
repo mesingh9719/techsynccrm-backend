@@ -1,6 +1,6 @@
 import { versionedUpdate } from '../lib/versionedUpdate.js'
 import { prisma } from '../db/prisma.js'
-import { diff, emit } from '../events/outbox.js'
+import { diff, emit, emitMany } from '../events/outbox.js'
 import { recordAudit } from '../lib/audit.js'
 import { runMergeSteps } from '../lib/merge.js'
 import { buildPage, parseListQuery } from '../lib/pagination.js'
@@ -428,7 +428,7 @@ export async function bulkContacts(ctx, { ids, action, payload = {} }) {
       if (action === 'untag') await removeTagsFromRecords(tx, ctx, ENTITY, allowed, payload.tagIds ?? [])
       if (action === 'delete') await tx.contact.updateMany({ where: { id: { in: allowed } }, data: { deletedAt: new Date() } })
       const type = action === 'delete' ? 'contact.deleted' : action === 'assign' ? 'contact.assigned' : 'contact.updated'
-      for (const id of allowed) await emit(tx, ctx, type, { entityType: ENTITY, entityId: id }, { bulk: action, ...(action === 'assign' && { changes: { ownerId: [found.get(id).ownerId, payload.ownerId ?? null] } }) })
+      await emitMany(tx, ctx, type, ENTITY, allowed, (id) => ({ bulk: action, ...(action === 'assign' && { changes: { ownerId: [found.get(id).ownerId, payload.ownerId ?? null] } }) }))
       await recordAudit(tx, ctx, { action: `contact.bulk_${action}`, entityType: ENTITY, changes: { ids: allowed, ...payload } })
     })
   }

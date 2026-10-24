@@ -24,13 +24,17 @@ describe('spreadsheet input and output', () => {
     expect(suggestMapping(parsed.headers, 'lead')).toEqual({ Mobile: 'phone', 'Customer Name': 'fullName', 'Email ID': 'email', Firm: 'companyName', 'Deal Value': 'budgetMinor' })
     expect(suggestMapping(['Sector'], 'lead', [{ label: 'Sector', key: 'sector' }])).toEqual({ Sector: 'cf.sector' })
   })
-  it('reads XLSX sheet/header overrides and refuses formulas', async () => {
+  it('reads XLSX sheet/header overrides, imports cached formula values and flags formulas without one', async () => {
     const book = new ExcelJS.Workbook(), a = book.addWorksheet('Empty'), b = book.addWorksheet('Customers')
     a.addRow(['Notes']); b.addRow(['Customer Name', 'Email']); b.addRow(['Asha', 'a@example.test'])
     let bytes = Buffer.from(await book.xlsx.writeBuffer())
     expect((await parseSpreadsheet('input.xlsx', bytes, { sheetName: 'Customers' })).rows).toEqual([['Asha', 'a@example.test']])
-    b.addRow([{ formula: '1+1', result: 2 }, 'a@example.test']); bytes = Buffer.from(await book.xlsx.writeBuffer())
-    await expect(parseSpreadsheet('input.xlsx', bytes, { sheetName: 'Customers' })).rejects.toThrow('formulas')
+    b.addRow([{ formula: '1+1', result: 2 }, 'b@example.test']); b.addRow([{ formula: '1+1' }, 'c@example.test'])
+    bytes = Buffer.from(await book.xlsx.writeBuffer())
+    const parsed = await parseSpreadsheet('input.xlsx', bytes, { sheetName: 'Customers' })
+    expect(parsed.rows).toEqual([['Asha', 'a@example.test'], ['2', 'b@example.test'], ['', 'c@example.test']])
+    expect(parsed.cellIssues['r:4:0']).toMatchObject({ severity: 'error', message: expect.stringContaining('cached value') })
+    expect(parsed.cellIssues['r:3:0']?.severity).not.toBe('error')
   })
   it('automatically selects the data sheet after empty and instruction sheets', async () => {
     const book = new ExcelJS.Workbook()
@@ -61,8 +65,9 @@ describe('spreadsheet input and output', () => {
     expect(suggestMapping(['Deal Title', 'Stage', 'Email'], 'contact', [], ['title', 'email'])).toEqual({ 'Deal Title': 'title', Stage: '', Email: 'email' })
     expect(suggestMapping(['Name'], 'deal')).toEqual({ Name: 'title' })
   })
-  it('bounds cell and row sizes and rejects duplicate headers', async () => {
-    await expect(parseSpreadsheet('x.csv', Buffer.from('Name,Name\na,b'))).rejects.toThrow('unique')
+  it('bounds cell and row sizes and disambiguates duplicate headers', async () => {
+    const duplicated = await parseSpreadsheet('x.csv', Buffer.from('Name,Name\na,b'))
+    expect(duplicated).toMatchObject({ headers: ['Name', 'Name (2)'], originalHeaders: ['Name', 'Name'], rows: [['a', 'b']] })
     await expect(parseSpreadsheet('x.csv', Buffer.from(`Name,Email\n${'a'.repeat(10001)},x`))).rejects.toThrow('10,000')
     await expect(parseSpreadsheet('x.csv', Buffer.from('Name,Email\n' + 'A,a@b.test\n'.repeat(50001)))).rejects.toThrow('50,000')
   })

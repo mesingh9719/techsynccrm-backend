@@ -15,6 +15,7 @@ import {
   lostReasonSchema,
   savedViewQuery,
   savedViewSchema,
+  sourceOrderSchema,
   sourceSchema,
   updateLeadSchema,
   updateLostReasonSchema,
@@ -50,6 +51,8 @@ leadRoutes.post('/:id/convert', permit('leads.update'), params, validate(convert
 export const leadSourceRoutes = Router()
 leadSourceRoutes.use(requireOrg)
 leadSourceRoutes.get('/', leads.listSources)
+leadSourceRoutes.get('/suggestions', permit('settings.workspace.manage'), leads.listSourceSuggestions)
+leadSourceRoutes.patch('/order', permit('settings.workspace.manage'), validate(sourceOrderSchema), leads.orderSources)
 leadSourceRoutes.post('/', permit('settings.workspace.manage'), validate(sourceSchema), leads.createSource)
 leadSourceRoutes.patch('/:id', permit('settings.workspace.manage'), params, validate(updateSourceSchema), leads.updateSource)
 leadSourceRoutes.delete('/:id', permit('settings.workspace.manage'), params, leads.deleteSource)

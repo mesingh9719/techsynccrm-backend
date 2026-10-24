@@ -193,14 +193,15 @@ async function presentFull(org) {
 }
 
 export async function getCurrentOrganization(ctx) {
-  const [organization, membership] = await Promise.all([
+  const [organization, membership, unreadNotificationCount] = await Promise.all([
     prisma.organization.findUniqueOrThrow({ where: { id: ctx.orgId }, select: fullSelect }),
     prisma.membership.findUniqueOrThrow({
       where: { organizationId_userId: { organizationId: ctx.orgId, userId: ctx.userId } },
       select: { role: true, title: true, joinedAt: true },
     }),
+    unreadCount(ctx),
   ])
-  return { organization: { ...(await presentFull(organization)), unreadNotificationCount: await unreadCount(ctx) }, membership: { ...membership, permissions: permissionsFor(membership.role) } }
+  return { organization: { ...(await presentFull(organization)), unreadNotificationCount }, membership: { ...membership, permissions: permissionsFor(membership.role) } }
 }
 
 // ---------- Update ----------

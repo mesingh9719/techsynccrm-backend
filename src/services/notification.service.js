@@ -5,9 +5,9 @@ import { recordAudit } from '../lib/audit.js'
 import { sha256 } from '../lib/hash.js'
 import { buildPage, parseListQuery } from '../lib/pagination.js'
 import { ApiError } from '../utils/ApiError.js'
-import { visibilityWhere } from '../lib/visibility.js'
+import { taskVisibilityWhere, visibilityWhere } from '../lib/visibility.js'
 import { RECORD_TYPES } from './recordRef.service.js'
-import { notificationContext, notificationRecord } from './notificationAccess.service.js'
+import { notificationContext, notificationRecord, rottingDealSelect } from './notificationAccess.service.js'
 
 export const notificationScope = (ctx) => ({ organizationId: ctx.orgId, userId: ctx.userId })
 export async function lockNotificationUser(tx, orgId, userId) {
@@ -104,17 +104,31 @@ export async function handleNotificationEvent(event) {
 export async function readableNotifications(ctx, rows, db = prisma) {
   const current = ctx.user ? ctx : await notificationContext(ctx.orgId, ctx.userId, db)
   if (!current) return []
+  // Prefetch every lookup notificationRecord needs for the page in a few set queries, instead of
+  // one query per task, mention or rotting-deal notification.
+  const uniq = (list) => [...new Set(list)]
+  const taskIds = uniq(rows.filter((r) => r.entityType === 'task').map((r) => r.entityId))
+  const dealIds = uniq(rows.filter((r) => r.type === 'deal_rotting' && r.entityType === 'deal').map((r) => r.entityId))
+  const activityIds = uniq(rows.filter((r) => r.type === 'mention' && r.context?.activityId).map((r) => r.context.activityId))
+  const [tasks, deals, mentions] = await Promise.all([
+    taskIds.length ? db.task.findMany({ where: { AND: [{ id: { in: taskIds }, organizationId: ctx.orgId, deletedAt: null }, taskVisibilityWhere(current)] }, select: { id: true, title: true, entityType: true, entityId: true, assigneeId: true, status: true, dueAt: true, remindAt: true } }) : [],
+    dealIds.length ? db.deal.findMany({ where: { id: { in: dealIds }, organizationId: ctx.orgId, deletedAt: null }, select: rottingDealSelect }) : [],
+    activityIds.length ? db.mention.findMany({ where: { organizationId: ctx.orgId, activityId: { in: activityIds }, userId: current.userId, activity: { deletedAt: null } }, select: { activityId: true } }) : [],
+  ])
+  const refs = [...rows, ...tasks.filter((t) => t.entityType)]
   const records = new Map()
-  for (const [type, definition] of Object.entries(RECORD_TYPES)) {
-    const ids = [...new Set(rows.filter((r) => r.entityType === type).map((r) => r.entityId))]
-    if (!ids.length) continue
+  await Promise.all(Object.entries(RECORD_TYPES).map(async ([type, definition]) => {
+    const ids = uniq(refs.filter((r) => r.entityType === type).map((r) => r.entityId))
+    if (!ids.length) return
     const found = await db[definition.model].findMany({ where: { AND: [{ organizationId: ctx.orgId, id: { in: ids }, deletedAt: null }, visibilityWhere(current, definition.resource, 'read')] }, select: { id: true, ownerId: true, [definition.name]: true } })
     for (const record of found) records.set(`${type}:${record.id}`, { id: record.id, ownerId: record.ownerId, name: record[definition.name] })
-  }
+  }))
+  const known = { records, tasks: new Map(tasks.map((t) => [t.id, t])), deals: new Map(deals.map((d) => [d.id, d])), mentions: new Set(mentions.map((m) => m.activityId)) }
+  const now = new Date()
   const out = []
   for (const row of rows) {
     const record = RECORD_TYPES[row.entityType] ? records.get(`${row.entityType}:${row.entityId}`) ?? null : undefined
-    if (await notificationRecord(current, row, db, new Date(), record)) out.push(row)
+    if (await notificationRecord(current, row, db, now, record, known)) out.push(row)
   }
   return out
 }
@@ -139,10 +153,13 @@ export async function listNotifications(ctx, query = {}) {
 export function presentNotification({ organizationId: _o, userId: _u, context: _c, emailPendingAt: _p, sourceEventId: _s, ...row }) { return row }
 
 export async function unreadCount(ctx) {
+  // Load the recipient's context once, not once per scanned page.
+  const current = ctx.user ? ctx : await notificationContext(ctx.orgId, ctx.userId)
+  if (!current) return 0
   let cursor
   let count = 0
   do {
-    const page = await listNotifications(ctx, { unread: true, limit: 100, cursor })
+    const page = await listNotifications(current, { unread: true, limit: 100, cursor })
     count += page.items.length
     cursor = page.nextCursor
   } while (cursor)

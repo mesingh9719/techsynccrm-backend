@@ -2,7 +2,7 @@ import { versionedUpdate } from '../lib/versionedUpdate.js'
 import { leadQualificationSchema } from '../validators/leadQualification.validators.js'
 import { prisma, DB_NULL } from '../db/prisma.js'
 import { resolveCampaignId } from '../lib/campaignAttribution.js'
-import { diff, emit } from '../events/outbox.js'
+import { diff, emit, emitMany } from '../events/outbox.js'
 import { recordAudit } from '../lib/audit.js'
 import { computeLeadScore, FROZEN_STATUSES } from '../lib/leadScore.js'
 import { registerMergeable, runConversionHooks } from '../lib/merge.js'
@@ -414,10 +414,14 @@ export async function createLead(ctx, input, { allowDuplicate = false, tx: exter
  * - matches only closed leads → a new lead linked via `previousLeadId`.
  *
  * `ctx` is a workspace context; connectors pass a system context { orgId, actorType: 'system' }.
+ * `sourceId` (a source of this workspace) wins over `sourceKey`; a foreign or deleted id falls back to it. A disabled
+ * (archived) source still tags captured leads: it only leaves the pickers, so no enquiry is lost or mislabelled.
  * @returns {Promise<{ lead: object, outcome: 'created' | 'merged_into_open' | 'linked_contact' }>}
  */
-export async function createLeadFromCapture(ctx, payload, { sourceKey, dedupe = true, tx: externalTx } = {}) {
-  const source = sourceKey ? await getSourceByKey(ctx.orgId, sourceKey, externalTx ?? prisma) : null
+export async function createLeadFromCapture(ctx, payload, { sourceKey, sourceId, dedupe = true, tx: externalTx } = {}) {
+  const db = externalTx ?? prisma
+  const chosen = sourceId ? await db.leadSource.findFirst({ where: { id: sourceId, organizationId: ctx.orgId }, select: { id: true, name: true } }) : null
+  const source = chosen ?? (sourceKey ? await getSourceByKey(ctx.orgId, sourceKey, db) : null)
   const { sourceId: _ignored, ownerId: _owner, tagIds: _tags, ...fields } = payload
   const data = await prepare({ ...ctx, actorType: 'system' }, fields, null, { capture: true, db: externalTx ?? prisma })
   if (source) data.sourceId = source.id
@@ -648,7 +652,7 @@ export async function bulkLeads(ctx, { ids, action, payload = {} }) {
       if (action === 'assign') {
         const ownerId = payload.ownerId ?? null
         await tx.lead.updateMany({ where: { id: { in: allowed } }, data: { ownerId, assignedAt: ownerId ? new Date() : null } })
-        for (const id of allowed) await emit(tx, ctx, 'lead.assigned', { entityType: ENTITY, entityId: id }, { changes: { ownerId: [found.get(id).ownerId, ownerId] }, bulk: true })
+        await emitMany(tx, ctx, 'lead.assigned', ENTITY, allowed, (id) => ({ changes: { ownerId: [found.get(id).ownerId, ownerId] }, bulk: true }))
       }
       if (action === 'tag') {
         const { skipped } = await addTagsToRecords(tx, ctx, ENTITY, allowed, payload.tagIds ?? [])
@@ -657,7 +661,7 @@ export async function bulkLeads(ctx, { ids, action, payload = {} }) {
       if (action === 'untag') await removeTagsFromRecords(tx, ctx, ENTITY, allowed, payload.tagIds ?? [])
       if (action === 'delete') {
         await tx.lead.updateMany({ where: { id: { in: allowed } }, data: { deletedAt: new Date() } })
-        for (const id of allowed) await emit(tx, ctx, 'lead.deleted', { entityType: ENTITY, entityId: id }, { bulk: true })
+        await emitMany(tx, ctx, 'lead.deleted', ENTITY, allowed, () => ({ bulk: true }))
       }
     })
     done.push(...allowed)

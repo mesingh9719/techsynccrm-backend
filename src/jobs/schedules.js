@@ -14,6 +14,7 @@ import { reassignRecords } from '../services/reassign.service.js'
 import { expireTrials, recountAllUsage, sendTrialReminders } from '../services/plan.service.js'
 import { rescoreAllLeads } from '../services/lead.service.js'
 import { purgeDeletedRecords } from '../services/purge.service.js'
+import { releaseHeldLeads } from '../services/assignment.service.js'
 // Record services register their tables for `members.reassign` (registerReassignable) on import.
 import '../services/company.service.js'
 import '../services/contact.service.js'
@@ -55,6 +56,9 @@ export async function registerJobs() {
   await registerHandler('deals.rotting_scan', () => scanRottingDeals())
   await registerHandler('tasks.reminders', () => sendDueReminders())
   await registerHandler('tasks.overdue_scan', () => scanOverdueTasks())
+  // Leads held outside working hours are assigned once their workspace opens.
+  await registerHandler('assignment.release', () => releaseHeldLeads())
+  await schedule('assignment.release', '*/5 * * * *', null, { tz: 'UTC' })
 
   // 02:30 IST daily
   await schedule('tokens.cleanup', '30 2 * * *', null, { tz: 'Asia/Kolkata' })

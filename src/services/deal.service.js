@@ -1,6 +1,6 @@
 import { versionedUpdate } from '../lib/versionedUpdate.js'
 import { prisma } from '../db/prisma.js'
-import { diff, emit } from '../events/outbox.js'
+import { diff, emit, emitMany } from '../events/outbox.js'
 import { recordAudit } from '../lib/audit.js'
 import { registerMergeable, registerMergeHook } from '../lib/merge.js'
 import { buildPage, parseListQuery } from '../lib/pagination.js'
@@ -627,7 +627,7 @@ export async function bulkDeals(ctx, { ids, action, payload = {} }) {
     await prisma.$transaction(async (tx) => {
       if (action === 'assign') {
         await tx.deal.updateMany({ where: { id: { in: allowed } }, data: { ownerId: payload.ownerId ?? null } })
-        for (const id of allowed) await emit(tx, ctx, 'deal.assigned', { entityType: ENTITY, entityId: id }, { changes: { ownerId: [found.get(id).ownerId, payload.ownerId ?? null] }, bulk: true })
+        await emitMany(tx, ctx, 'deal.assigned', ENTITY, allowed, (id) => ({ changes: { ownerId: [found.get(id).ownerId, payload.ownerId ?? null] }, bulk: true }))
       }
       if (action === 'tag') {
         const { skipped } = await addTagsToRecords(tx, ctx, ENTITY, allowed, payload.tagIds ?? [])
@@ -636,7 +636,7 @@ export async function bulkDeals(ctx, { ids, action, payload = {} }) {
       if (action === 'untag') await removeTagsFromRecords(tx, ctx, ENTITY, allowed, payload.tagIds ?? [])
       if (action === 'delete') {
         await tx.deal.updateMany({ where: { id: { in: allowed } }, data: { deletedAt: new Date() } })
-        for (const id of allowed) await emit(tx, ctx, 'deal.deleted', { entityType: ENTITY, entityId: id }, { bulk: true })
+        await emitMany(tx, ctx, 'deal.deleted', ENTITY, allowed, () => ({ bulk: true }))
       }
     })
     done.push(...allowed)

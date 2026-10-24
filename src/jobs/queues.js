@@ -38,6 +38,8 @@ export const QUEUES = {
   // M07/M08
   'leads.rescore': { ...standard, retryLimit: 2, expireInSeconds: 3600 },
   'records.purge': { ...standard, retryLimit: 2, expireInSeconds: 3600 },
+  // M14 — idempotent: each held lead is re-checked under a row lock
+  'assignment.release': { ...standard, retryLimit: 1, expireInSeconds: 600 },
   // M09
   'deals.rotting_scan': { ...standard, retryLimit: 2, expireInSeconds: 1800 },
   // M10 — short-lived scans; a missed run is caught by the next one

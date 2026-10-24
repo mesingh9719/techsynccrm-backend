@@ -25,6 +25,8 @@ import { signAccessToken } from '../../src/services/token.service.js'
 import { accessToken, syncMailbox } from '../../src/integrations/gmail/jobs.js'
 import { disableMemberMailboxes } from '../../src/integrations/gmail/hooks.js'
 import { checkEmailConnections } from '../../src/email-integration/connectionHealth.js'
+import { gmailMe, updateSettings } from '../../src/integrations/gmail/connection.js'
+import { notificationContext } from '../../src/services/notificationAccess.service.js'
 import { processRevocations } from '../../src/email-integration/revocation.js'
 
 let server, base, org, other, users, sessions, testIp = 0
@@ -213,6 +215,26 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('email foundation with real Post
     expect((await request('/accounts/me', { user: 1 })).data.data.settings.emailEnabled).toBe(false)
     expect(await prisma.emailAuditLog.count({ where: { organizationId: org.id, action: 'SETTINGS_UPDATED' } })).toBe(1)
     expect((await request('/admin/settings', { user: 2, tenant: other.id })).data.data.emailEnabled).toBe(true)
+  })
+  it('saves signature-only changes without resetting exclusions and enforces the workspace signature policy', async () => {
+    await connect(1)
+    const employee = await notificationContext(org.id, users[1].id)
+    await updateSettings(employee, { excludedAddresses: ['private@example.test'], excludedDomains: ['internal.example.test'] })
+    const result = await updateSettings(employee, { signatureHtml: '<p>Regards, Employee</p><script>steal()</script>' })
+    expect(result.account.signatureHtml).toBe('<p>Regards, Employee</p>')
+    expect(result.account.excludedAddresses).toEqual(['private@example.test'])
+    expect(result.account.excludedDomains).toEqual(['internal.example.test'])
+    await request('/admin/settings', { method: 'PUT', body: { allowEmployeeCustomSignature: false } })
+    expect((await gmailMe(employee)).canCustomizeSignature).toBe(false)
+    await expect(updateSettings(employee, { signatureHtml: '<p>Blocked</p>' })).rejects.toMatchObject({ code: 'EMAIL_SIGNATURE_MANAGED', statusCode: 403 })
+    expect((await gmailMe(employee)).account.signatureHtml).toBe('<p>Regards, Employee</p>')
+    // Privacy exclusions remain editable when personal signatures are managed.
+    await updateSettings(employee, { excludedDomains: ['another.example.test'] })
+    fixture.provider.identity.mockResolvedValue({ subject: 'owner-subject', email: 'owner-mailbox@example.test' })
+    await connect(0)
+    const owner = await notificationContext(org.id, users[0].id)
+    expect((await gmailMe(owner)).canCustomizeSignature).toBe(true)
+    expect((await updateSettings(owner, { signatureHtml: '<p>Owner</p>' })).account.signatureHtml).toBe('<p>Owner</p>')
   })
   it('atomically disables departed members, retries encrypted revocations and prevents reconnect until revocation finishes', async () => {
     const account = await connect(1)

@@ -19,6 +19,8 @@ import { invitationRoutes, memberRoutes, teamRoutes } from './team.routes.js'
 import userRoutes from './user.routes.js'
 import { notificationRoutes } from './notification.routes.js'
 import { campaignRoutes } from './campaign.routes.js'
+import { webFormRoutes } from './webForm.routes.js'
+import { assignmentRuleRoutes, outOfOfficeRoutes, workingHoursRoutes } from './assignment.routes.js'
 import { getOpenApiDocument } from '../docs/openapi.js'
 import { env } from '../config/env.js'
 
@@ -34,6 +36,8 @@ router.use('/webhooks/in/facebook', facebookWebhookRoutes)
 
 router.get('/health', getHealth)
 router.use('/auth', authRoutes)
+// Before /users so the user router doesn't claim /users/me/out-of-office (M14).
+router.use('/users/me/out-of-office', outOfOfficeRoutes)
 router.use('/users', userRoutes)
 router.use('/organizations', organizationRoutes)
 router.use('/members', memberRoutes)
@@ -50,6 +54,10 @@ router.use('/custom-fields', customFieldRoutes)
 router.use('/leads', leadRoutes)
 router.use('/campaigns', campaignRoutes)
 router.use('/lead-sources', leadSourceRoutes)
+// Lead capture (M14)
+router.use('/forms', webFormRoutes)
+router.use('/assignment-rules', assignmentRuleRoutes)
+router.use('/working-hours', workingHoursRoutes)
 router.use('/lost-reasons', lostReasonRoutes)
 router.use('/saved-views', savedViewRoutes)
 // Pipelines & deals (M09)

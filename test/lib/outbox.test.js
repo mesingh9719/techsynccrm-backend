@@ -22,6 +22,13 @@ describe('outbox', () => {
     expect(diff(before, after, ['status', 'ownerId', 'tags', 'at'])).toEqual({ status: ['new', 'contacted'] })
     expect(diff(before, before, ['status'])).toBeNull()
   })
+
+  it('diffs BigInt money fields, including to and from empty', () => {
+    expect(diff({ budgetMinor: null }, { budgetMinor: 1545465400n }, ['budgetMinor'])).toEqual({ budgetMinor: [null, 1545465400n] })
+    expect(diff({ budgetMinor: 100n }, { budgetMinor: null }, ['budgetMinor'])).toEqual({ budgetMinor: [100n, null] })
+    expect(diff({ budgetMinor: 100n }, { budgetMinor: 100n }, ['budgetMinor'])).toBeNull()
+    expect(diff({ meta: { amount: 1n } }, { meta: { amount: 2n } }, ['meta'])).toEqual({ meta: [{ amount: 1n }, { amount: 2n }] })
+  })
 })
 
 describe('event registry', () => {

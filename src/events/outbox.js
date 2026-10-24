@@ -34,9 +34,34 @@ export async function emit(tx, ctx, type, { entityType, entityId }, payload = {}
   })
 }
 
+/**
+ * `emit` for many records of one type in a single insert (bulk actions): one round trip inside the
+ * transaction instead of one per record. `payloadFor(entityId)` builds each event's payload.
+ */
+export async function emitMany(tx, ctx, type, entityType, entityIds, payloadFor = () => ({})) {
+  if (!/^[a-z_]+\.[a-z_]+$/.test(type)) throw new Error(`Invalid event type "${type}"`)
+  if (!entityIds.length) return { count: 0 }
+  return tx.domainEvent.createMany({
+    data: entityIds.map((entityId) => {
+      const payload = payloadFor(entityId)
+      return {
+        organizationId: ctx?.orgId ?? null,
+        actorId: ctx?.userId ?? null,
+        type,
+        entityType,
+        entityId,
+        payload: toJsonValue(ctx?.importId ? { ...payload, meta: { ...payload.meta, importId: ctx.importId } } : payload) ?? {},
+      }
+    }),
+  })
+}
+
+// Money columns are BigInt, which JSON.stringify rejects; compare them as strings.
+const stable = (value) => JSON.stringify(value, (_key, v) => (typeof v === 'bigint' ? v.toString() : v))
 const isEqual = (a, b) => {
   if (a instanceof Date || b instanceof Date) return a?.valueOf?.() === b?.valueOf?.()
-  if (typeof a === 'object' || typeof b === 'object') return JSON.stringify(a) === JSON.stringify(b)
+  if (typeof a === 'bigint' || typeof b === 'bigint') return a !== null && b !== null && BigInt(a) === BigInt(b)
+  if (typeof a === 'object' || typeof b === 'object') return stable(a) === stable(b)
   return a === b
 }
 

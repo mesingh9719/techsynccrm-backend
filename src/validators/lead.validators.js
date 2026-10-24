@@ -115,9 +115,16 @@ export const leadDuplicatesSchema = z.object({
 
 // ---------- Settings ----------
 
-export const sourceSchema = z.object({
-  name: z.string().trim().min(1, 'Enter a name').max(60),
-  scoreWeight: z.number().int().min(0, '0–20').max(20, '0–20').optional(),
+/** A custom source needs a name; one picked from the catalog (`catalogKey`) takes the catalog's name and weight unless given. */
+export const sourceSchema = z
+  .object({
+    name: z.string().trim().min(1, 'Enter a name').max(60).optional(),
+    scoreWeight: z.number().int().min(0, '0–20').max(20, '0–20').optional(),
+    catalogKey: z.string().regex(/^[a-z0-9_]{2,40}$/, 'Choose a suggested source').optional(),
+  })
+  .refine((v) => v.name || v.catalogKey, { path: ['name'], message: 'Enter a name' })
+export const sourceOrderSchema = z.object({
+  ids: z.array(z.uuid()).min(1).max(500).refine((ids) => new Set(ids).size === ids.length, 'Each source can appear once'),
 })
 export const updateSourceSchema = z
   .object({ name: z.string().trim().min(1).max(60), scoreWeight: z.number().int().min(0).max(20), archived: z.boolean() })

@@ -27,8 +27,14 @@ export async function notificationContext(orgId, userId, db = prisma) {
   return { orgId, userId, role, permissions: permissionsFor(role), managedUserIds: team.map((m) => m.userId), timezone: user.timezone || org.timezone, user, organization: org }
 }
 
-/** Recheck both scope and event-specific state before exposing or emailing record data. */
-export async function notificationRecord(ctx, notification, db = prisma, now = new Date(), knownRecord) {
+export const rottingDealSelect = { id: true, status: true, lastActivityAt: true, stageEnteredAt: true, stage: { select: { rottingDays: true } } }
+
+/**
+ * Recheck both scope and event-specific state before exposing or emailing record data.
+ * `known` (from readableNotifications) holds the same lookups prefetched for a whole page:
+ * { records: Map<"type:id", record>, tasks: Map<id, task>, deals: Map<id, deal>, mentions: Set<activityId> }.
+ */
+export async function notificationRecord(ctx, notification, db = prisma, now = new Date(), knownRecord, known) {
   const { entityType, entityId, type, context = {} } = notification
   let record = null
   try {
@@ -38,13 +44,15 @@ export async function notificationRecord(ctx, notification, db = prisma, now = n
       if (['lead_assigned', 'lead_repeat_enquiry', 'deal_assigned', 'deal_rotting'].includes(type) && record.ownerId !== ctx.userId) return null
       if (type === 'new_unassigned_lead' && record.ownerId !== null) return null
       if (type === 'deal_rotting') {
-        const d = await db.deal.findFirst({ where: { id: entityId, organizationId: ctx.orgId, deletedAt: null }, include: { stage: true } })
+        const d = known ? known.deals.get(entityId) : await db.deal.findFirst({ where: { id: entityId, organizationId: ctx.orgId, deletedAt: null }, select: rottingDealSelect })
         if (!d || d.status !== 'open' || d.stage.rottingDays == null || now - new Date(Math.max(d.lastActivityAt?.getTime() ?? 0, d.stageEnteredAt.getTime())) <= d.stage.rottingDays * 86400000) return null
       }
     } else if (entityType === 'task') {
-      const task = await db.task.findFirst({ where: { AND: [{ id: entityId, organizationId: ctx.orgId, deletedAt: null }, taskVisibilityWhere(ctx)] } })
+      const task = known ? known.tasks.get(entityId) : await db.task.findFirst({ where: { AND: [{ id: entityId, organizationId: ctx.orgId, deletedAt: null }, taskVisibilityWhere(ctx)] } })
       if (!task) return null
-      if (task.entityType) await loadRecord(ctx, task.entityType, task.entityId, 'read', db)
+      if (task.entityType && known) {
+        if (!known.records.get(`${task.entityType}:${task.entityId}`)) return null
+      } else if (task.entityType) await loadRecord(ctx, task.entityType, task.entityId, 'read', db)
       if (type.startsWith('task_') && task.assigneeId !== ctx.userId) return null
       if (['task_reminder', 'task_overdue'].includes(type) && task.status !== 'open') return null
       if (type === 'task_reminder' && context.dueAt && task.dueAt?.getTime() !== new Date(context.dueAt).getTime()) return null
@@ -57,7 +65,7 @@ export async function notificationRecord(ctx, notification, db = prisma, now = n
     } else if (!entityType) record = { name: null }
     if (!record) return null
     if (type === 'mention' && context.activityId) {
-      const mention = await db.mention.findFirst({ where: { organizationId: ctx.orgId, activityId: context.activityId, userId: ctx.userId, activity: { deletedAt: null } }, select: { id: true } })
+      const mention = known ? known.mentions.has(context.activityId) : await db.mention.findFirst({ where: { organizationId: ctx.orgId, activityId: context.activityId, userId: ctx.userId, activity: { deletedAt: null } }, select: { id: true } })
       if (!mention) return null
     }
     return record

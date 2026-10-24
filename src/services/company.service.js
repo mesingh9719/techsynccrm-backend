@@ -1,6 +1,6 @@
 import { versionedUpdate } from '../lib/versionedUpdate.js'
 import { prisma } from '../db/prisma.js'
-import { diff, emit } from '../events/outbox.js'
+import { diff, emit, emitMany } from '../events/outbox.js'
 import { recordAudit } from '../lib/audit.js'
 import { gstinErrors } from '../lib/india.js'
 import { runMergeSteps } from '../lib/merge.js'
@@ -354,9 +354,7 @@ export async function bulkCompanies(ctx, { ids, action, payload = {} }) {
       }
       if (action === 'untag') await removeTagsFromRecords(tx, ctx, ENTITY, allowed, payload.tagIds ?? [])
       if (action === 'delete') await tx.company.updateMany({ where: { id: { in: allowed } }, data: { deletedAt: new Date() } })
-      for (const id of allowed) {
-        await emit(tx, ctx, action === 'delete' ? 'company.deleted' : 'company.updated', { entityType: ENTITY, entityId: id }, { bulk: action })
-      }
+      await emitMany(tx, ctx, action === 'delete' ? 'company.deleted' : 'company.updated', ENTITY, allowed, () => ({ bulk: action }))
       await recordAudit(tx, ctx, { action: `company.bulk_${action}`, entityType: ENTITY, changes: { ids: allowed, ...payload } })
     })
   }

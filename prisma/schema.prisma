@@ -102,6 +102,9 @@ model User {
   facebookConnections FacebookConnection[]
   facebookOAuthStates FacebookOAuthState[]
   facebookAssignedForms FacebookForm[]
+  webFormsCreated        WebForm[]
+  workingHoursFallback   WorkingHours[]
+  outOfOffice            OutOfOffice[]
   recoveryCodes          RecoveryCode[]
   inboundMessages        InboundMessage[]
   lastActiveOrganization Organization?  @relation("LastActiveOrganization", fields: [lastActiveOrganizationId], references: [id], onDelete: SetNull)
@@ -205,7 +208,11 @@ model Organization {
   facebookPages FacebookPage[]
   facebookForms FacebookForm[]
   facebookDeliveries FacebookLeadDelivery[]
-
+  webForms        WebForm[]
+  webFormSubmissions WebFormSubmission[]
+  assignmentRules AssignmentRule[]
+  workingHours    WorkingHours?
+  outOfOffice     OutOfOffice[]
 }
 
 // ---------- Plans & entitlements (M06) ----------
@@ -792,6 +799,7 @@ model LeadSource {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   leads        Lead[]
+  webForms     WebForm[]
 
   @@unique([organizationId, name])
   @@unique([organizationId, key])
@@ -871,8 +879,19 @@ model Lead {
   createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt          DateTime?  @map("deleted_at") @db.Timestamptz(6)
+  /// Lead capture (M14): the web form that created the lead, and the assignment rule that routed it.
+  webFormId          String?    @map("web_form_id") @db.Uuid
+  assignmentRuleId   String?    @map("assignment_rule_id") @db.Uuid
+  assignmentHeldAt   DateTime?  @map("assignment_held_at") @db.Timestamptz(6)
+  slaRemindedAt      DateTime?  @map("sla_reminded_at") @db.Timestamptz(6)
+  slaEscalatedAt     DateTime?  @map("sla_escalated_at") @db.Timestamptz(6)
+  /// Most recent enquiry (repeat enquiries merge into the open lead).
+  latestSourceId     String?    @map("latest_source_id") @db.Uuid
+  latestWebFormId    String?    @map("latest_web_form_id") @db.Uuid
+  latestEnquiryAt    DateTime?  @map("latest_enquiry_at") @db.Timestamptz(6)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  webForm      WebForm?     @relation(fields: [webFormId], references: [id], onDelete: SetNull, onUpdate: NoAction)
   source       LeadSource?  @relation(fields: [sourceId], references: [id], onDelete: SetNull)
   lostReason   LostReason?  @relation(fields: [lostReasonId], references: [id], onDelete: SetNull)
   phoneLookups LeadPhone[]
@@ -888,6 +907,7 @@ model Lead {
   @@index([organizationId, campaignId])
   @@map("leads")
   @@index([organizationId, importId])
+  @@index([webFormId])
   @@unique([organizationId, id])
 }
 
@@ -918,6 +938,9 @@ model Campaign {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  impressions Int?
+  clicks Int?
+  syncedAt DateTime? @map("synced_at") @db.Timestamptz(6)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   leads Lead[]
   @@unique([organizationId, id])
@@ -1073,6 +1096,8 @@ model Deal {
   contacts     DealContact[]
   history      DealStageHistory[]
 
+  // Partial list index deals_live_created_idx (organization_id, created_at DESC, id DESC)
+  // WHERE deleted_at IS NULL is managed in SQL (20261024010000), like deals_board_idx.
   @@index([organizationId, pipelineId, stageId])
   @@index([organizationId, ownerId, status])
   @@index([organizationId, status, closedAt])
@@ -1785,6 +1810,141 @@ model EmailSuppression {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   @@unique([organizationId, recipientKey])
   @@map("email_suppressions")
+}
+
+// ---------- Lead capture (M14) ----------
+// Production created these tables in migration 20261021000000_lead_capture, which is not in this
+// repository; 20261024000000_lead_capture_restore recreates them idempotently for new databases.
+// SQL-only: CHECK constraints (form key format, rule strategy/outside_hours/daily_cap, working-hour
+// times, out-of-office range, catalog key/weight) and the partial lead indexes in that migration.
+
+/// Embeddable enquiry form. `fields`/`settings` are validated by validators/webForm.validators.js.
+model WebForm {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  /// Public 22-character id used in /f/:key and the embed script
+  key            String    @unique
+  name           String
+  fields         Json      @default("[]")
+  settings       Json      @default("{}")
+  sourceId       String?   @map("source_id") @db.Uuid
+  isActive       Boolean   @default(false) @map("is_active")
+  views          Int       @default(0)
+  submissions    Int       @default(0)
+  createdById    String?   @map("created_by_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  source       LeadSource?         @relation(fields: [sourceId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  createdBy    User?               @relation(fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  leads        Lead[]
+  entries      WebFormSubmission[]
+
+  @@unique([id, organizationId])
+  // Partial index web_forms_organization_id_idx (live forms) is managed in SQL.
+  @@index([sourceId])
+  @@index([createdById])
+  @@map("web_forms")
+}
+
+/// One accepted submission and what happened to it (created | merged_into_open | linked_contact).
+model WebFormSubmission {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  formId         String   @map("form_id") @db.Uuid
+  leadId         String?  @map("lead_id") @db.Uuid
+  outcome        String
+  /// Answers as submitted (after validation)
+  payload        Json     @default("{}")
+  /// ip, userAgent, pageUrl, referrer, utm, assignment details
+  meta           Json     @default("{}")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  form         WebForm      @relation(fields: [formId, organizationId], references: [id, organizationId], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([formId, createdAt(sort: Desc)])
+  @@index([leadId])
+  @@index([organizationId, formId])
+  @@map("web_form_submissions")
+}
+
+model AssignmentRule {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId    String   @map("organization_id") @db.Uuid
+  name              String
+  position          Int      @default(0)
+  isActive          Boolean  @default(true) @map("is_active")
+  conditions        Json     @default("[]")
+  /// round_robin | load_balanced | specific_user
+  strategy          String   @default("round_robin")
+  memberIds         String[] @default([]) @map("member_ids") @db.Uuid
+  /// assign_anyway | hold_until_open | fallback
+  outsideHours      String   @default("assign_anyway") @map("outside_hours")
+  onlyWorkingHours  Boolean  @default(true) @map("only_working_hours")
+  dailyCap          Int?     @map("daily_cap")
+  lastAssignedIndex Int      @default(-1) @map("last_assigned_index")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([organizationId, position])
+  @@map("assignment_rules")
+}
+
+model WorkingHours {
+  organizationId          String   @id @map("organization_id") @db.Uuid
+  timezone                String   @default("Asia/Kolkata")
+  days                    Int[]    @default([1, 2, 3, 4, 5, 6]) @db.SmallInt
+  startTime               String   @default("10:00") @map("start_time")
+  endTime                 String   @default("19:00") @map("end_time")
+  fallbackOwnerId         String?  @map("fallback_owner_id") @db.Uuid
+  firstResponseSlaMinutes Int?     @map("first_response_sla_minutes")
+  slaAutoReassign         Boolean  @default(false) @map("sla_auto_reassign")
+  updatedAt               DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  fallbackOwner User?        @relation(fields: [fallbackOwnerId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([fallbackOwnerId])
+  @@map("working_hours")
+}
+
+model OutOfOffice {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  startsAt       DateTime @map("starts_at") @db.Timestamptz(6)
+  endsAt         DateTime @map("ends_at") @db.Timestamptz(6)
+  note           String   @default("")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([organizationId, userId, endsAt])
+  @@index([userId])
+  @@map("out_of_office")
+}
+
+/// Global catalogue of lead source types (seeded in production).
+model LeadSourceCatalog {
+  key                String   @id
+  name               String   @unique
+  category           String   @default("other")
+  description        String   @default("")
+  defaultScoreWeight Int      @default(5) @map("default_score_weight")
+  allowWebForm       Boolean  @default(false) @map("allow_web_form")
+  defaultEnabled     Boolean  @default(false) @map("default_enabled")
+  isActive           Boolean  @default(true) @map("is_active")
+  position           Int      @default(0)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("lead_source_catalog")
 }
 
 

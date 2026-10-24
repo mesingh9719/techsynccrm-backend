@@ -72,6 +72,14 @@ export async function createSource(req, res) {
   ok(res, { source: await setup.createSource(req.ctx, req.body) }, 201)
 }
 
+export async function listSourceSuggestions(req, res) {
+  ok(res, { suggestions: await setup.listSourceSuggestions(req.ctx) })
+}
+
+export async function orderSources(req, res) {
+  ok(res, { sources: await setup.orderSources(req.ctx, req.body.ids) })
+}
+
 export async function updateSource(req, res) {
   ok(res, { source: await setup.updateSource(req.ctx, id(req), req.body) })
 }

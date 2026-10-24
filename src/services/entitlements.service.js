@@ -12,7 +12,7 @@ const GB = 1024 ** 3
 
 /**
  * How each limited resource is counted for a workspace. Modules that add the counted tables
- * replace their placeholder here: webForms (M14), workflowRules (M18).
+ * replace their placeholder here: workflowRules (M18).
  *
  * @type {Record<string, (db: any, orgId: string, opts?: { entityType?: string }) => Promise<number>>}
  */
@@ -37,7 +37,8 @@ const COUNTERS = {
   pipelines: async (db, orgId) => db.pipeline.count({ where: { organizationId: orgId, archivedAt: null } }),
   /** Per entity type; archived definitions still count (M07). */
   customFields: async (db, orgId, { entityType } = {}) => db.customFieldDefinition.count({ where: { organizationId: orgId, ...(entityType && { entityType }) } }),
-  webForms: async () => 0,
+  /** Forms that aren't deleted, published or not (M14). */
+  webForms: async (db, orgId) => db.webForm.count({ where: { organizationId: orgId, deletedAt: null } }),
   workflowRules: async () => 0,
   /** Bytes stored in Object Storage by this workspace. */
   storage: async (db, orgId) => {

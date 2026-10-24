@@ -28,7 +28,7 @@ async function keepsAccessDuringSeatSelection(orgId, userId, role) {
 
 /**
  * Workspace routes: authenticates, then loads the user, their membership of the token's workspace
- * and the workspace itself in ONE query — on every request, so removing someone, changing their
+ * and the workspace itself in one parallel round trip — on every request, so removing someone, changing their
  * role or deleting a workspace takes effect immediately rather than when the access token expires.
  * Also replaces `requireVerified`, and enforces the workspace's "require 2FA" setting.
  *
@@ -41,29 +41,29 @@ export async function loadOrgContext(req, _res, next) {
   const orgId = req.user.orgId
   if (!orgId) return next(ORG_REQUIRED())
 
-  const membership = await prisma.membership.findUnique({
-    where: { organizationId_userId: { organizationId: orgId, userId: req.user.id } },
-    select: {
-      role: true,
-      status: true,
-      user: { select: { email: true, emailVerifiedAt: true, twoFactorEnabledAt: true, deletedAt: true } },
-      organization: {
-        select: {
-          id: true,
-          plan: true,
-          timezone: true,
-          currency: true,
-          country: true,
-          locale: true,
-          fiscalYearStartMonth: true,
-          require2fa: true,
-          trialEndsAt: true,
-          seatSelectionRequiredAt: true,
-          deletedAt: true,
-        },
+  // Three key lookups in parallel: one database round trip instead of a membership query followed
+  // by its relation queries. Runs on every workspace request.
+  const [found, user, organization] = await Promise.all([
+    prisma.membership.findUnique({ where: { organizationId_userId: { organizationId: orgId, userId: req.user.id } }, select: { role: true, status: true } }),
+    prisma.user.findUnique({ where: { id: req.user.id }, select: { email: true, emailVerifiedAt: true, twoFactorEnabledAt: true, deletedAt: true } }),
+    prisma.organization.findUnique({
+      where: { id: orgId },
+      select: {
+        id: true,
+        plan: true,
+        timezone: true,
+        currency: true,
+        country: true,
+        locale: true,
+        fiscalYearStartMonth: true,
+        require2fa: true,
+        trialEndsAt: true,
+        seatSelectionRequiredAt: true,
+        deletedAt: true,
       },
-    },
-  })
+    }),
+  ])
+  const membership = found && user && organization ? { ...found, user, organization } : null
 
   if (!membership || membership.user.deletedAt) return next(ORG_REQUIRED('You don’t have access to this workspace.'))
   if (!membership.user.emailVerifiedAt) return next(new ApiError(403, 'Please verify your email address first.', { code: 'EMAIL_NOT_VERIFIED' }))
