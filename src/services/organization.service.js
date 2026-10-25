@@ -304,7 +304,7 @@ export async function switchOrganization(userId, organizationId) {
  * theirs as they ship (import leads — M13, invite team — M04, connect WhatsApp — M19, web form — M14).
  */
 const CHECKLIST = [
-  { key: 'import_leads', title: 'Import your leads', description: 'Bring your spreadsheet into the workspace.', href: '/app/import?entity=leads', done: (_org, counts) => counts.imports > 0 },
+  { key: 'import_leads', title: 'Import your leads', description: 'Bring your spreadsheet into the workspace.', href: '/app/import?entity=lead', done: (_org, counts) => counts.imports > 0 },
   { key: 'first_pipeline', title: 'Set up your first pipeline', description: 'Your industry pipeline is ready to use.', href: '/app/deals', done: (_org, counts) => counts.pipelines > 0 },
   {
     key: 'invite_team',
