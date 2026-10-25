@@ -15,6 +15,7 @@ import * as campaigns from '../controllers/campaign.controller.js'
 export const campaignRoutes = Router()
 const params = validate(idParams, 'params')
 campaignRoutes.use(requireOrg)
+campaignRoutes.get('/options', permit('campaigns.read'), campaigns.options)
 campaignRoutes.get('/', permit('campaigns.read'), validate(campaignListQuery, 'query'), campaigns.list)
 campaignRoutes.post('/', permit('campaigns.create'), validate(createCampaignSchema), campaigns.create)
 campaignRoutes.post(

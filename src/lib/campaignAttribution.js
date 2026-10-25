@@ -1,3 +1,5 @@
+import { validationError } from './records.js'
+
 /** Stable identifiers only: names and substring matches can attribute a lead twice. */
 export async function resolveCampaignId(db, orgId, { utm, sourceDetail } = {}) {
   const campaignCode = String(utm?.utm_campaign ?? '')
@@ -35,4 +37,12 @@ export async function resolveCampaignId(db, orgId, { utm, sourceDetail } = {}) {
     : matches.length === 1
       ? matches[0].id
       : null
+}
+
+/** Explicit attribution may be edited without rewriting the original capture metadata. */
+export async function validateCampaignId(db, orgId, id) {
+  if (id === null) return null
+  const campaign = await db.campaign.findFirst({ where: { id, organizationId: orgId, deletedAt: null }, select: { id: true } })
+  if (!campaign) throw validationError({ campaignId: 'Choose an existing campaign in this workspace' })
+  return campaign.id
 }

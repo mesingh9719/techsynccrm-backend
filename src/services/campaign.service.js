@@ -1,8 +1,10 @@
+import { campaignTransitions } from '../config/campaigns.js'
+import { emit } from '../events/outbox.js'
 import { Prisma } from '../generated/prisma/client.js'
 import { prisma } from '../db/prisma.js'
 import { hasPermission, scopeFor } from '../config/permissions.js'
 import { visibilityWhere, registerReassignable } from '../lib/visibility.js'
-import { assertAssignableOwner, validationError } from '../lib/records.js'
+import { assertAssignableOwner, dateRange, ownerFilter, validationError } from '../lib/records.js'
 import { recordAudit } from '../lib/audit.js'
 import { versionedUpdate } from '../lib/versionedUpdate.js'
 import { minorToJson, divideHalfEven } from '../lib/money.js'
@@ -48,7 +50,7 @@ async function present(ctx, rows) {
       where: {
         AND: [{ organizationId: ctx.orgId, campaignId: { in: ids }, deletedAt: null }, visibilityWhere(ctx, 'leads')],
       },
-      _count: { _all: true },
+      _count: { _all: true, firstRespondedAt: true },
     }),
     prisma.$queryRaw(Prisma.sql`
       SELECT l.campaign_id AS "campaignId", COUNT(*)::int AS count, SUM(d.value_minor) AS revenue
@@ -88,8 +90,8 @@ async function present(ctx, rows) {
       sourceName: sourceNames.get(row.sourceId) ?? null,
       metrics: {
         leadsCount,
-        contactedCount: count('contacted'),
-        qualifiedCount: count('qualified'),
+        contactedCount: counts.reduce((n, group) => n + (['contacted', 'qualified', 'converted'].includes(group.status) ? group._count._all : (group._count.firstRespondedAt ?? 0)), 0),
+        qualifiedCount: count('qualified') + count('converted'),
         convertedCount: count('converted'),
         dealsWonCount: won?.count ?? 0,
         revenueWonMinor,
@@ -107,12 +109,16 @@ async function present(ctx, rows) {
 
 export async function listCampaigns(ctx, query = {}) {
   const page = parseListQuery(query, {
-    sortable: { createdAt: 'date', name: 'string', updatedAt: 'date' },
+    sortable: { createdAt: 'date', name: 'string', updatedAt: 'date', code: 'string', status: 'string', actualSpendMinor: 'bigint', budgetMinor: 'bigint' },
     defaultSort: '-createdAt',
   })
   const filters = [{ organizationId: ctx.orgId, deletedAt: null }, visibilityWhere(ctx, 'campaigns')]
   if (query.status) filters.push({ status: query.status })
   if (query.type) filters.push({ type: query.type })
+  if (query.ownerId) filters.push(ownerFilter(ctx, query.ownerId))
+  if (query.sourceId) filters.push({ sourceId: query.sourceId })
+  const created = dateRange(query.createdFrom, query.createdTo, ctx.timezone)
+  if (created) filters.push({ createdAt: created })
   if (query.q)
     filters.push({
       OR: [{ name: { contains: query.q, mode: 'insensitive' } }, { code: { contains: query.q, mode: 'insensitive' } }],
@@ -196,6 +202,7 @@ export async function createCampaign(ctx, input) {
         data: { ...data, organizationId: ctx.orgId, createdById: ctx.userId },
       })
       await attributeExisting(tx, ctx, created)
+      await emit(tx, ctx, 'campaign.created', { entityType: 'campaign', entityId: created.id })
       await recordAudit(tx, ctx, { action: 'campaign.created', entityType: 'campaign', entityId: created.id })
       return created
     })
@@ -221,9 +228,14 @@ export async function updateCampaign(ctx, id, input, { expectedUpdatedAt, fromMe
         }
         if (Object.keys(fields).length) throw validationError(fields)
       }
+      if (!isMetaCampaign(before) && input.status && input.status !== before.status && !campaignTransitions[before.status]?.includes(input.status)) {
+        throw new ApiError(400, `Cannot change a ${before.status} campaign to ${input.status}.`, { code: 'INVALID_TRANSITION', details: { from: before.status, to: input.status, allowed: campaignTransitions[before.status] ?? [] } })
+      }
       const data = await prepare(ctx, input, before, tx)
       const updated = await versionedUpdate(tx, 'campaign', ctx, before, data)
       if (data.externalCampaignId) await attributeExisting(tx, ctx, updated)
+      await emit(tx, ctx, 'campaign.updated', { entityType: 'campaign', entityId: id })
+      if (updated.status !== before.status) await emit(tx, ctx, 'campaign.status_changed', { entityType: 'campaign', entityId: id }, { changes: { status: [before.status, updated.status] } })
       await recordAudit(tx, ctx, { action: 'campaign.updated', entityType: 'campaign', entityId: id })
       return updated
     })
@@ -256,6 +268,7 @@ export async function deleteCampaign(ctx, id, { expectedUpdatedAt } = {}) {
     if (expectedUpdatedAt && before.updatedAt.getTime() !== new Date(expectedUpdatedAt).getTime())
       throw new ApiError(409, 'This campaign changed. Refresh and try again.', { code: 'STALE_UPDATE' })
     await versionedUpdate(tx, 'campaign', ctx, before, { deletedAt: new Date() })
+    await emit(tx, ctx, 'campaign.deleted', { entityType: 'campaign', entityId: id })
     await recordAudit(tx, ctx, { action: 'campaign.deleted', entityType: 'campaign', entityId: id })
   })
 }

@@ -1,9 +1,11 @@
+import { campaignTypes, campaignObjectives, campaignStatuses, campaignTransitions } from '../config/campaigns.js'
 import * as campaigns from '../services/campaign.service.js'
 import { listLeads } from '../services/lead.service.js'
 import { concurrency } from './crm.controller.js'
 
 const ok = (res, data, status = 200) => res.status(status).json({ success: true, data })
 const id = (req) => req.validated.params.id
+export const options = (_req, res) => ok(res, { types: campaignTypes, objectives: campaignObjectives, statuses: campaignStatuses, transitions: campaignTransitions })
 export const list = async (req, res) => ok(res, await campaigns.listCampaigns(req.ctx, req.validated.query))
 export const get = async (req, res) => ok(res, { campaign: await campaigns.getCampaign(req.ctx, id(req)) })
 export const create = async (req, res) => ok(res, { campaign: await campaigns.createCampaign(req.ctx, req.body) }, 201)

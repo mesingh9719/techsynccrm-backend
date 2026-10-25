@@ -2,16 +2,8 @@ import { z } from 'zod'
 import { listQuerySchema } from '../lib/pagination.js'
 import { expectedUpdatedAt } from './crm.validators.js'
 
-export const campaignTypes = ['meta_ads', 'google_ads', 'email', 'sms', 'website', 'referral', 'offline', 'other']
-export const campaignObjectives = [
-  'lead_generation',
-  'brand_awareness',
-  'conversion',
-  'retargeting',
-  'event',
-  'retention',
-]
-export const campaignStatuses = ['draft', 'scheduled', 'active', 'paused', 'completed', 'archived']
+import { campaignTypes, campaignObjectives, campaignStatuses } from '../config/campaigns.js'
+export { campaignTypes, campaignObjectives, campaignStatuses } from '../config/campaigns.js'
 const text = (max) => z.string().trim().max(max).nullable()
 const money = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).nullable()
 const fields = {
@@ -83,6 +75,10 @@ export const campaignListQuery = listQuerySchema
     q: z.string().trim().max(100).optional(),
     status: z.enum(campaignStatuses).optional(),
     type: z.enum(campaignTypes).optional(),
+    ownerId: z.string().max(800).refine(value => value.split(',').every(id => ['me', 'none'].includes(id.trim()) || z.uuid().safeParse(id.trim()).success), 'Choose valid owners').optional(),
+    sourceId: z.uuid().optional(),
+    createdFrom: z.iso.date().optional(),
+    createdTo: z.iso.date().optional(),
   })
   .strict()
 export const campaignStatusSchema = z.object({ status: z.enum(campaignStatuses), expectedUpdatedAt }).strict()

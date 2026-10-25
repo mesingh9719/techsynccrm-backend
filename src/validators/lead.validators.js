@@ -35,6 +35,7 @@ const leadFields = {
     .refine((v) => v === null || /^[1-9][0-9]{5}$/.test(v), 'Enter a 6-digit PIN code'),
   sourceId: z.uuid('Choose a source').nullable(),
   sourceDetail: text(200),
+  campaignId: z.uuid('Choose a campaign').nullable(),
   utm: z.record(z.string().max(40), z.string().max(200)).nullable(),
   tagIds,
   customFields,
@@ -51,7 +52,7 @@ export const updateLeadSchema = z
 export const leadListQuery = recordListQuery({
   status: z.string().max(100).optional(),
   sourceId: z.string().max(800).optional(),
-  campaignId: z.uuid().optional(),
+  campaignId: z.string().max(800).refine(value => value.split(',').every(id => id.trim() === 'none' || z.uuid().safeParse(id.trim()).success), 'Choose valid campaigns or none').optional(),
   scoreMin: z.coerce.number().int().min(0).max(100).optional(),
   city: z.string().trim().max(80).optional(),
   stateCode: z.string().max(200).optional(),

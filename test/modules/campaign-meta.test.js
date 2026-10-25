@@ -4,7 +4,7 @@ const { db, graph, connectionFor } = vi.hoisted(() => ({
   db: {
     campaign: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
     lead: { groupBy: vi.fn() }, user: { findMany: vi.fn() }, leadSource: { findMany: vi.fn() },
-    auditLog: { create: vi.fn() }, $queryRaw: vi.fn(), $transaction: vi.fn(),
+    auditLog: { create: vi.fn() }, domainEvent: { create: vi.fn() }, $queryRaw: vi.fn(), $transaction: vi.fn(),
   }, graph: vi.fn(), connectionFor: vi.fn(),
 }))
 vi.mock('../../src/db/prisma.js', () => ({ prisma: db }))
@@ -50,6 +50,7 @@ describe('Meta campaign status changes', () => {
   it('changes Meta, verifies readback, and retains the status through the next sync', async () => {
     const result = await setCampaignStatus(ctx, row.id, 'active', { expectedUpdatedAt: row.updatedAt })
     expect(result.status).toBe('active')
+    expect(db.domainEvent.create.mock.calls.map(([args]) => args.data.type)).toEqual(['campaign.updated', 'campaign.status_changed'])
     expect(remote.status).toBe('ACTIVE')
     expect(posts()).toEqual([['456', 'test-token', { status: 'ACTIVE' }, 'POST']])
     expect(graph.mock.calls.map(call => call[3] ?? 'GET')).toEqual(['GET', 'POST', 'GET'])

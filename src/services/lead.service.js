@@ -1,7 +1,7 @@
 import { versionedUpdate } from '../lib/versionedUpdate.js'
 import { leadQualificationSchema } from '../validators/leadQualification.validators.js'
 import { prisma, DB_NULL } from '../db/prisma.js'
-import { resolveCampaignId } from '../lib/campaignAttribution.js'
+import { resolveCampaignId, validateCampaignId } from '../lib/campaignAttribution.js'
 import { diff, emit, emitMany } from '../events/outbox.js'
 import { recordAudit } from '../lib/audit.js'
 import { computeLeadScore, FROZEN_STATUSES } from '../lib/leadScore.js'
@@ -126,9 +126,15 @@ const AUDITED = ['firstName', 'lastName', 'emails', 'phones', 'companyName', 're
 async function present(rows) {
   const list = Array.isArray(rows) ? rows : [rows]
   if (!list.length) return Array.isArray(rows) ? [] : null
-  const [owners, tags] = await Promise.all([usersById(list.map((r) => r.ownerId)), tagsFor(list[0].organizationId, ENTITY, list.map((r) => r.id))])
+  const campaignIds = [...new Set(list.map(r => r.campaignId).filter(Boolean))]
+  const [owners, tags, campaigns] = await Promise.all([
+    usersById(list.map(r => r.ownerId)), tagsFor(list[0].organizationId, ENTITY, list.map(r => r.id)),
+    campaignIds.length ? prisma.campaign.findMany({ where: { organizationId: list[0].organizationId, id: { in: campaignIds } }, select: { id: true, name: true, code: true } }) : [],
+  ])
+  const campaignsById = new Map(campaigns.map(c => [c.id, c]))
   const out = list.map(({ organizationId: _o, source, ...r }) => ({
     ...r,
+    campaign: campaignsById.get(r.campaignId) ?? null,
     budgetMinor: bigToNumber(r.budgetMinor),
     source: source ? { id: source.id, name: source.name, key: source.key } : null,
     owner: r.ownerId ? (owners.get(r.ownerId) ?? null) : null,
@@ -299,6 +305,7 @@ async function prepare(ctx, input, existing = null, { capture = false, db = pris
     await assertSource(ctx, input.sourceId, db)
     data.sourceId = input.sourceId
   }
+  if ('campaignId' in input) data.campaignId = input.campaignId === existing?.campaignId ? existing.campaignId : await validateCampaignId(db, ctx.orgId, input.campaignId)
   if ('customFields' in input || !existing) {
     data.customFields = await validateCustomFields(ctx, ENTITY, input.customFields ?? {}, { existing: existing?.customFields, isCreate: !existing && !capture })
   }
@@ -326,7 +333,10 @@ async function listWhere(ctx, query, { withStatus = true } = {}) {
   }
   if (query.ownerId) and.push(ownerFilter(ctx, query.ownerId))
   if (query.sourceId) and.push({ sourceId: { in: listParam(query.sourceId) } })
-  if (query.campaignId) and.push({ campaignId: query.campaignId })
+  if (query.campaignId) {
+    const ids = listParam(query.campaignId)
+    and.push({ OR: [...(ids.includes('none') ? [{ campaignId: null }] : []), ...(ids.some(id => id !== 'none') ? [{ campaignId: { in: ids.filter(id => id !== 'none') } }] : [])] })
+  }
   if (query.scoreMin !== undefined) and.push({ score: { gte: query.scoreMin } })
   if (query.city) and.push({ city: { equals: query.city, mode: 'insensitive' } })
   if (query.stateCode) and.push({ stateCode: { in: listParam(query.stateCode) } })
@@ -372,7 +382,7 @@ export async function getLead(ctx, id) {
 /** Inserts a lead (+ lookups, tags, score, event) inside `tx`. Checks the records limit. */
 async function insertLeadTx(tx, ctx, data, { tagIds, extra = {} } = {}) {
   await assertWithinLimit(ctx, 'records', 1, tx)
-  const campaignId = await resolveCampaignId(tx, ctx.orgId, data)
+  const campaignId = 'campaignId' in data ? data.campaignId : await resolveCampaignId(tx, ctx.orgId, data)
   const ownerId = 'ownerId' in data ? data.ownerId : null
   let lead = await tx.lead.create({
     data: { ...data, ...extra, campaignId, organizationId: ctx.orgId, ownerId, assignedAt: ownerId ? new Date() : null, createdById: ctx.userId ?? null },
@@ -475,7 +485,7 @@ export async function updateLead(ctx, id, input, { expectedUpdatedAt, allowDupli
     if (duplicates.length) throw duplicateError(duplicates)
   }
   const after = await (externalTx ? (fn) => fn(externalTx) : (fn) => prisma.$transaction(fn))(async (tx) => {
-    if ('utm' in input || 'sourceDetail' in input) data.campaignId = await resolveCampaignId(tx, ctx.orgId, { utm: 'utm' in input ? input.utm : before.utm, sourceDetail: 'sourceDetail' in input ? input.sourceDetail : before.sourceDetail })
+    if (!('campaignId' in input) && ('utm' in input || 'sourceDetail' in input)) data.campaignId = await resolveCampaignId(tx, ctx.orgId, { utm: 'utm' in input ? input.utm : before.utm, sourceDetail: 'sourceDetail' in input ? input.sourceDetail : before.sourceDetail })
     let row = await versionedUpdate(tx, 'lead', ctx, before, data, leadSelect)
     if (data.emails || data.phones) await syncLeadLookups(tx, ctx.orgId, id, row.emails, row.phones)
     if (input.tagIds) await setRecordTags(tx, ctx, ENTITY, id, input.tagIds)
