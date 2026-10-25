@@ -16,7 +16,7 @@ import { enqueue } from '../jobs/queue.js'
 import { ApiError } from '../utils/ApiError.js'
 import { createContact, updateContact, listContacts } from './contact.service.js'
 import { createCompany, updateCompany, listCompanies, normalizeDomain } from './company.service.js'
-import { createLead, updateLead, listLeads } from './lead.service.js'
+import { createLead, updateLead, listLeads, getLead } from './lead.service.js'
 import { createDealTx, updateDeal, listDeals, missingFor } from './deal.service.js'
 import { createContactSchema, createCompanySchema, contactListQuery, companyListQuery } from '../validators/crm.validators.js'
 import { createLeadSchema, leadListQuery } from '../validators/lead.validators.js'
@@ -585,6 +585,28 @@ function exportContext(ctx) {
   if (!scope) throw forbidden()
   if (scope === 'team') return { ...ctx, forExport: true, permissions: ctx.permissions.filter((p) => !Object.values(ENTITIES).some((e) => p === `${e.resource}.read.all`)).concat(Object.values(ENTITIES).map((e) => `${e.resource}.read.team`)) }
   return ctx
+}
+/** Bounded, visibility-scoped RAW Google Sheets projection; never proxies arbitrary CRM columns. */
+export async function googleLeadRows(ctx, { leadId, filters = {}, columns = ['id', 'displayName', 'primaryEmail', 'primaryPhoneE164', 'companyName', 'status', 'city', 'budgetMinor', 'source', 'owner'] }) {
+  ctx = exportContext(ctx)
+  const allowed = new Set(['id', 'displayName', 'primaryEmail', 'primaryPhoneE164', 'companyName', 'status', 'city', 'budgetMinor', 'source', 'owner'])
+  if (!columns.length || columns.some((column) => !allowed.has(column))) throw invalid('Choose valid lead export columns.')
+  let rows
+  if (leadId) {
+    // getLead supports record reading; explicitly apply the stricter export visibility first.
+    if (!await prisma.lead.count({ where: { AND: [{ id: leadId, organizationId: ctx.orgId, deletedAt: null }, visibilityWhere(ctx, 'leads', 'read')] } })) throw forbidden()
+    rows = [await getLead(ctx, leadId)]
+  } else rows = await exportRows(ctx, { entityType: 'lead', filters }, 5001)
+  if (rows.length > 5000) throw invalid('Google Sheets exports are limited to 5,000 leads. Narrow the filters.')
+  const labels = { id: 'Lead ID', displayName: 'Name', primaryEmail: 'Email', primaryPhoneE164: 'Phone', companyName: 'Company', status: 'Status', city: 'City', budgetMinor: 'Budget', source: 'Source', owner: 'Owner' }
+  const values = [columns.map((column) => labels[column]), ...rows.map((row) => columns.map((column) => {
+    if (column === 'source') return row.source?.name || ''
+    if (column === 'owner') return row.owner?.fullName || ''
+    if (column === 'budgetMinor' && row[column] != null) { const n = BigInt(row[column]); return `${n < 0n ? '-' : ''}${(n < 0n ? -n : n) / 100n}.${String((n < 0n ? -n : n) % 100n).padStart(2, '0')}` }
+    return row[column] == null ? '' : String(row[column])
+  }))]
+  if (Buffer.byteLength(JSON.stringify(values)) > 4 * 1024 * 1024) throw invalid('This Google Sheets export is too large. Narrow the filters.')
+  return values
 }
 async function exportRows(ctx, job, cap = 50001) {
   ctx = exportContext(ctx)

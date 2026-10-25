@@ -33,6 +33,13 @@ export async function purgeDeletedRecords(now = new Date()) {
         const byOrg = Map.groupBy(rows, (r) => r.organizationId)
         for (const [orgId, list] of byOrg) await deleteTagsOf(tx, orgId, entityType, list.map((r) => r.id))
         if (model === 'contact') await tx.lead.updateMany({ where: { contactId: { in: rows.map((r) => r.id) } }, data: { contactId: null } })
+        if (model === 'lead') {
+          // Remove local copies/links at the lead's retention boundary. Google resources remain
+          // in their owner's account, just as downloaded exports do.
+          const leadIds = rows.map((r) => r.id)
+          await tx.googleCalendarEvent.deleteMany({ where: { leadId: { in: leadIds } } })
+          await tx.googleSheet.deleteMany({ where: { leadId: { in: leadIds } } })
+        }
         await tx[model].deleteMany({ where: { id: { in: rows.map((r) => r.id) } } })
       })
       total += rows.length

@@ -1,5 +1,7 @@
 # Phase 0 implementation record
 
+> This records the original foundation. Calendar, Meet and Sheets tools now extend it; see the [current implementation](14-calendar-meet-sheets.md).
+
 25 October 2026. Implemented on `feat/google-workspace-foundation` in the independent backend and frontend repositories. User-staged Gmail/Templates changes were preserved. Canonical tracked program documents live under `backend/docs/integrations/google-workspace`; the workspace-level planning copy is retained for convenience.
 
 ## Delivered behavior

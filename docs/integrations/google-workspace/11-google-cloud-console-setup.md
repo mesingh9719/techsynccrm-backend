@@ -1,6 +1,6 @@
-# Google Cloud Console setup for the Workspace foundation
+# Google Cloud Console setup for Calendar, Meet and Sheets
 
-Updated 25 October 2026. The code is implemented with all new flags off by default. No Cloud project, OAuth credential, real Google account operation or production migration was performed during implementation. These are the remaining operator steps. Calendar events, Drive attachments and Google Sheets exports are later phases; this setup enables connection preparation and access checks only.
+Updated 25 October 2026. The code is implemented with all new flags off by default. No Cloud project, OAuth credential, real Google account operation or production migration was performed during implementation. These are the remaining operator steps. Calendar meetings, Google Meet links and app-created Google Sheets editing/lead exports are now implemented. See [current feature scope](14-calendar-meet-sheets.md). Drive attachment browsing remains pending.
 
 ## 1. Use your existing account and project
 
@@ -12,7 +12,7 @@ Keep an inventory of environment, project number, client ID, callback, key versi
 
 ## 2. Enable the APIs
 
-In **APIs & Services → Library**, enable **Google Calendar API**, **Google Drive API** and **Google Sheets API** for the planned features. OAuth itself does not prove those content methods work; they require later real-account tests. Google Picker API and a browser-restricted API key are deferred until the Drive Picker phase. No service-account impersonation or domain-wide delegation is needed for per-user connections.
+In **APIs & Services → Library**, enable **Google Calendar API**, **Google Drive API** and **Google Sheets API** for the implemented features. You have already enabled Google Meet API; scheduled Meet links here are created by Google Calendar API, so Calendar API must also be enabled. No additional Meet scope is needed. OAuth itself does not prove those content methods work; they require a real-account pilot after deployment. Google Picker API and a browser-restricted API key are deferred until the Drive Picker phase. No service-account impersonation or domain-wide delegation is needed for per-user connections.
 
 ## 3. Configure Google Auth Platform
 
@@ -39,7 +39,7 @@ The official [Calendar scope guide](https://developers.google.com/workspace/cale
 Go to **Google Auth Platform → Clients** and open the **Web application** client already used for Gmail/sign-in. Add this exact backend callback under **Authorized redirect URIs**, keeping every existing callback. You may create another Web application client inside this same project if you prefer, but it is optional and shares the same revocation boundary:
 
 ```text
-Local standard development: http://localhost:5000/api/google/oauth/callback
+Your local backend (8900):   http://localhost:8900/api/google/oauth/callback
 Production example:         https://api.YOUR-DOMAIN/api/google/oauth/callback
 ```
 
@@ -70,14 +70,14 @@ Choose **one** credential wrapping mechanism:
 
 Never use `VITE_*` for these values or commit secrets. Keep old wrapping keys/KMS versions decryptable while any connection or 30-day revocation-outbox row still needs them. Changing the active wrapping version affects newly wrapped credentials; existing rows retain their version until reconnected/rewrapped. KMS setup must be tested with real runtime identities; syntactically valid configuration alone does not confirm IAM access.
 
-Deploy the additive migration `20261025150000_google_workspace_foundation` through your normal migration process, generate the Prisma client, then deploy/restart API and worker. The `google.maintain` worker job runs every minute and performs cleanup even with rollout disabled. This implementation was migrated only on disposable local databases.
+Deploy the additive migrations `20261025150000_google_workspace_foundation` and `20261025180000_google_calendar_sheets` through your normal migration process, generate the Prisma client, then deploy/restart API and worker. The `google.maintain` worker job runs every minute and performs cleanup even with rollout disabled. Calendar/Sheets operations need the worker and `google.content.maintain` recovery as well. This implementation was migrated only on disposable local databases.
 
-## 7. Enable a controlled connection pilot
+## 7. Enable a controlled feature pilot
 
 1. With the Console and runtime values complete, turn `GOOGLE_WORKSPACE_ENABLED=true` and only the service flags selected for your pilot. Restart both processes. Leave other flags off.
-2. In TechSync **Settings → Team & Google**, enable the matching permission-setup preferences. New workspaces start with every preference off. The future-export preference does not enable a Google export feature in this release.
+2. In TechSync **Settings → Team & Google**, enable **Allow Calendar & Meet** and **Allow Google Sheets**. Enable **Allow lead exports to Google Sheets** when lead copying is intended. New workspaces start with every preference off.
 3. Sign into TechSync as an authorized test user. Open **Settings → Google connections**, review a service's permission notice, check its acknowledgement and continue to Google. The Google account may differ from the CRM login account.
-4. Confirm the returned account and chosen service preference. Verify cancellation and denied permission leave existing connections unchanged; no Calendar event or Drive/Sheets content should be created in Phase 0.
+4. Confirm the returned account and chosen service preference. Verify cancellation and denied permission leave existing connections unchanged; connecting alone should create no content. Review/enable older Calendar and Sheets preferences again for the current consent version. Open the sidebar **Calendar & Meet**, set up the TechSync calendar, and schedule a guest-free Meet call. Open **Google Sheets** to create/edit a notes spreadsheet. From a lead, schedule a meeting or export selected lead fields.
 5. Test access checks, local service-off, workspace disconnect and reconnect using designated test accounts only. In shared-project mode the UI shows **Manage Google Account access** instead of in-app project revocation. Confirm ordinary disconnect does not interrupt Gmail/sign-in. Test full removal separately at Google Account connections, expecting other service grants in the project to be invalidated and re-consent needed. Separate-project mode retains the in-app project-removal action with recent login and typed confirmation.
 
 ## 8. Before public launch

@@ -1,0 +1,12 @@
+{
+  "results": [
+    "Same-project OAuth and separate Calendar/Sheets service preferences",
+    "Lead → Google meeting → durable job → Meet link and linked CRM task, no automatic guests",
+    "Calendar edit synchronizes Google and task; cancellation completes in the background",
+    "Sidebar Sheets → create → native cell edit → save to Google → reload persists value",
+    "Concurrent cell edits are rejected; unsaved changes block route navigation",
+    "Lead export opens in native Sheets editor; Calendar and Sheets fit mobile screens",
+    "Viewer role cannot access content tools or sidebar links"
+  ],
+  "errors": []
+}

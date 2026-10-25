@@ -7,6 +7,7 @@ import { ApiError } from '../utils/ApiError.js'
 import { tenantSettings } from '../integrations/google/access.js'
 import { GOOGLE_SERVICES, CONSENT_VERSION, cookieName, cookieOptions } from '../integrations/google/config.js'
 import * as google from '../integrations/google/connection.js'
+import { googleResourcesRoutes } from './googleResources.routes.js'
 
 const guarded = (fn) => async (req, res, next) => {
   try { await fn(req, res) } catch (error) {
@@ -31,6 +32,7 @@ googleWorkspaceRoutes.get('/oauth/callback', limited, async (req, res) => {
   res.redirect(303, google.callbackDestination(returnTo, status))
 })
 googleWorkspaceRoutes.use(requireOrg)
+googleWorkspaceRoutes.use(googleResourcesRoutes)
 googleWorkspaceRoutes.get('/connections/me', guarded(async (req, res) => ok(res, await google.me(req.ctx))))
 googleWorkspaceRoutes.post('/oauth/start', permit('google.connect.own'), limited,
   validate(z.object({ service, consentVersion: z.literal(CONSENT_VERSION), returnTo: z.string().max(160).optional() }).strict()), guarded(async (req, res) => {

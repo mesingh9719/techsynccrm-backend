@@ -27,7 +27,7 @@ export async function me(ctx) {
   ])
   const c = settings(), setup = configurationStatus(c), canConnect = hasPermission(ctx.permissions, 'google.connect.own')
   return { connection: publicConnection(row), gmail, setup, consentVersion: CONSENT_VERSION, canConnect,
-    services: GOOGLE_SERVICES.map((service) => ({ service, connectionOnly: true, available: setup.ready && c.services[service],
+    services: GOOGLE_SERVICES.map((service) => ({ service, connectionOnly: service === 'drive', available: setup.ready && c.services[service],
       tenantEnabled: tenant[`${service}Enabled`], permissionGranted: row?.clientFingerprint === fingerprint(c.clientId) && row?.projectNumber === c.projectNumber && row.grantedScopes.includes(SERVICE_SCOPES[service]) || false,
       enabled: canConnect && setup.ready && c.services[service] && tenant[`${service}Enabled`] && row?.status === 'connected' && row.clientFingerprint === fingerprint(c.clientId) && row.projectNumber === c.projectNumber && row.grantedScopes.includes(SERVICE_SCOPES[service]) && row.services.some((s) => s.service === service && s.enabled && s.consentVersion === CONSENT_VERSION) || false })) }
 }

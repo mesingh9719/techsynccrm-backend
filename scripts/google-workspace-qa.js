@@ -20,6 +20,9 @@ googleProvider.exchange = async (code) => ({ refresh_token: 'fixture-refresh-onl
 googleProvider.identity = async () => ({ subject: 'browser-fixture-subject', email: 'google-browser@example.test' })
 googleProvider.refresh = async () => ({ access_token: 'fixture-access-only', expiry_date: Date.now() + 3600000 })
 googleProvider.revoke = async () => {}
+const { fakeGoogleContent } = await import('../test/fixtures/google-content-provider.js')
+const content = fakeGoogleContent()
+googleProvider.request = content.request
 const { prisma } = await import('../src/db/prisma.js')
 if (process.argv.includes('--reset-fixtures')) {
   const fs = await import('node:fs/promises')
@@ -27,6 +30,8 @@ if (process.argv.includes('--reset-fixtures')) {
   const organizationId = { in: fixtures.map((row) => row.orgId) }
   assert.equal(await prisma.organization.count({ where: { id: organizationId, slug: { startsWith: 'product-review-qa-' } } }), fixtures.length)
   await prisma.$transaction(async (tx) => {
+    const meetings = await tx.googleCalendarEvent.findMany({ where: { organizationId }, select: { taskId: true } })
+    if (meetings.length) await tx.task.deleteMany({ where: { organizationId, id: { in: meetings.map((row) => row.taskId) } } })
     await tx.googleConnection.deleteMany({ where: { organizationId } })
     await tx.googleRevocation.deleteMany({ where: { organizationId } })
     await tx.googleWorkspaceOAuthState.deleteMany({ where: { organizationId } })
@@ -36,7 +41,13 @@ if (process.argv.includes('--reset-fixtures')) {
 }
 const { startQueue, stopQueue } = await import('../src/jobs/queue.js')
 await startQueue({ role: 'api' })
+const { registerHandler } = await import('../src/jobs/queue.js')
+const { syncCalendarEvent, recoverCalendarEvents } = await import('../src/integrations/google/calendar.js')
+const { runGoogleSheet, recoverGoogleSheets } = await import('../src/integrations/google/sheets.js')
+await registerHandler('google.calendar.sync', (job) => syncCalendarEvent(job.data.id))
+await registerHandler('google.sheets.create', (job) => runGoogleSheet(job.data.id))
+const recovery = setInterval(() => Promise.allSettled([recoverCalendarEvents(), recoverGoogleSheets()]), 5000)
 const { default: app } = await import('../src/app.js')
 const server = app.listen(5063, '127.0.0.1', () => console.log('Mock Google QA API http://127.0.0.1:5063 (local synthetic data only)'))
-const shutdown = async () => { server.closeAllConnections(); await new Promise((resolve) => server.close(resolve)); await stopQueue(); await prisma.$disconnect(); process.exit(0) }
+const shutdown = async () => { clearInterval(recovery); server.closeAllConnections(); await new Promise((resolve) => server.close(resolve)); await stopQueue(); await prisma.$disconnect(); process.exit(0) }
 process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown)

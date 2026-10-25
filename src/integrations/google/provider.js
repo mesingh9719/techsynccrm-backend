@@ -20,6 +20,25 @@ async function kms(action, name, data) {
 }
 /** Network methods are mocked in tests, never bypassed with a production test switch. */
 export const googleProvider = {
+  async request(token, api, path, { method = 'GET', query = {}, body, headers = {} } = {}) {
+    const roots = { calendar: 'https://www.googleapis.com/calendar/v3/', sheets: 'https://sheets.googleapis.com/v4/', drive: 'https://www.googleapis.com/drive/v3/' }
+    if (!roots[api] || path.startsWith('/') || path.includes('://')) throw googleError('GOOGLE_INVALID_RESOURCE', 'Invalid Google resource.', 400)
+    const url = new URL(path, roots[api])
+    for (const [key, value] of Object.entries(query)) if (value !== undefined) url.searchParams.set(key, String(value))
+    let response
+    try { response = await fetch(url, { method, headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json', ...headers }, ...(body && { body: JSON.stringify(body) }), signal: AbortSignal.timeout(20000) }) }
+    catch { throw googleError('GOOGLE_REMOTE_UNCERTAIN', 'Google did not confirm this operation. Check its status before retrying.', 503) }
+    if (!response.ok) {
+      let reason
+      try { const data = await response.json(); reason = data.error?.errors?.[0]?.reason || data.error?.status } catch { /* No provider payload escapes. */ }
+      const code = response.status === 404 || response.status === 410 ? 'GOOGLE_REMOTE_NOT_FOUND' : response.status === 409 ? 'GOOGLE_REMOTE_EXISTS' : response.status === 412 ? 'GOOGLE_REMOTE_CONFLICT' : response.status === 429 ? 'GOOGLE_RATE_LIMITED' : response.status === 401 ? 'GOOGLE_RECONNECT_REQUIRED' : ['accessNotConfigured', 'SERVICE_DISABLED'].includes(reason) ? 'GOOGLE_API_DISABLED' : response.status === 403 ? 'GOOGLE_PERMISSION_DENIED' : response.status === 400 ? 'GOOGLE_REQUEST_REJECTED' : 'GOOGLE_UNAVAILABLE'
+      throw Object.assign(googleError(code, 'Google could not complete this request. Check the connection, enabled APIs and resource access.', response.status >= 500 || response.status === 429 ? 503 : 409), { providerStatus: response.status })
+    }
+    if (response.status === 204) return {}
+    const text = await response.text()
+    if (Buffer.byteLength(text) > 8 * 1024 * 1024) throw googleError('GOOGLE_RESULT_TOO_LARGE', 'The Google response is too large. Use a smaller range.', 413)
+    try { return text ? JSON.parse(text) : {} } catch { throw googleError('GOOGLE_UNAVAILABLE', 'Google returned an incomplete response.', 503) }
+  },
   async authorization({ state, nonce, scope, loginHint }) {
     const client = oauthClient(), { codeVerifier, codeChallenge } = await client.generateCodeVerifierAsync()
     return { verifier: codeVerifier, url: client.generateAuthUrl({ access_type: 'offline', prompt: 'consent select_account', include_granted_scopes: true,

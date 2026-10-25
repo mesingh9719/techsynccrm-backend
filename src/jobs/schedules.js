@@ -2,6 +2,8 @@ import { runImport, runImportPreview, runExport, recoverTransfers } from '../ser
 import { sendQueued as sendGmail } from '../integrations/gmail/jobs.js'
 import { maintainGmail } from '../integrations/gmail/maintenance.js'
 import { maintainGoogleWorkspace } from '../integrations/google/jobs.js'
+import { syncCalendarEvent, recoverCalendarEvents } from '../integrations/google/calendar.js'
+import { runGoogleSheet, recoverGoogleSheets } from '../integrations/google/sheets.js'
 import { syncMailbox } from '../integrations/gmail/jobs.js'
 import '../integrations/gmail/hooks.js'
 import { processFacebookDelivery, syncFacebookForm, recoverFacebookJobs } from '../integrations/facebook/capture.js'
@@ -30,6 +32,10 @@ export async function registerJobs() {
   await schedule('gmail.maintain', '* * * * *', null, { tz: 'UTC' })
   await registerHandler('google.maintain', () => maintainGoogleWorkspace())
   await schedule('google.maintain', '* * * * *', null, { tz: 'UTC' })
+  await registerHandler('google.calendar.sync', (job) => syncCalendarEvent(job.data.id), { concurrency: 2 })
+  await registerHandler('google.sheets.create', (job) => runGoogleSheet(job.data.id), { concurrency: 2 })
+  await registerHandler('google.content.maintain', async () => { await recoverCalendarEvents(); await recoverGoogleSheets() })
+  await schedule('google.content.maintain', '* * * * *', null, { tz: 'UTC' })
   await registerHandler('facebook.delete', (job) => processFacebookDeletion(job.data.requestId), { concurrency: 2 })
   await registerHandler('facebook.privacy_recover', recoverFacebookDeletions)
   await schedule('facebook.privacy_recover', '* * * * *', null, { tz: 'UTC' })

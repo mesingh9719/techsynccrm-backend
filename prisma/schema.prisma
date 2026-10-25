@@ -206,6 +206,9 @@ model Organization {
   gmailOAuthStates GmailOAuthState[]
   emailSettings TenantEmailSettings?
   googleConnections GoogleConnection[]
+  googleCalendarLinks GoogleCalendarLink[]
+  googleCalendarEvents GoogleCalendarEvent[]
+  googleSheets GoogleSheet[]
   googleWorkspaceOAuthStates GoogleWorkspaceOAuthState[]
   googleWorkspaceSettings GoogleWorkspaceSettings?
   googleSyncLogs GoogleSyncLog[]
@@ -835,6 +838,8 @@ model LostReason {
 
 /// An unqualified enquiry. Converts into a contact (+ company, + deal from M09).
 model Lead {
+  googleCalendarEvents GoogleCalendarEvent[]
+  googleSheets GoogleSheet[]
   deals Deal[] @relation("DealLead")
   campaignId String? @map("campaign_id") @db.Uuid
   campaign Campaign? @relation(fields: [organizationId, campaignId], references: [organizationId, id], onDelete: NoAction, onUpdate: NoAction)
@@ -1293,11 +1298,14 @@ model Task {
   updatedAt             DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt             DateTime?  @map("deleted_at") @db.Timestamptz(6)
 
+  googleCalendarEvent GoogleCalendarEvent?
+
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, assigneeId, status, dueAt])
   @@index([organizationId, entityType, entityId])
   @@index([status, dueAt])
+  @@unique([organizationId, id])
   @@map("tasks")
 }
 
@@ -2030,6 +2038,8 @@ model GoogleConnection {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  calendars GoogleCalendarLink[]
+  sheets GoogleSheet[]
   services GoogleServiceConsent[]
   logs GoogleSyncLog[]
   @@unique([organizationId, id])
@@ -2144,4 +2154,105 @@ model EmailTokenRevocation {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   @@index([organizationId, nextAttemptAt])
   @@map("email_token_revocations")
+}
+
+// Explicit appointments and app-managed spreadsheet workspaces; never a broad Google data mirror.
+model GoogleCalendarLink {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  connectionId String @map("connection_id") @db.Uuid
+  googleSubject String @map("google_subject")
+  projectNumber String @map("project_number")
+  providerCalendarId String? @map("provider_calendar_id")
+  status String @default("pending")
+  meetSupported Boolean @default(false) @map("meet_supported")
+  lastError String? @map("last_error")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  connection GoogleConnection @relation(fields: [organizationId, connectionId], references: [organizationId, id], onDelete: Cascade)
+  events GoogleCalendarEvent[]
+  @@unique([organizationId, id])
+  @@unique([organizationId, connectionId, googleSubject])
+  @@map("google_calendar_links")
+}
+
+model GoogleCalendarEvent {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  calendarLinkId String @map("calendar_link_id") @db.Uuid
+  taskId String @map("task_id") @db.Uuid
+  leadId String? @map("lead_id") @db.Uuid
+  requestId String @map("request_id") @db.Uuid
+  requestHash String @map("request_hash")
+  connectionGeneration Int @map("connection_generation")
+  title String
+  startAt DateTime @map("start_at") @db.Timestamptz(6)
+  endAt DateTime @map("end_at") @db.Timestamptz(6)
+  timeZone String @map("time_zone")
+  location String?
+  includeMeet Boolean @default(false) @map("include_meet")
+  attendees String[] @default([])
+  revision Int @default(1)
+  syncedRevision Int @default(0) @map("synced_revision")
+  etag String?
+  projection Json?
+  meetUrl String? @map("meet_url")
+  meetStatus String @default("none") @map("meet_status")
+  cancelRequested Boolean @default(false) @map("cancel_requested")
+  status String @default("queued")
+  attempts Int @default(0)
+  lastError String? @map("last_error")
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  leaseUntil DateTime? @map("lease_until") @db.Timestamptz(6)
+  leaseToken String? @map("lease_token") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  calendar GoogleCalendarLink @relation(fields: [organizationId, calendarLinkId], references: [organizationId, id], onDelete: Cascade)
+  task Task @relation(fields: [organizationId, taskId], references: [organizationId, id], onDelete: Cascade)
+  lead Lead? @relation(fields: [organizationId, leadId], references: [organizationId, id], onDelete: NoAction)
+  @@unique([organizationId, id])
+  @@unique([organizationId, calendarLinkId, requestId])
+  @@unique([organizationId, taskId])
+  @@index([organizationId, calendarLinkId, startAt])
+  @@index([organizationId, leadId, startAt])
+  @@index([status, nextAttemptAt, leaseUntil])
+  @@map("google_calendar_events")
+}
+
+model GoogleSheet {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  connectionId String @map("connection_id") @db.Uuid
+  googleSubject String @map("google_subject")
+  projectNumber String @map("project_number")
+  connectionGeneration Int @map("connection_generation")
+  leadId String? @map("lead_id") @db.Uuid
+  requestId String @map("request_id") @db.Uuid
+  requestHash String @map("request_hash")
+  title String
+  kind String @default("blank")
+  source Json
+  providerFileId String? @map("provider_file_id")
+  sheetId Int @map("sheet_id")
+  createAttempted Boolean @default(false) @map("create_attempted")
+  status String @default("queued")
+  rowCount Int @default(0) @map("row_count")
+  attempts Int @default(0)
+  lastError String? @map("last_error")
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  leaseUntil DateTime? @map("lease_until") @db.Timestamptz(6)
+  leaseToken String? @map("lease_token") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  connection GoogleConnection @relation(fields: [organizationId, connectionId], references: [organizationId, id], onDelete: Cascade)
+  lead Lead? @relation(fields: [organizationId, leadId], references: [organizationId, id], onDelete: NoAction)
+  @@unique([organizationId, id])
+  @@unique([organizationId, connectionId, requestId])
+  @@index([organizationId, connectionId, createdAt])
+  @@index([organizationId, leadId, createdAt])
+  @@index([status, nextAttemptAt, leaseUntil])
+  @@map("google_sheets")
 }

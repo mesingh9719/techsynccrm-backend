@@ -4,7 +4,7 @@ import { ApiError } from '../../utils/ApiError.js'
 import { keyring } from '../../email-integration/crypto/tokenCrypto.js'
 
 export const GOOGLE_SERVICES = ['calendar', 'drive', 'sheets']
-export const CONSENT_VERSION = '2026-10-25-workspace-foundation-v1'
+export const CONSENT_VERSION = '2026-10-25-workspace-tools-v2'
 export const SERVICE_SCOPES = Object.freeze({ calendar: 'https://www.googleapis.com/auth/calendar.app.created', drive: 'https://www.googleapis.com/auth/drive.file', sheets: 'https://www.googleapis.com/auth/drive.file' })
 export const IDENTITY_SCOPES = ['openid', 'email', 'profile']
 const acceptedScopes = new Set([...IDENTITY_SCOPES, ...Object.values(SERVICE_SCOPES), 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'])

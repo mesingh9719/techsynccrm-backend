@@ -174,9 +174,9 @@ async function assertAssignee(ctx, assigneeId, record) {
 
 // ---------- Create & update ----------
 
-export async function createTask(ctx, input) {
+export async function createTask(ctx, input, { db } = {}) {
   const tz = ctx.timezone ?? DEFAULT_TZ
-  const record = input.entityType ? await loadRecord(ctx, input.entityType, input.entityId, 'read') : null
+  const record = input.entityType ? await loadRecord(ctx, input.entityType, input.entityId, 'read', db || prisma) : null
   const assigneeId = input.assigneeId ?? ctx.userId
   await assertAssignee(ctx, assigneeId, record)
   const due = dueFrom(input, tz)
@@ -209,8 +209,8 @@ export async function createTask(ctx, input) {
     if (assigneeId !== ctx.userId) await emit(tx, ctx, 'task.assigned', ref, { changes: { assigneeId: [null, assigneeId] } })
     return task
   }
-  const task = await prisma.$transaction(run)
-  return getTask(ctx, task.id)
+  const task = db ? await run(db) : await prisma.$transaction(run)
+  return db ? task : getTask(ctx, task.id)
 }
 
 export async function getTask(ctx, id) {
