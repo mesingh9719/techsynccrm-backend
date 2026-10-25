@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util'
 import { versionedUpdate } from '../lib/versionedUpdate.js'
 import { leadQualificationSchema } from '../validators/leadQualification.validators.js'
 import { prisma, DB_NULL } from '../db/prisma.js'
@@ -485,7 +486,7 @@ export async function updateLead(ctx, id, input, { expectedUpdatedAt, allowDupli
     if (duplicates.length) throw duplicateError(duplicates)
   }
   const after = await (externalTx ? (fn) => fn(externalTx) : (fn) => prisma.$transaction(fn))(async (tx) => {
-    if (!('campaignId' in input) && ('utm' in input || 'sourceDetail' in input)) data.campaignId = await resolveCampaignId(tx, ctx.orgId, { utm: 'utm' in input ? input.utm : before.utm, sourceDetail: 'sourceDetail' in input ? input.sourceDetail : before.sourceDetail })
+    if (!('campaignId' in input) && (('utm' in input && !isDeepStrictEqual(before.utm ?? null, input.utm ?? null)) || ('sourceDetail' in input && (before.sourceDetail ?? null) !== input.sourceDetail))) data.campaignId = await resolveCampaignId(tx, ctx.orgId, { utm: 'utm' in input ? input.utm : before.utm, sourceDetail: 'sourceDetail' in input ? input.sourceDetail : before.sourceDetail })
     let row = await versionedUpdate(tx, 'lead', ctx, before, data, leadSelect)
     if (data.emails || data.phones) await syncLeadLookups(tx, ctx.orgId, id, row.emails, row.phones)
     if (input.tagIds) await setRecordTags(tx, ctx, ENTITY, id, input.tagIds)

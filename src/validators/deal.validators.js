@@ -137,6 +137,13 @@ export const boardQuery = z
   .catchall(z.string().max(200))
 
 export const forecastQuery = z.object({
+  campaignId: z.uuid().optional(),
+  sourceId: z.uuid().optional(),
+  stageId: z.string().max(400).optional(),
+  q: z.string().trim().max(100).optional(),
+  createdFrom: z.string().max(40).optional(),
+  createdTo: z.string().max(40).optional(),
+  rotting: queryBool,
   pipelineId: z.uuid().optional(),
   period: z.enum(['month', 'quarter']).default('month'),
   ownerId: z.string().max(400).optional(),

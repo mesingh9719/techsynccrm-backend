@@ -56,7 +56,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('campaign completion: real tenan
   const created=await request('/leads',{method:'POST',body:{firstName:'Explicit campaign',emails:[{value:`${uuid()}@example.test`}],utm,sourceDetail:'Original capture',campaignId:b.id}})
   expect(created.status).toBe(201);const lead=created.body.data.lead
   expect(lead).toMatchObject({campaignId:b.id,campaign:{id:b.id,name:b.name,code:b.code},utm,sourceDetail:'Original capture'})
-  const linked=await request(`/leads/${lead.id}`,{method:'PATCH',body:{campaignId:a.id},ifMatch:lead.updatedAt})
+  const unchanged=await request(`/leads/${lead.id}`,{method:'PATCH',body:{firstName:'Updated name',utm,sourceDetail:'Original capture'}})
+  expect(unchanged.body.data.lead.campaignId).toBe(b.id)
+  const linked=await request(`/leads/${lead.id}`,{method:'PATCH',body:{campaignId:a.id},ifMatch:unchanged.body.data.lead.updatedAt})
   expect(linked.body.data.lead).toMatchObject({campaignId:a.id,utm,sourceDetail:'Original capture'})
   const captured=await createLeadFromCapture({orgId:org.id,userId:null,actorType:'system',plan:'business',country:'IN',currency:'INR',permissions:permissionsFor('owner')},{firstName:'Repeat',emails:lead.emails,utm:{utm_campaign:b.code}})
   expect(captured.outcome).toBe('merged_into_open');expect(captured.lead.campaignId).toBe(a.id)

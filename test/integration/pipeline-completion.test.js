@@ -63,6 +63,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('pipeline completion: real tenan
   const query=`pipelineId=${p.id}&campaignId=${campaign.id}&sourceId=${source.id}`
   const list=await request(`/deals?${query}&count=true`),board=await request(`/deals/board?${query}`)
   expect(list.body.data.total).toBe(1);expect(list.body.data.items[0].id).toBe(deal.id);expect(board.body.data.stages.reduce((n,s)=>n+s.count,0)).toBe(1)
+  expect((await request(`/deals/forecast?${query}`)).body.data.totals.count).toBe(1)
+  expect((await request(`/deals/forecast?pipelineId=${p.id}&sourceId=${uuid()}`)).body.data.totals.count).toBe(0)
   expect((await request(`/deals/board?pipelineId=${p.id}&sourceId=${uuid()}`)).body.data.stages.reduce((n,s)=>n+s.count,0)).toBe(0)
   expect((await request(`/deals?pipelineId=${p.id}&campaignId=${uuid()}&count=true`)).body.data.total).toBe(0)
   expect((await request(`/deals/${deal.id}`,{tenant:other.id})).status).toBe(404)

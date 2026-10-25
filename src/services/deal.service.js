@@ -418,7 +418,7 @@ export async function getHistory(ctx, id) {
   const rows = await prisma.dealStageHistory.findMany({ where: { dealId: id, organizationId: ctx.orgId }, orderBy: { movedAt: 'desc' }, take: 200 })
   const stageIds = [...new Set(rows.flatMap((r) => [r.fromStageId, r.toStageId]).filter(Boolean))]
   const [stages, users] = await Promise.all([
-    prisma.pipelineStage.findMany({ where: { id: { in: stageIds } }, select: { id: true, name: true, type: true } }),
+    prisma.pipelineStage.findMany({ where: { organizationId: ctx.orgId, id: { in: stageIds } }, select: { id: true, name: true, type: true } }),
     usersById(rows.map((r) => r.movedById)),
   ])
   const stageMap = new Map(stages.map((s) => [s.id, s]))
@@ -668,10 +668,8 @@ export function periodKey(date, period, fyStartMonth) {
  * total, weighted (value × stage probability, or the deal's override) and count, overall and by
  * owner. Deals without a close date are reported separately.
  */
-export async function forecast(ctx, { pipelineId, period = 'month', ownerId }) {
-  const and = [{ organizationId: ctx.orgId, deletedAt: null, status: 'open' }, visibilityWhere(ctx, RESOURCE, 'read')]
-  if (pipelineId) and.push({ pipelineId })
-  if (ownerId) and.push(ownerFilter(ctx, ownerId))
+export async function forecast(ctx, { period = 'month', ...filters }) {
+  const and = await listWhere(ctx, { ...filters, status: 'open' })
   const deals = await prisma.deal.findMany({
     where: { AND: and },
     select: { valueMinor: true, probabilityOverride: true, expectedCloseDate: true, ownerId: true, status: true, stage: { select: { probability: true } } },
