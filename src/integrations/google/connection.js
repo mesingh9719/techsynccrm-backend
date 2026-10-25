@@ -6,7 +6,7 @@ import { hasPermission } from '../../config/permissions.js'
 import { enqueue } from '../../jobs/queue.js'
 import { googleProvider } from './provider.js'
 import { gmailAdapter } from './gmailAdapter.js'
-import { GOOGLE_SERVICES, CONSENT_VERSION, SERVICE_SCOPES, settings, configurationStatus, requireConfiguration, scopesAllowed, fingerprint, safeReturn, googleError } from './config.js'
+import { GOOGLE_SERVICES, CONSENT_VERSION, SERVICE_SCOPES, settings, configurationStatus, requireConfiguration, scopesAllowed, fingerprint, safeReturn, googleError, sharedGoogleProject } from './config.js'
 import { currentContext, tenantSettings, assertService, requireAdmin, ownedConnection, publicConnection, auditGoogle } from './access.js'
 import { workspaceContext, openValue, sealValue } from './envelope.js'
 import { lockGrant, detachConnection } from './revocation.js'
@@ -66,7 +66,7 @@ export async function finish(query, browser) {
     const tokens = await googleProvider.exchange(query.code, decrypt(state.verifierEnc))
     const identity = await googleProvider.identity(tokens.id_token, state.nonce)
     const scopes = [...new Set(String(tokens.scope || '').split(/\s+/).filter(Boolean))]
-    if (!scopesAllowed(scopes)) throw googleError('GOOGLE_UNEXPECTED_SCOPES', 'Google returned permissions outside this connection profile. Check the dedicated Workspace project.', 400)
+    if (!scopesAllowed(scopes)) throw googleError('GOOGLE_UNEXPECTED_SCOPES', 'Google returned unsupported permissions. Check the OAuth project scope configuration.', 400)
     if (!scopes.includes(SERVICE_SCOPES[state.service])) throw googleError('GOOGLE_SCOPES_MISSING', 'The requested Google permission was not granted. Existing connections are unchanged.', 400)
     const previous = await prisma.googleConnection.findUnique({ where: { organizationId_userId: { organizationId: ctx.orgId, userId: ctx.userId } } })
     if ((previous?.generation || 0) !== state.expectedGeneration) throw googleError('GOOGLE_ACCOUNT_CHANGED', 'Your Google connection changed. Start again.')
@@ -126,6 +126,8 @@ export async function disconnect(ctx, id, { admin = false, projectWide = false }
   if (admin) requireAdmin(ctx)
   if (projectWide) {
     if (admin) throw googleError('GOOGLE_ACCESS_DENIED', 'Only the connected account owner can remove the Google project grant.', 403)
+    const binding = await ownedConnection(ctx, id)
+    if (sharedGoogleProject(binding.projectNumber)) throw googleError('GOOGLE_SHARED_PROJECT_REVOCATION', 'This project also serves Gmail or Google sign-in. Remove full access from your Google Account connections page; this may require reconnecting those services.')
     const first = ctx.sessionId && await prisma.refreshToken.findFirst({ where: { userId: ctx.userId, sessionId: ctx.sessionId }, orderBy: { createdAt: 'asc' }, select: { createdAt: true } })
     if (!first || Date.now() - first.createdAt.getTime() > 15 * 60000 || !await liveSession(prisma, ctx.userId, ctx.sessionId)) throw googleError('GOOGLE_RECENT_LOGIN_REQUIRED', 'Sign out and sign in again before removing Google access.', 401)
   }

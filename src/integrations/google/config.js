@@ -8,7 +8,16 @@ export const CONSENT_VERSION = '2026-10-25-workspace-foundation-v1'
 export const SERVICE_SCOPES = Object.freeze({ calendar: 'https://www.googleapis.com/auth/calendar.app.created', drive: 'https://www.googleapis.com/auth/drive.file', sheets: 'https://www.googleapis.com/auth/drive.file' })
 export const IDENTITY_SCOPES = ['openid', 'email', 'profile']
 const acceptedScopes = new Set([...IDENTITY_SCOPES, ...Object.values(SERVICE_SCOPES), 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'])
-export const scopesAllowed = (scopes) => scopes.every((scope) => acceptedScopes.has(scope))
+const existingGmailScopes = new Set(['https://www.googleapis.com/auth/gmail.send', 'https://www.googleapis.com/auth/gmail.readonly', 'https://www.googleapis.com/auth/gmail.modify'])
+// Account ownership is independent of project isolation. A shared project is supported,
+// but local disconnects must not revoke other services' project-wide grants.
+export const sharedGoogleProject = (projectNumber = env.GOOGLE_WORKSPACE_PROJECT_NUMBER || '') => /^\d+$/.test(projectNumber) &&
+  [env.GOOGLE_GMAIL_CLIENT_ID, env.GOOGLE_AUTH_CLIENT_ID, env.GOOGLE_CLIENT_ID].filter(Boolean).some((client) => client.startsWith(`${projectNumber}-`))
+export const gmailSharesWorkspaceProject = () => sharedGoogleProject() &&
+  Boolean((env.GOOGLE_GMAIL_CLIENT_ID || env.GOOGLE_CLIENT_ID || '').startsWith(`${env.GOOGLE_WORKSPACE_PROJECT_NUMBER}-`))
+// Google can return existing grants for another client in this project. They never
+// enable Gmail operations through the Workspace profile or get requested by it.
+export const scopesAllowed = (scopes) => scopes.every((scope) => acceptedScopes.has(scope) || sharedGoogleProject() && existingGmailScopes.has(scope))
 export const fingerprint = (value) => crypto.createHash('sha256').update(value).digest('hex')
 export const googleError = (code, message, status = 409) => new ApiError(status, message, { code })
 export const settings = () => ({ enabled: env.GOOGLE_WORKSPACE_ENABLED === true,
@@ -25,10 +34,6 @@ export function configurationStatus(c = settings()) {
       (url.protocol === 'https:' || !env.isProduction && url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname))
   } catch { /* Safe diagnostics only. */ }
   const project = /^\d+$/.test(c.projectNumber) && c.clientId.startsWith(`${c.projectNumber}-`) && c.clientId.endsWith('.apps.googleusercontent.com')
-  // Client IDs carry their project number. A second client in the Gmail/sign-in project
-  // would still share Google's project-wide revoke boundary.
-  const separate = [env.GOOGLE_GMAIL_CLIENT_ID, env.GOOGLE_AUTH_CLIENT_ID, env.GOOGLE_CLIENT_ID].filter(Boolean)
-    .every((client) => !client.startsWith(`${c.projectNumber}-`))
   let encryption = false
   if (c.kmsKey) encryption = /^projects\/[^/]+\/locations\/[^/]+\/keyRings\/[^/]+\/cryptoKeys\/[^/]+$/.test(c.kmsKey)
   else {
@@ -39,8 +44,8 @@ export function configurationStatus(c = settings()) {
     } catch { /* Invalid encryption setup disables connections without exposing values. */ }
   }
   const missing = [...(!c.enabled ? ['enabled'] : []), ...(!c.clientId ? ['clientId'] : []), ...(!c.clientSecret ? ['clientSecret'] : []),
-    ...(!project ? ['projectNumber'] : []), ...(!separate ? ['separateProject'] : []), ...(!callback ? ['redirectUri'] : []), ...(!encryption ? ['encryption'] : [])]
-  return { ready: missing.length === 0, missing }
+    ...(!project ? ['projectNumber'] : []), ...(!callback ? ['redirectUri'] : []), ...(!encryption ? ['encryption'] : [])]
+  return { ready: missing.length === 0, missing, sharedProject: sharedGoogleProject(c.projectNumber) }
 }
 export function requireConfiguration() {
   const c = settings()

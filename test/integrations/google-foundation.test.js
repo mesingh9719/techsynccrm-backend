@@ -25,13 +25,24 @@ describe('Google configuration and credential compatibility', () => {
       }
     } finally { verify.mockRestore() }
   })
-  it('requires an independent Google project, valid callback and valid encryption', () => {
+  it('accepts a shared Google project while requiring a valid callback and encryption', () => {
     expect(configurationStatus(config).ready).toBe(true)
-    expect(configurationStatus({ ...config, clientId: fixture.env.GOOGLE_GMAIL_CLIENT_ID, projectNumber: '987654321' }).missing).toContain('separateProject')
+    expect(configurationStatus({ ...config, clientId: fixture.env.GOOGLE_GMAIL_CLIENT_ID, projectNumber: '987654321' })).toMatchObject({ ready: true, missing: [], sharedProject: true })
     expect(configurationStatus({ ...config, projectNumber: 'wrong' }).missing).toContain('projectNumber')
     for (const redirectUri of ['https://api.example.test/elsewhere', 'https://api.example.test/api/google/oauth/callback?x=1', 'http://api.example.test/api/google/oauth/callback']) expect(configurationStatus({ ...config, redirectUri }).missing).toContain('redirectUri')
     expect(configurationStatus({ ...config, kmsKey: 'invalid-key' }).missing).toContain('encryption')
     expect(configurationStatus({ ...config, kmsKey: 'projects/test/locations/global/keyRings/techsync/cryptoKeys/google' }).ready).toBe(true)
+  })
+  it('accepts existing supported Gmail grants only when the project is shared and never allows broad Drive scopes', () => {
+    const original = fixture.env.GOOGLE_WORKSPACE_PROJECT_NUMBER
+    try {
+      fixture.env.GOOGLE_WORKSPACE_PROJECT_NUMBER = '123456789'
+      expect(scopesAllowed(['https://www.googleapis.com/auth/gmail.send'])).toBe(false)
+      fixture.env.GOOGLE_WORKSPACE_PROJECT_NUMBER = '987654321'
+      expect(scopesAllowed(['https://www.googleapis.com/auth/gmail.send', 'https://www.googleapis.com/auth/gmail.readonly'])).toBe(true)
+      expect(scopesAllowed(['https://www.googleapis.com/auth/drive'])).toBe(false)
+      expect(scopesAllowed(['https://mail.google.com/'])).toBe(false)
+    } finally { fixture.env.GOOGLE_WORKSPACE_PROJECT_NUMBER = original }
   })
   it('accepts only exact narrow scopes and safe internal returns', () => {
     expect(scopesAllowed(['openid', 'email', 'profile', ...Object.values(SERVICE_SCOPES)])).toBe(true)

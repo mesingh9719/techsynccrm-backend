@@ -7,7 +7,7 @@ All data was synthetic in disposable local Postgres 16 databases on port 55441. 
 | Check | Result |
 |---|---|
 | Pre-change backend baseline | 450 passed, 2 optional skipped |
-| Final backend suite | 474 passed, 2 optional skipped, 49 test files |
+| Final backend suite including shared-project support | 479 passed, 2 optional skipped, 49 test files |
 | Backend build | Prisma generation, generated client import and syntax check of 239 JS files passed |
 | Frontend Node tests | All 3 files passed |
 | Frontend production build | TypeScript and Vite passed; two existing ineffective dynamic-import warnings |
@@ -15,7 +15,9 @@ All data was synthetic in disposable local Postgres 16 databases on port 55441. 
 | Migration | Additive migration applied to disposable test/browser databases; temporary schema validation and guarded rollback passed |
 | Chrome browser | All six complete journeys passed at desktop and 390px mobile widths; no browser exceptions or horizontal overflow |
 
-The final suite adds 24 Google foundation cases to the baseline. It covers real HTTP routes and database state with only Google network calls mocked: PKCE/offline/incremental authorization, identity audience/nonce/verified-email checks, browser binding, replay/expiry, revoked CRM session, cancellation, partial/broad scope denial, missing and retained refresh credentials, stale OAuth generations, changed client/subject, role changes, own/admin/tenant boundaries, no secret DTOs, per-service consent, tenant switch-off, refresh leases/cache authorization/disconnect races, invalid grant, coordinated cross-workspace revocation, recent login/confirmation, departure maintenance, encrypted outbox retries with rollout off, tenant-composite constraints and outbox survival after hard deletion. Legacy Gmail/email/sign-in regressions pass unchanged.
+The final suite adds 29 Google foundation cases to the baseline. It covers real HTTP routes and database state with only Google network calls mocked: PKCE/offline/incremental authorization, identity audience/nonce/verified-email checks, browser binding, replay/expiry, revoked CRM session, cancellation, partial/broad scope denial, missing and retained refresh credentials, stale OAuth generations, changed client/subject, role changes, own/admin/tenant boundaries, no secret DTOs, per-service consent, tenant switch-off, refresh leases/cache authorization/disconnect races, invalid grant, coordinated cross-workspace revocation, recent login/confirmation, departure maintenance, encrypted outbox retries with rollout off, tenant-composite constraints and outbox survival after hard deletion. Legacy Gmail/email/sign-in regressions pass unchanged.
+
+Five additional shared-project cases verify accepting an existing project/client, recognizing only supported pre-existing Gmail grants without requesting them, local-only Workspace disconnect, blocked in-app shared-project revocation and erasure of queued Workspace/Gmail snapshots without provider calls (also with rollout disabled). No schema migration was required for shared-project support.
 
 The migration rollback was checked inside a transaction and temporary schema: apply DDL, insert a fixture credential, assert rollback refuses, remove fixture, assert empty rollback succeeds, then roll back the entire schema. No migration history or application data was modified by that check. [Migration result](evidence/migration-check.txt).
 
@@ -31,6 +33,8 @@ The migration rollback was checked inside a transaction and temporary schema: ap
 6. Viewer cannot connect services or open team administration.
 
 [Machine-readable browser result](evidence/browser-results.json), [personal mobile](evidence/screenshots/personal-mobile.png), [team desktop](evidence/screenshots/team-desktop.png), [team mobile](evidence/screenshots/team-mobile.png), [project-removal mobile](evidence/screenshots/project-revocation-mobile.png).
+
+The shared-project browser variant passes eight journeys, including the Google Account access link, absence of the in-app project-wide revoke action, local disconnect and successful reconnect through the same OAuth client. [Shared-project result](evidence/shared-project-browser-results.json), [shared-project mobile](evidence/screenshots/shared-project-mobile.png). The previous separate-project evidence remains applicable to optional isolated deployments.
 
 React review checked unconditional hooks, lazy page imports, query keys scoped by organization/user, mutation invalidation, independent parallel queries, permission-gated admin fetching, labeled controls, disabled/pending/error states and reusable dialog focus behavior. The browser run caught a controlled-checkbox save-feedback issue; the UI now shows the pending value while saving and restores the server value on failure. A mobile layout review moved service actions below the text on narrow screens.
 
@@ -53,6 +57,8 @@ node test/google-workspace.browser.mjs
 ```
 
 Tests expect `/usr/bin/google-chrome`; the script documents its overridable Playwright module path. Browser artifacts go to `/tmp/google-workspace-browser` by default. Repeat a journey after restarting the QA API with `--reset-fixtures`, so an earlier fixture revocation does not intentionally block reconnect.
+
+For the shared-project variant, add `--shared-project` to the QA API command and run the browser script with `QA_SHARED_GOOGLE_PROJECT=true QA_OUTPUT=/tmp/google-shared-project-browser`. This uses the same synthetic Google client for Gmail and Workspace; no real credentials are used. Frontend tests, lint and production build were rerun successfully for this variant.
 
 ## Pending live acceptance
 

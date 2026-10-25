@@ -3,6 +3,7 @@ import { prisma } from '../../db/prisma.js'
 import { googleProvider } from './provider.js'
 import { workspaceContext, openValue } from './envelope.js'
 import { auditGoogle } from './access.js'
+import { sharedGoogleProject, googleError } from './config.js'
 
 export const lockGrant = (tx, hash) => tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`google-workspace:${hash}`}, 0))`
 const erased = () => ({ status: 'disconnected', credentialEnc: null, wrappedKey: null, keyVersion: null, disconnectedAt: new Date(),
@@ -16,6 +17,7 @@ async function schedule(tx, row) {
 }
 /** Caller already authorized the local binding. Internal cross-tenant checks expose no DTOs. */
 export async function detachConnection(tx, row, ctx, { projectWide = false, reason = null } = {}) {
+  if (projectWide && sharedGoogleProject(row.projectNumber)) throw googleError('GOOGLE_SHARED_PROJECT_REVOCATION', 'Remove full project access from your Google Account connections page; Gmail and sign-in may need reconnecting.')
   await lockGrant(tx, row.grantHash)
   const current = await tx.googleConnection.findFirst({ where: { id: row.id, organizationId: row.organizationId }, include: { services: true } })
   if (!current) return
@@ -37,7 +39,7 @@ export async function detachConnection(tx, row, ctx, { projectWide = false, reas
     await tx.googleConnection.update({ where: { id: current.id, organizationId: current.organizationId }, data: erased() })
     await tx.googleServiceConsent.updateMany({ where: { organizationId: current.organizationId, connectionId: current.id }, data: { enabled: false } })
     const peers = await tx.googleConnection.count({ where: { grantHash: current.grantHash, credentialEnc: { not: null } } })
-    if (!peers) await schedule(tx, current)
+    if (!peers && !sharedGoogleProject(current.projectNumber)) await schedule(tx, current)
     await auditGoogle(tx, ctx, 'connection_detached', { connectionId: current.id, reason })
   }
 }
@@ -55,6 +57,12 @@ export async function processGoogleRevocations(now = new Date()) {
   await prisma.googleRevocation.deleteMany({ where: { expiresAt: { lte: now } } })
   const rows = await prisma.googleRevocation.findMany({ where: { nextAttemptAt: { lte: now }, expiresAt: { gt: now }, OR: [{ leaseUntil: null }, { leaseUntil: { lt: now } }] }, take: 25, orderBy: { nextAttemptAt: 'asc' } })
   for (const row of rows) {
+    // Old queued local cleanup must not become a project-wide revoke after an operator
+    // configures this same project for Gmail/sign-in. Erase the snapshot locally.
+    if (sharedGoogleProject()) {
+      await prisma.googleRevocation.deleteMany({ where: { id: row.id, OR: [{ leaseUntil: null }, { leaseUntil: { lt: now } }] } })
+      continue
+    }
     const leaseToken = crypto.randomUUID()
     if (!(await prisma.googleRevocation.updateMany({ where: { id: row.id, OR: [{ leaseUntil: null }, { leaseUntil: { lt: now } }] }, data: { leaseToken, leaseUntil: new Date(Date.now() + 60000) } })).count) continue
     try {

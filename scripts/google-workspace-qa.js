@@ -13,6 +13,7 @@ Object.assign(process.env, {
   GOOGLE_WORKSPACE_REDIRECT_URI: 'http://127.0.0.1:5182/api/google/oauth/callback', GOOGLE_WORKSPACE_TOKEN_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
   GOOGLE_GMAIL_CLIENT_ID: '', GOOGLE_AUTH_CLIENT_ID: '', GOOGLE_CLIENT_ID: '', GOOGLE_WORKSPACE_KMS_KEY_NAME: '',
 })
+if (process.argv.includes('--shared-project')) process.env.GOOGLE_GMAIL_CLIENT_ID = process.env.GOOGLE_WORKSPACE_CLIENT_ID
 const { googleProvider } = await import('../src/integrations/google/provider.js')
 const { SERVICE_SCOPES } = await import('../src/integrations/google/config.js')
 googleProvider.exchange = async (code) => ({ refresh_token: 'fixture-refresh-only', id_token: 'fixture-identity-only', scope: `openid email profile ${code === 'denied' ? '' : `${SERVICE_SCOPES.calendar} ${SERVICE_SCOPES.drive}`}` })

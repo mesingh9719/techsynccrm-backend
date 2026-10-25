@@ -4,6 +4,8 @@
 
 ## First approval set
 
+**Owner update, 25 October 2026:** reuse the existing Console account and project; no additional account/project is required. G03's original default is superseded for this deployment. Shared-project mode recognizes supported pre-existing Gmail grants, retains per-service consent, makes both Gmail/Workspace disconnect cleanup local-only, and routes full removal to Google Account connections. Separate-project mode remains optional. See the current [setup guide](11-google-cloud-console-setup.md).
+
 | ID | Options | Recommended default | Consequence / input needed |
 |---|---|---|---|
 | G01 | Per-user OAuth / DWD / hybrid | **Per-user OAuth** for all core features; DWD Phase 4 only with enterprise sponsor | Works with consumer Gmail and SME domains; each employee consents. DWD adds super-admin onboarding and security scope. |

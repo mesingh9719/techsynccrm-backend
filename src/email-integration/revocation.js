@@ -1,6 +1,7 @@
 import { prisma } from '../db/prisma.js'
 import { provider } from '../integrations/gmail/provider.js'
 import { open } from '../integrations/gmail/vault.js'
+import { gmailSharesWorkspaceProject } from '../integrations/google/config.js'
 
 /** Save encrypted credentials in the same transaction that disables local access. */
 export async function scheduleRevocation(tx, account) {
@@ -13,6 +14,13 @@ export async function scheduleRevocation(tx, account) {
 export async function processRevocations(now = new Date(), scope = {}) {
   const rows = await prisma.emailTokenRevocation.findMany({ where: { ...scope, nextAttemptAt: { lte: now }, OR: [{ leaseUntil: null }, { leaseUntil: { lt: now } }] }, take: 50, orderBy: { nextAttemptAt: 'asc' } })
   for (const row of rows) {
+    // Shared-project disconnect is local only: Google's revoke endpoint would also
+    // invalidate Calendar/Drive/Sheets and sign-in grants. Full removal is user-led
+    // at Google Account connections. Retain no encrypted cleanup snapshot here.
+    if (gmailSharesWorkspaceProject()) {
+      await prisma.emailTokenRevocation.deleteMany({ where: { id: row.id, organizationId: row.organizationId, OR: [{ leaseUntil: null }, { leaseUntil: { lt: now } }] } })
+      continue
+    }
     const leaseUntil = new Date(Date.now() + 60000)
     if (!(await prisma.emailTokenRevocation.updateMany({ where: { id: row.id, organizationId: row.organizationId, OR: [{ leaseUntil: null }, { leaseUntil: { lt: now } }] }, data: { leaseUntil } })).count) continue
     try {

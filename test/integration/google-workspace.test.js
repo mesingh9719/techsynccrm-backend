@@ -25,6 +25,8 @@ import { workspaceAccessToken, maintainGoogleWorkspace } from '../../src/integra
 import { processGoogleRevocations } from '../../src/integrations/google/revocation.js'
 import { workspaceContext, openValue } from '../../src/integrations/google/envelope.js'
 import { disableMemberMailboxes } from '../../src/integrations/gmail/hooks.js'
+import { processRevocations as processGmailRevocations } from '../../src/email-integration/revocation.js'
+import { provider as gmailProvider } from '../../src/integrations/gmail/provider.js'
 
 let server, base, org, other, users, sessions, testIp = 0
 const request = async (path, { user = 0, tenant, method = 'GET', body, cookie, anonymous = false } = {}) => {
@@ -65,9 +67,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('Google Workspace with real Post
   beforeEach(async () => {
     vi.clearAllMocks(); testIp++
     fixture.env.GOOGLE_WORKSPACE_ENABLED = true; fixture.env.GOOGLE_WORKSPACE_CALENDAR_ENABLED = true
+    fixture.env.GOOGLE_GMAIL_CLIENT_ID = '987654321-gmail.apps.googleusercontent.com'
     await prisma.googleConnection.deleteMany({ where: { organizationId: { in: [org.id, other.id] } } })
     await prisma.googleWorkspaceOAuthState.deleteMany({ where: { organizationId: { in: [org.id, other.id] } } })
     await prisma.googleRevocation.deleteMany({ where: { organizationId: { in: [org.id, other.id] } } })
+    await prisma.emailTokenRevocation.deleteMany({ where: { organizationId: { in: [org.id, other.id] } } })
     await prisma.googleSyncLog.deleteMany({ where: { organizationId: { in: [org.id, other.id] } } })
     for (const row of [org, other]) await prisma.googleWorkspaceSettings.upsert({ where: { organizationId: row.id }, create: { organizationId: row.id, calendarEnabled: true, driveEnabled: true, sheetsEnabled: true }, update: { calendarEnabled: true, driveEnabled: true, sheetsEnabled: true } })
     await prisma.membership.updateMany({ where: { userId: users[1].id }, data: { role: 'sales_rep', status: 'active' } })
@@ -276,5 +280,51 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('Google Workspace with real Post
     expect((await prisma.googleConnection.findUnique({ where: { id: row.id } })).status).toBe('disconnected')
     expect(googleProvider.refresh).not.toHaveBeenCalled()
     expect(await prisma.googleRevocation.count({ where: { grantHash: row.grantHash } })).toBe(1)
+  })
+  it('connects using the existing Gmail client and shared project without requesting Gmail scopes', async () => {
+    fixture.env.GOOGLE_GMAIL_CLIENT_ID = fixture.env.GOOGLE_WORKSPACE_CLIENT_ID
+    const started = await start()
+    expect(started.url.searchParams.get('client_id')).toBe(fixture.env.GOOGLE_GMAIL_CLIENT_ID)
+    expect(started.url.searchParams.get('scope')).toBe(`openid email profile ${SERVICE_SCOPES.calendar}`)
+    googleProvider.exchange.mockResolvedValueOnce({ refresh_token: 'fixture', id_token: 'fixture', scope: `${SERVICE_SCOPES.calendar} https://www.googleapis.com/auth/gmail.send` })
+    expect((await finish(started)).headers.get('location')).toContain('google=connected')
+    const state = (await request('/connections/me')).data.data
+    expect(state.setup).toMatchObject({ ready: true, sharedProject: true })
+    expect(state.services.map((s) => s.enabled)).toEqual([true, false, false])
+    googleProvider.refresh.mockResolvedValueOnce({ access_token: 'shared-access', scope: `${SERVICE_SCOPES.calendar} https://www.googleapis.com/auth/gmail.send` })
+    expect(await workspaceAccessToken(org.id, state.connection.id, 'calendar')).toBe('shared-access')
+  })
+  it('keeps shared-project Workspace disconnect local and rejects in-app project revocation', async () => {
+    fixture.env.GOOGLE_GMAIL_CLIENT_ID = fixture.env.GOOGLE_WORKSPACE_CLIENT_ID
+    const row = await connect()
+    const revoked = await request(`/connections/${row.id}/revoke-project-grant`, { method: 'POST', body: { confirmProjectRevocation: true } })
+    expect(revoked.status).toBe(409); expect(revoked.data.error.code).toBe('GOOGLE_SHARED_PROJECT_REVOCATION')
+    expect((await prisma.googleConnection.findUnique({ where: { id: row.id } })).status).toBe('connected')
+    expect((await request(`/connections/${row.id}/disconnect`, { method: 'POST' })).status).toBe(200)
+    expect(await prisma.googleRevocation.count({ where: { grantHash: row.grantHash } })).toBe(0)
+    const disconnected = await prisma.googleConnection.findUnique({ where: { id: row.id } })
+    expect(disconnected).toMatchObject({ status: 'disconnected', credentialEnc: null, wrappedKey: null })
+    expect(googleProvider.revoke).not.toHaveBeenCalled()
+  })
+  it('erases an old Workspace revocation snapshot locally after changing to a shared project', async () => {
+    const row = await connect()
+    await request(`/connections/${row.id}/disconnect`, { method: 'POST' })
+    expect(await prisma.googleRevocation.count({ where: { grantHash: row.grantHash } })).toBe(1)
+    fixture.env.GOOGLE_GMAIL_CLIENT_ID = fixture.env.GOOGLE_WORKSPACE_CLIENT_ID
+    fixture.env.GOOGLE_WORKSPACE_ENABLED = false
+    await processGoogleRevocations()
+    expect(googleProvider.revoke).not.toHaveBeenCalled()
+    expect(await prisma.googleRevocation.count({ where: { grantHash: row.grantHash } })).toBe(0)
+  })
+  it('erases Gmail disconnect snapshots without revoking other shared-project services even with rollout off', async () => {
+    fixture.env.GOOGLE_GMAIL_CLIENT_ID = fixture.env.GOOGLE_WORKSPACE_CLIENT_ID
+    fixture.env.GOOGLE_WORKSPACE_ENABLED = false
+    await prisma.emailTokenRevocation.create({ data: { organizationId: org.id, accountId: crypto.randomUUID(), credentialEnc: 'encrypted-fixture', wrappedKey: 'wrapped-fixture', keyVersion: 'fixture' } })
+    const revoke = vi.spyOn(gmailProvider, 'revoke').mockResolvedValue(undefined), unwrap = vi.spyOn(gmailProvider, 'unwrapKey')
+    try {
+      await processGmailRevocations(new Date(), { organizationId: org.id })
+      expect(await prisma.emailTokenRevocation.count({ where: { organizationId: org.id } })).toBe(0)
+      expect(revoke).not.toHaveBeenCalled(); expect(unwrap).not.toHaveBeenCalled()
+    } finally { revoke.mockRestore(); unwrap.mockRestore() }
   })
 })
