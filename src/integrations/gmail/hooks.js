@@ -1,4 +1,5 @@
 import { scheduleRevocation } from '../../email-integration/revocation.js'
+import { detachForDeparture } from '../google/revocation.js'
 import { auditEmail } from '../../email-integration/service.js'
 import { registerConversionHook, registerMergeHook } from '../../lib/merge.js'
 
@@ -16,6 +17,7 @@ registerMergeHook('contact', async (tx, ctx, { primaryId, ids }) => {
 
 /** Run within membership/account deactivation transactions; no provider calls or credentials in jobs. */
 export async function disableMemberMailboxes(tx, userId, organizationId) {
+  await detachForDeparture(tx, { userId, organizationId })
   const accounts = await tx.gmailAccount.findMany({ where: { userId, ...(organizationId && { organizationId }), credentialEnc: { not: null } } })
   for (const account of accounts) {
     await tx.$queryRaw`SELECT id FROM gmail_accounts WHERE id = ${account.id}::uuid AND organization_id = ${account.organizationId}::uuid FOR UPDATE`

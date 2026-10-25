@@ -24,9 +24,11 @@ import { webFormRoutes } from './webForm.routes.js'
 import { assignmentRuleRoutes, outOfOfficeRoutes, workingHoursRoutes } from './assignment.routes.js'
 import { getOpenApiDocument } from '../docs/openapi.js'
 import { env } from '../config/env.js'
+import { googleWorkspaceRoutes } from './googleWorkspace.routes.js'
 
 /** Root API router, mounted at /api. */
 const router = Router()
+router.use('/google', googleWorkspaceRoutes)
 router.use('/email', emailFoundationRoutes)
 router.use('/integrations/gmail', gmailRoutes)
 router.use('/emails', emailRoutes)

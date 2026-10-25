@@ -98,6 +98,8 @@ model User {
   notificationBatches    NotificationEmailBatch[]
   notificationTickets    NotificationStreamTicket[]
   gmailAccounts GmailAccount[]
+  googleConnections GoogleConnection[]
+  googleWorkspaceOAuthStates GoogleWorkspaceOAuthState[]
   gmailOAuthStates GmailOAuthState[]
   emailAuditActions EmailAuditLog[] @relation("EmailAuditActor")
   emailAuditTargets EmailAuditLog[] @relation("EmailAuditTarget")
@@ -203,6 +205,10 @@ model Organization {
   gmailAccounts GmailAccount[]
   gmailOAuthStates GmailOAuthState[]
   emailSettings TenantEmailSettings?
+  googleConnections GoogleConnection[]
+  googleWorkspaceOAuthStates GoogleWorkspaceOAuthState[]
+  googleWorkspaceSettings GoogleWorkspaceSettings?
+  googleSyncLogs GoogleSyncLog[]
   emailAuditLogs EmailAuditLog[]
   emailRevocations EmailTokenRevocation[]
   facebookConnection FacebookConnection?
@@ -1998,8 +2004,132 @@ model EmailAuditLog {
   @@map("email_audit_logs")
 }
 
-/// Durable encrypted revocation outbox. Deleted after Google revokes the grant. No user FK:
-/// account deletion must not destroy the credential before the worker can revoke it.
+/// Per-user Workspace credential binding. Gmail credentials remain in GmailAccount.
+model GoogleConnection {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  googleSubject String @map("google_subject")
+  email String
+  projectNumber String @map("project_number")
+  clientFingerprint String @map("client_fingerprint")
+  grantHash String @map("grant_hash")
+  status String @default("connected")
+  generation Int @default(1)
+  grantedScopes String[] @default([]) @map("granted_scopes")
+  credentialEnc String? @map("credential_enc")
+  wrappedKey String? @map("wrapped_key")
+  keyVersion String? @map("key_version")
+  refreshLeaseUntil DateTime? @map("refresh_lease_until") @db.Timestamptz(6)
+  refreshLeaseToken String? @map("refresh_lease_token") @db.Uuid
+  lastSuccessAt DateTime? @map("last_success_at") @db.Timestamptz(6)
+  lastError String? @map("last_error")
+  nextCheckAt DateTime @default(now()) @map("next_check_at") @db.Timestamptz(6)
+  disconnectedAt DateTime? @map("disconnected_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  services GoogleServiceConsent[]
+  logs GoogleSyncLog[]
+  @@unique([organizationId, id])
+  @@unique([organizationId, userId])
+  @@index([organizationId, status, nextCheckAt])
+  @@index([status, nextCheckAt])
+  @@index([grantHash])
+  @@index([userId])
+  @@map("google_connections")
+}
+
+model GoogleServiceConsent {
+  organizationId String @map("organization_id") @db.Uuid
+  connectionId String @map("connection_id") @db.Uuid
+  service String
+  enabled Boolean @default(false)
+  consentVersion String @map("consent_version")
+  consentAt DateTime @default(now()) @map("consent_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  connection GoogleConnection @relation(fields: [organizationId, connectionId], references: [organizationId, id], onDelete: Cascade)
+  @@id([organizationId, connectionId, service])
+  @@map("google_service_consents")
+}
+
+model GoogleWorkspaceOAuthState {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  sessionId String @map("session_id") @db.Uuid
+  stateHash String @unique @map("state_hash")
+  browserHash String @map("browser_hash")
+  verifierEnc String @map("verifier_enc")
+  nonce String
+  service String
+  consentVersion String @map("consent_version")
+  expectedGeneration Int @map("expected_generation")
+  clientFingerprint String @map("client_fingerprint")
+  returnTo String @map("return_to")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  usedAt DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([organizationId, userId])
+  @@index([expiresAt])
+  @@map("google_workspace_oauth_states")
+}
+
+model GoogleWorkspaceSettings {
+  organizationId String @id @map("organization_id") @db.Uuid
+  calendarEnabled Boolean @default(false) @map("calendar_enabled")
+  driveEnabled Boolean @default(false) @map("drive_enabled")
+  sheetsEnabled Boolean @default(false) @map("sheets_enabled")
+  exportsEnabled Boolean @default(false) @map("exports_enabled")
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@map("google_workspace_settings")
+}
+
+model GoogleSyncLog {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  connectionId String? @map("connection_id") @db.Uuid
+  actorUserId String? @map("actor_user_id") @db.Uuid
+  action String
+  service String?
+  status String
+  reason String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  connection GoogleConnection? @relation(fields: [organizationId, connectionId], references: [organizationId, id], onDelete: Cascade)
+  @@index([organizationId, createdAt, id])
+  @@index([organizationId, connectionId, createdAt])
+  @@index([createdAt])
+  @@map("google_sync_logs")
+}
+
+/// Independent encrypted cleanup record: operational tenant/user deletion must not
+/// cascade away the only credential needed to finish a provider revocation.
+model GoogleRevocation {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  connectionId String @map("connection_id") @db.Uuid
+  grantHash String @map("grant_hash")
+  credentialEnc String @map("credential_enc")
+  wrappedKey String @map("wrapped_key")
+  keyVersion String @map("key_version")
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  leaseUntil DateTime? @map("lease_until") @db.Timestamptz(6)
+  leaseToken String? @map("lease_token") @db.Uuid
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  @@index([organizationId, nextAttemptAt])
+  @@index([nextAttemptAt, leaseUntil])
+  @@unique([grantHash])
+  @@index([expiresAt])
+  @@map("google_revocations")
+}
+
 model EmailTokenRevocation {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organizationId String @map("organization_id") @db.Uuid

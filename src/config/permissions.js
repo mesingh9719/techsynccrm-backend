@@ -69,6 +69,8 @@ function build(role) {
     }
   }
   if (role !== 'viewer') perms.push('email.connect', 'email.send', 'email.templates.write.own')
+  if (role !== 'viewer') perms.push('google.connect.own')
+  if (['owner', 'admin'].includes(role)) perms.push('google.connections.manage', 'google.settings.manage')
   if (['owner', 'admin'].includes(role)) perms.push('email.connections.manage', 'email.templates.manage')
   return Object.freeze(perms)
 }

@@ -1,5 +1,6 @@
 import { permissionsFor } from '../config/permissions.js'
 import { DB_NULL, prisma, UNIQUE_VIOLATION } from '../db/prisma.js'
+import { detachForDeparture } from '../integrations/google/revocation.js'
 import { diff, emit } from '../events/outbox.js'
 import { recordAudit } from '../lib/audit.js'
 import { planHasFeature, presentEntitlements } from '../config/plans.js'
@@ -280,6 +281,7 @@ export async function deleteCurrentOrganization(ctx, confirmName) {
   }
   await prisma.$transaction(async (tx) => {
     await tx.organization.update({ where: { id: org.id }, data: { deletedAt: new Date() } })
+    await detachForDeparture(tx, { organizationId: org.id })
     await tx.user.updateMany({ where: { lastActiveOrganizationId: org.id }, data: { lastActiveOrganizationId: null } })
     await emit(tx, ctx, 'organization.deleted', { entityType: 'organization', entityId: org.id })
     await recordAudit(tx, ctx, { action: 'organization.delete', entityType: 'organization', entityId: org.id, changes: { name: [org.name, null] } })
