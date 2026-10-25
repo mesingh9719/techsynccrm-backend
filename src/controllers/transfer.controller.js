@@ -1,4 +1,11 @@
 import * as transfer from '../services/transfer.service.js'
+export const importTemplate = async (req, res) => {
+  const { entityType } = req.validated.query
+  const bytes = await transfer.importTemplate(req.ctx, entityType)
+  res.set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    .set('Content-Disposition', `attachment; filename="${entityType}-import-template.xlsx"`)
+    .set('Cache-Control', 'private, no-store').send(bytes)
+}
 export const createImport = async (req, res) => res.status(201).json({ success: true, data: await transfer.createImport(req.ctx, req.body) })
 export const updateImport = async (req, res) => res.json({ success: true, data: await transfer.updateImport(req.ctx, req.validated.params.id, req.body) })
 export const previewImport = async (req, res) => res.json({ success: true, data: await transfer.previewImport(req.ctx, req.validated.params.id, req.validated?.query, req.method === 'POST') })

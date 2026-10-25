@@ -4,6 +4,8 @@ import assert from 'node:assert/strict'
 const url = new URL(process.env.QA_DATABASE_URL || 'postgresql://invalid/invalid')
 if (!['localhost', '127.0.0.1'].includes(url.hostname) || url.pathname !== '/techsync_product_browser') throw new Error('Local disposable techsync_product_browser required')
 Object.assign(process.env, { DATABASE_URL: url.href, DATABASE_URL_UNPOOLED: url.href, NODE_ENV: 'test', LOG_LEVEL: 'silent', JWT_ACCESS_SECRET: 'product-review-qa-only-012345678901234567890', DATA_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', AWS_ACCESS_KEY_ID: 'fixture-only', AWS_SECRET_ACCESS_KEY: 'fixture-only', AWS_REGION: 'us-east-1', AWS_ENDPOINT_URL_S3: 'http://127.0.0.1:9', FRONTEND_URL: 'http://127.0.0.1:5181', CORS_ORIGINS: 'http://127.0.0.1:5181', PERFORMANCE_METRICS: 'true', RATE_LIMIT_MAX: '100000', AUTH_RATE_LIMIT_MAX: '100000', EMAIL_DELIVERY: 'queue' })
+// Opt-in disposable S3 HTTP stub; the normal QA mode still denies storage traffic.
+if (process.env.QA_LOCAL_S3 === 'true') process.env.AWS_ENDPOINT_URL_S3 = 'http://127.0.0.1:5062'
 const { prisma } = await import('../src/db/prisma.js')
 const mode = process.argv[2]
 const fixturePath = '/tmp/techsync-product-review-fixture.json'
@@ -42,8 +44,21 @@ if (mode === 'seed') {
     console.log(JSON.stringify({tenants:2,users:10,leads:48,deals:170,campaigns:6,fixturePath}))
   } finally { await prisma.$disconnect() }
 } else if(mode==='serve') {
+  const { startQueue, stopQueue } = await import('../src/jobs/queue.js')
+  await startQueue({ role: 'api' })
   const {default:app}=await import('../src/app.js')
   const server=app.listen(5061,'127.0.0.1',()=>console.log('QA API http://127.0.0.1:5061 (synthetic local data only)'))
-  const shutdown=async()=>{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));await prisma.$disconnect();process.exit(0)}
+  const shutdown=async()=>{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));await stopQueue();await prisma.$disconnect();process.exit(0)}
   process.on('SIGTERM',shutdown);process.on('SIGINT',shutdown)
-} else {await prisma.$disconnect();throw new Error('Use seed or serve')}
+} else if(mode==='transfer-worker') {
+  const { startQueue, stopQueue, registerHandler } = await import('../src/jobs/queue.js')
+  const { runImport, runImportPreview, runExport, recoverTransfers } = await import('../src/services/transfer.service.js')
+  await startQueue({ role: 'worker' })
+  await registerHandler('import.run', (job) => runImport(job.data.importId))
+  await registerHandler('import.preview', (job) => runImportPreview(job.data.importId, job.data.revision))
+  await registerHandler('export.run', (job) => runExport(job.data.exportId))
+  await recoverTransfers()
+  console.log('QA transfer worker running (no provider or email handlers)')
+  const shutdown = async () => { await stopQueue(); await prisma.$disconnect(); process.exit(0) }
+  process.on('SIGTERM',shutdown);process.on('SIGINT',shutdown)
+} else {await prisma.$disconnect();throw new Error('Use seed, serve or transfer-worker')}

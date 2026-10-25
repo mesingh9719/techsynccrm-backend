@@ -2,12 +2,13 @@ import { Router } from 'express'
 import { requireOrg, permit } from '../middlewares/org.js'
 import { validate } from '../middlewares/validate.js'
 import { idParams } from '../validators/crm.validators.js'
-import { createImportSchema, updateImportSchema, exportSchema, datasetQuery, previewQuery, startImportSchema } from '../validators/transfer.validators.js'
+import { createImportSchema, updateImportSchema, exportSchema, datasetQuery, previewQuery, startImportSchema, importTemplateQuery } from '../validators/transfer.validators.js'
 import * as t from '../controllers/transfer.controller.js'
 const id = validate(idParams, 'params')
 export const importRoutes = Router()
 importRoutes.use(requireOrg, permit('records.import'))
 importRoutes.get('/', t.importHistory)
+importRoutes.get('/template', validate(importTemplateQuery, 'query'), t.importTemplate)
 importRoutes.post('/', validate(createImportSchema), t.createImport)
 importRoutes.get('/:id/dataset', id, validate(datasetQuery, 'query'), t.importDataset)
 importRoutes.get('/:id/preview', id, validate(previewQuery, 'query'), t.previewImport)

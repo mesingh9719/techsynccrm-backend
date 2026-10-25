@@ -37,6 +37,19 @@ const hashHeaders = (headers) => crypto.createHash('sha256').update(JSON.stringi
 const invalid = (message, details) => new ApiError(400, message, { code: 'VALIDATION_ERROR', details })
 const forbidden = () => new ApiError(403, 'You do not have permission to transfer these records.', { code: 'FORBIDDEN' })
 const mustImport = (ctx) => { if (!hasPermission(ctx.permissions, 'records.import')) throw forbidden() }
+const TEMPLATE_COLUMNS = {
+  lead: ['Full name', 'Mobile', 'Email', 'Company', 'Lead source', 'Budget', 'Requirement', 'City', 'State', 'Pincode', 'Owner email', 'Tags'],
+  contact: ['Full name', 'Mobile', 'Email', 'Company', 'Title', 'Source', 'Owner email', 'Tags'],
+  company: ['Company name', 'Website', 'Domain', 'Phone', 'Email', 'Industry', 'GSTIN', 'Owner email', 'Tags'],
+  deal: ['Deal title', 'Amount', 'Close date', 'Company', 'Pipeline', 'Stage', 'Source', 'Owner email', 'Tags'],
+}
+export async function importTemplate(ctx, entityType) {
+  mustImport(ctx)
+  if (!TEMPLATE_COLUMNS[entityType]) throw invalid('Choose a valid record type.')
+  const definitions = await prisma.customFieldDefinition.findMany({ where: { organizationId: ctx.orgId, entityType, archivedAt: null }, orderBy: [{ position: 'asc' }, { id: 'asc' }], select: { label: true } })
+  // Text-formatted columns keep phone prefixes, PIN codes and long identifiers intact.
+  return writeSpreadsheet([...TEMPLATE_COLUMNS[entityType], ...definitions.map((field) => field.label)], [], 'xlsx')
+}
 const jobWhere = (ctx, id) => ({ id, organizationId: ctx.orgId, ...(!['owner', 'admin'].includes(ctx.role) && { createdById: ctx.userId }) })
 async function getImport(ctx, id, db = prisma) {
   mustImport(ctx)
@@ -582,7 +595,7 @@ async function exportRows(ctx, job, cap = 50001) {
   return rows
 }
 async function exportFile(ctx, job, rows) {
-  const labels = { displayName: 'Name', firstName: 'First name', lastName: 'Last name', name: 'Company Name', companyName: 'Company Name', primaryEmail: 'Email ID', primaryPhoneE164: 'Mobile', budgetMinor: 'Budget', valueMinor: 'Amount', owner: 'Assigned To', source: 'Lead Source', title: 'Title', company: 'Company', stage: 'Stage', pipeline: 'Pipeline', expectedCloseDate: 'Expected close date' }
+  const labels = { displayName: 'Name', firstName: 'First name', lastName: 'Last name', name: 'Company Name', companyName: 'Company Name', primaryEmail: 'Email ID', primaryPhoneE164: 'Mobile', phoneE164: 'Phone', stateCode: 'State', pincode: 'Pincode', budgetMinor: 'Budget', valueMinor: 'Amount', owner: 'Assigned To', source: 'Lead Source', title: 'Title', company: 'Company', stage: 'Stage', pipeline: 'Pipeline', expectedCloseDate: 'Expected close date' }
   const definitions = await prisma.customFieldDefinition.findMany({ where: { organizationId: ctx.orgId, entityType: job.entityType } })
   const headers = job.columns.map((c) => c.startsWith('cf.') ? definitions.find((d) => d.key === c.slice(3))?.label ?? c : labels[c] ?? c)
   const money = (value) => { const n = BigInt(value); const magnitude = n < 0n ? -n : n; return `${n < 0n ? '-' : ''}${magnitude / 100n}.${String(magnitude % 100n).padStart(2, '0')}` }
@@ -606,7 +619,15 @@ async function exportFile(ctx, job, rows) {
     return r[c]
   }
   const values = rows.map((r) => job.columns.map((c) => cell(r, c)))
-  const bytes = await writeSpreadsheet(headers, values, job.format)
+  const columnTypes = job.columns.map((column) => {
+    if (['valueMinor', 'budgetMinor'].includes(column)) return 'currency'
+    if (column === 'expectedCloseDate') return 'date'
+    if (['createdAt', 'updatedAt', 'lastActivityAt'].includes(column)) return 'datetime'
+    if (column.startsWith('cf.')) return definitions.find((d) => d.key === column.slice(3))?.type
+    if (column === 'score') return 'number'
+    return 'text'
+  })
+  const bytes = await writeSpreadsheet(headers, values, job.format, { columnTypes })
   const file = await storeGeneratedFile(ctx, `${job.entityType}-export-${job.id}.${job.format}`, bytes, 7)
   await prisma.$transaction(async (tx) => {
     await tx.exportJob.update({ where: { id: job.id, organizationId: ctx.orgId }, data: { status: 'completed', fileId: file.id, rowCount: rows.length, finishedAt: new Date() } })

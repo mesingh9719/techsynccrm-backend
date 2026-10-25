@@ -51,17 +51,21 @@ export async function parseSpreadsheet(name, bytes, { sheetName, headerRow, hasH
   const cellIssues = {}
   if (/\.xlsx$/i.test(name)) {
     // Check the ZIP directory before ExcelJS expands XML/shared strings.
-    const zip = await Open.buffer(bytes)
+    let zip
+    try { zip = await Open.buffer(bytes) }
+    catch { throw invalid('This Excel workbook is damaged or encrypted. Save an unprotected copy as .xlsx and try again.') }
     if (zip.files.length > 2000 || zip.files.reduce((n, f) => n + f.uncompressedSize, 0) > 100 * 1024 ** 2 || zip.files.some((f) => f.uncompressedSize > 50 * 1024 ** 2)) throw invalid('The expanded spreadsheet is too large.')
     const workbook = new ExcelJS.Workbook()
-    await workbook.xlsx.load(bytes)
+    try { await workbook.xlsx.load(bytes) }
+    catch { throw invalid('This Excel workbook could not be read. Save an unprotected copy as .xlsx and try again.') }
     sheets = workbook.worksheets.map((s) => s.name)
     const sheet = sheetName ? workbook.getWorksheet(sheetName) : workbook.worksheets
       .map((candidate) => {
         const sample = Array.from({ length: Math.min(candidate.rowCount, 105) }, (_, index) => Array.from({ length: Math.min(candidate.columnCount, 200) }, (_, column) => {
           const value = candidate.getRow(index + 1).getCell(column + 1).value
           // Selection only: formulas in the chosen sheet are rejected when reading below.
-          return value && typeof value === 'object' && ('formula' in value || 'sharedFormula' in value) ? '' : cellText(value)
+          try { return value && typeof value === 'object' && ('formula' in value || 'sharedFormula' in value) ? '' : cellText(value) }
+          catch { return '' }
         }))
         const detected = detectHeader(sample)
         const hasData = sample.slice(detected.index + 1).some((row) => row.some((value) => value.trim()))
@@ -143,10 +147,38 @@ export const safeCell = (v) => {
   const s = v == null ? '' : v instanceof Date ? v.toISOString() : typeof v === 'object' ? JSON.stringify(v) : String(v)
   return /^[\s\u0000-\u001f]*[=+\-@]/.test(s) ? `'${s}` : s
 }
-export async function writeSpreadsheet(headers, rows, format) {
+// Excel supports 15 significant digits. Keep longer values as text to avoid rounding
+// identifiers or large monetary amounts when a workbook is opened and saved.
+function excelCell(value, type) {
+  if (value == null || value === '') return ''
+  if (value instanceof Date && Number.isFinite(value.getTime())) return value
+  if (['date', 'datetime'].includes(type)) {
+    const date = new Date(value)
+    if (Number.isFinite(date.getTime())) return date
+  }
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'number' || ['currency', 'number'].includes(type)) {
+    const text = String(value), number = Number(value)
+    const digits = text.replace(/^-?0*/, '').replace('.', '').length
+    if (/^-?\d+(\.\d+)?$/.test(text) && digits <= 15 && Number.isFinite(number)) return number
+  }
+  return safeCell(value)
+}
+export async function writeSpreadsheet(headers, rows, format, { columnTypes = [] } = {}) {
   if (format === 'xlsx') {
-    const workbook = new ExcelJS.Workbook(); const sheet = workbook.addWorksheet('Records')
-    sheet.addRow(headers.map(safeCell)); for (const row of rows) sheet.addRow(row.map(safeCell))
+    const workbook = new ExcelJS.Workbook()
+    workbook.creator = 'TechSync CRM'
+    const sheet = workbook.addWorksheet('Records', { views: [{ state: 'frozen', ySplit: 1 }] })
+    sheet.columns = headers.map((header, index) => ({
+      width: Math.min(45, Math.max(14, String(header).length + 2, ...rows.slice(0, 200).map((row) => String(row[index] ?? '').length + 2))),
+      style: { numFmt: ({ currency: '#,##0.00', number: '0.###############', date: 'yyyy-mm-dd', datetime: 'yyyy-mm-dd hh:mm:ss' })[columnTypes[index]] ?? '@' },
+    }))
+    const heading = sheet.addRow(headers.map(safeCell))
+    heading.font = { bold: true, color: { argb: 'FFFFFFFF' } }
+    heading.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A5F' } }
+    heading.height = 24
+    if (headers.length) sheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: Math.max(1, rows.length + 1), column: headers.length } }
+    for (const row of rows) sheet.addRow(row.map((value, index) => excelCell(value, columnTypes[index])))
     return Buffer.from(await workbook.xlsx.writeBuffer())
   }
   const quote = (v) => `"${safeCell(v).replace(/"/g, '""')}"`

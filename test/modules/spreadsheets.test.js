@@ -78,6 +78,32 @@ describe('spreadsheet input and output', () => {
     const book = new ExcelJS.Workbook(); await book.xlsx.load(await writeSpreadsheet(['Name'], [['=1+1']], 'xlsx'))
     expect(book.worksheets[0].getCell('A2').value).toBe("'=1+1")
   })
+  it('exports native Excel amounts and dates while preserving identifiers and oversized decimals', async () => {
+    const bytes = await writeSpreadsheet(['Amount', 'Close date', 'Mobile', 'PIN', 'Large amount', 'Opt in'],
+      [['185000.50', '2026-11-15', '09876543210', '001234', '90071992547409.91', true]], 'xlsx',
+      { columnTypes: ['currency', 'date', 'text', 'text', 'currency', 'checkbox'] })
+    const book = new ExcelJS.Workbook(); await book.xlsx.load(bytes)
+    const sheet = book.worksheets[0]
+    expect(sheet.getCell('A2').value).toBe(185000.5)
+    expect(sheet.getCell('A2').numFmt).toBe('#,##0.00')
+    expect(sheet.getCell('B2').value).toEqual(new Date('2026-11-15T00:00:00Z'))
+    expect(sheet.getCell('C2').value).toBe('09876543210')
+    expect(sheet.getCell('D2').value).toBe('001234')
+    expect(sheet.getCell('E2').value).toBe('90071992547409.91')
+    expect(sheet.getCell('F2').value).toBe(true)
+    expect(sheet.views[0]).toMatchObject({ state: 'frozen', ySplit: 1 })
+    expect(sheet.autoFilter).toBe('A1:F2')
+    expect((await parseSpreadsheet('roundtrip.xlsx', bytes)).rows[0]).toEqual(['185000.5', '2026-11-15', '09876543210', '001234', '90071992547409.91', 'true'])
+  })
+  it('reports malformed Excel files as actionable validation errors', async () => {
+    await expect(parseSpreadsheet('damaged.xlsx', Buffer.from('not a workbook'))).rejects.toMatchObject({ statusCode: 400, code: 'INVALID_SPREADSHEET' })
+  })
+  it('does not let an Excel error cell on the instructions sheet prevent data-sheet detection', async () => {
+    const book = new ExcelJS.Workbook()
+    book.addWorksheet('Instructions').addRow([{ error: '#N/A' }])
+    const data = book.addWorksheet('Customers'); data.addRow(['Name', 'Email']); data.addRow(['Asha', 'a@example.test'])
+    expect((await parseSpreadsheet('input.xlsx', Buffer.from(await book.xlsx.writeBuffer()))).sheetName).toBe('Customers')
+  })
 })
 describe('attachment content validation', () => {
   it('rejects SVG/HTML and executable or text renamed to PDF', async () => {

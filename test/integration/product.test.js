@@ -2,6 +2,7 @@ import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
 import express from 'express'
 import pg from 'pg'
+import ExcelJS from 'exceljs'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 const { objects, mail, queued } = vi.hoisted(() => ({ objects: new Map(), mail: vi.fn().mockResolvedValue({ messageId: 'test' }), queued: vi.fn().mockResolvedValue('job') }))
 vi.mock('../../src/config/env.js', () => ({ env: { NODE_ENV: 'test', isProduction: false, DATABASE_URL: process.env.TEST_DATABASE_URL || 'postgresql://unused@localhost/unused', DATABASE_URL_UNPOOLED: process.env.TEST_DATABASE_URL || 'postgresql://unused@localhost/unused', DB_POOL_MAX: 10, FRONTEND_URL: 'https://crm.example.test', STORAGE_URL_EXPIRES_IN: 900, MAX_UPLOAD_MB: 25, JWT_ACCESS_SECRET: 'test-only-not-a-real-secret-01234567890123456789', JWT_ISSUER: 'test', JWT_AUDIENCE: 'test', JWT_ACCESS_EXPIRES_IN: '15m', INVITATION_TTL_DAYS: 7, DATA_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=' } }))
@@ -207,8 +208,77 @@ describe.skipIf(!enabled)('product regressions on disposable PostgreSQL', () => 
     expect((await prisma.company.findUnique({ where: { id: created[0].id } })).deletedAt).toBeNull()
   })
 
+  it('downloads tenant-scoped Excel templates with active custom columns and enforces import permission', async () => {
+    const key = `excel_${uuid().replaceAll('-', '')}`
+    await prisma.customFieldDefinition.createMany({ data: [
+      { organizationId: org.id, entityType: 'lead', key, label: 'Excel sector', type: 'text' },
+      { organizationId: org.id, entityType: 'lead', key: `${key}_old`, label: 'Archived Excel field', type: 'text', archivedAt: new Date() },
+      { organizationId: other.id, entityType: 'lead', key, label: 'Other tenant secret field', type: 'text' },
+    ] })
+    const headers = { authorization: `Bearer ${signAccessToken(users[0], org.id).accessToken}` }
+    for (const entityType of ['lead', 'contact', 'company', 'deal']) {
+      const res = await fetch(`${base}/imports/template?entityType=${entityType}`, { headers })
+      expect(res.status).toBe(200)
+      expect(res.headers.get('content-type')).toContain('spreadsheetml.sheet')
+      expect(res.headers.get('content-disposition')).toContain(`${entityType}-import-template.xlsx`)
+      const book = new ExcelJS.Workbook(); await book.xlsx.load(Buffer.from(await res.arrayBuffer()))
+      const sheet = book.worksheets[0], columns = sheet.getRow(1).values.slice(1)
+      expect(sheet.rowCount).toBe(1)
+      expect(columns.includes('Excel sector')).toBe(entityType === 'lead')
+      expect(columns).not.toContain('Archived Excel field')
+      expect(columns).not.toContain('Other tenant secret field')
+      expect(sheet.getColumn(2).numFmt).toBe('@')
+    }
+    expect((await fetch(`${base}/imports/template?entityType=invalid`, { headers })).status).toBe(400)
+    expect((await fetch(`${base}/imports/template?entityType=lead`, { headers: { authorization: `Bearer ${signAccessToken(users[2], org.id).accessToken}` } })).status).toBe(403)
+    expect((await fetch(`${base}/imports/template?entityType=lead`)).status).toBe(401)
+  })
+
+  it.each(['lead', 'contact', 'company', 'deal'])('imports and exports %s Excel workbooks through authenticated HTTP and the real worker', async (entityType) => {
+    const marker = `Excel ${uuid()}`, email = `excel-${uuid()}@example.test`, phone = `98${crypto.randomInt(10000000, 99999999)}`
+    const inputs = {
+      lead: { headers: ['Full name', 'Email', 'Mobile', 'Budget'], values: [marker, email, phone, '₹1,85,000.50'], columns: ['displayName', 'primaryEmail', 'budgetMinor'] },
+      contact: { headers: ['Full name', 'Email', 'Title'], values: [marker, email, 'Counsellor'], columns: ['displayName', 'primaryEmail', 'title'] },
+      company: { headers: ['Company name', 'Email', 'Phone'], values: [marker, email, phone], columns: ['name', 'email', 'phoneE164'] },
+      deal: { headers: ['Deal title', 'Amount', 'Close date'], values: [marker, 185000.5, new Date('2026-11-15T00:00:00Z')], columns: ['title', 'valueMinor', 'expectedCloseDate'] },
+    }
+    const input = inputs[entityType], book = new ExcelJS.Workbook()
+    book.addWorksheet('Instructions').addRow(['Fill in the Records sheet'])
+    const sheet = book.addWorksheet('Records'); sheet.addRow(input.headers); sheet.addRow(input.values)
+    if (entityType === 'deal') sheet.getCell('C2').numFmt = 'yyyy-mm-dd'
+    const headers = { authorization: `Bearer ${signAccessToken(users[0], org.id).accessToken}` }
+    const request = async (path, method = 'GET', body) => {
+      const res = await fetch(`${base}${path}`, { method, headers: { ...headers, ...(body && { 'content-type': 'application/json' }) }, body: body && JSON.stringify(body) })
+      const json = await res.json(); expect(res.status, JSON.stringify(json)).toBeLessThan(300); return json.data
+    }
+    const form = new FormData(); form.append('file', new Blob([await book.xlsx.writeBuffer()], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'records.xlsx')
+    const uploaded = await fetch(`${base}/files`, { method: 'POST', headers, body: form })
+    const upload = await uploaded.json(); expect(uploaded.status, JSON.stringify(upload)).toBe(201)
+    const job = await request('/imports', 'POST', { entityType, fileId: upload.data.file.id })
+    expect(job.sheetName).toBe('Records')
+    const preview = await request(`/imports/${job.id}/preview`, 'POST')
+    expect(preview.summary).toMatchObject({ willCreate: 1, errorRows: 0 })
+    await request(`/imports/${job.id}/start`, 'POST', { revision: preview.revision })
+    await runImport(job.id)
+    expect(await request(`/imports/${job.id}`)).toMatchObject({ status: 'completed', created: 1, failed: 0 })
+    const result = await request('/exports', 'POST', { entityType, filters: { q: marker }, columns: input.columns, format: 'xlsx' })
+    const exportedJob = await prisma.exportJob.findUnique({ where: { id: result.exportId } })
+    expect(exportedJob.rowCount).toBe(1)
+    const file = await prisma.file.findUnique({ where: { id: exportedJob.fileId } })
+    const exported = new ExcelJS.Workbook(); await exported.xlsx.load(objects.get(file.storageKey))
+    const row = exported.worksheets[0].getRow(2)
+    expect(row.getCell(1).value).toBe(marker)
+    if (entityType === 'lead') expect(row.getCell(3).value).toBe(185000.5)
+    if (entityType === 'deal') {
+      expect(row.getCell(2).value).toBe(185000.5)
+      expect(row.getCell(3).value).toEqual(new Date('2026-11-15T00:00:00Z'))
+    }
+    await expect(exportStatus({ ...ctx, orgId: other.id }, result.exportId)).rejects.toMatchObject({ statusCode: 404 })
+  })
+
   it('exports requested filters/columns with formula safety and audit; managers cannot export outside their team', async () => {
     const lead = await createLead(ctx, { firstName: '=UNSAFE()', emails: [{ value: `export-${uuid()}@example.test` }], ownerId: rep.userId })
+    await createLead(ctx, { firstName: '=UNSAFE()', emails: [{ value: `outside-team-${uuid()}@example.test` }], ownerId: ctx.userId })
     const manager = { ...ctx, userId: rep.userId, role: 'manager', permissions: permissionsFor('manager'), managedUserIds: [] }
     await prisma.membership.update({ where: { organizationId_userId: { organizationId: org.id, userId: rep.userId } }, data: { role: 'manager' } })
     const result = await createExport(manager, { entityType: 'lead', filters: { q: '=UNSAFE()' }, columns: ['displayName', 'primaryEmail'], format: 'csv' })
@@ -219,6 +289,13 @@ describe.skipIf(!enabled)('product regressions on disposable PostgreSQL', () => 
     await expect(exportStatus({ ...manager, orgId: other.id }, result.exportId)).rejects.toMatchObject({ statusCode: 404 })
     await expect(createExport(rep, { entityType: 'lead', filters: {}, columns: ['id'], format: 'csv' })).rejects.toMatchObject({ code: 'FORBIDDEN' })
     expect((await exportStatus(manager, result.exportId)).file.id).toBe(job.fileId)
+    const excel = await createExport(manager, { entityType: 'lead', filters: { q: '=UNSAFE()' }, columns: ['displayName', 'primaryEmail'], format: 'xlsx' })
+    const excelJob = await prisma.exportJob.findUnique({ where: { id: excel.exportId } })
+    expect(excelJob.rowCount).toBe(1)
+    const excelFile = await prisma.file.findUnique({ where: { id: excelJob.fileId } })
+    const workbook = new ExcelJS.Workbook(); await workbook.xlsx.load(objects.get(excelFile.storageKey))
+    expect(workbook.worksheets[0].getCell('A2').value).toBe("'=UNSAFE()")
+    expect(workbook.worksheets[0].getCell('B2').value).toBe(lead.primaryEmail)
     expect(lead.id).toBeTruthy()
     await prisma.membership.update({ where: { organizationId_userId: { organizationId: org.id, userId: rep.userId } }, data: { role: 'sales_rep' } })
   })

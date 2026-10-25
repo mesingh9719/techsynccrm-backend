@@ -2,6 +2,7 @@ import { z } from 'zod'
 export const transferEntity = z.enum(['lead', 'contact', 'company', 'deal'])
 const mapping = z.record(z.string().max(10000), z.string().max(80).refine((v) => !['__proto__', 'constructor', 'prototype'].some((k) => v.split('.').includes(k)), 'Invalid mapping'))
 export const createImportSchema = z.object({ entityType: transferEntity, fileId: z.uuid() })
+export const importTemplateQuery = z.object({ entityType: transferEntity })
 const rowId = z.string().regex(/^(r:\d+|a:[a-zA-Z0-9-]+)$/).max(80)
 const editBatch = z.object({
   reset: z.boolean().optional(),
