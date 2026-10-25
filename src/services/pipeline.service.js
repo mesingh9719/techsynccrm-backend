@@ -1,3 +1,4 @@
+import { Prisma } from '../generated/prisma/client.js'
 import { planDefinition } from '../config/plans.js'
 import { PIPELINE_TEMPLATES, templateCatalogue, templateForIndustry } from '../config/pipelineTemplates.js'
 import { prisma } from '../db/prisma.js'
@@ -19,6 +20,11 @@ export const REQUIRABLE_FIELDS = ['valueMinor', 'expectedCloseDate', 'companyId'
 
 const stageSelect = { id: true, pipelineId: true, name: true, type: true, position: true, probability: true, rottingDays: true, requiredFields: true }
 const pipelineSelect = { id: true, name: true, isDefault: true, position: true, templateKey: true, archivedAt: true, createdAt: true, updatedAt: true }
+
+// Settings writes serialize per workspace; deal writes retain their existing row/FK locks.
+async function lockSettings(tx, orgId) {
+  await tx.$queryRaw`SELECT id FROM organizations WHERE id = ${orgId}::uuid FOR UPDATE`
+}
 
 const forbidden = (message) => new ApiError(403, message, { code: 'FORBIDDEN' })
 
@@ -80,15 +86,17 @@ export async function listPipelines(ctx, { includeArchived = false } = {}) {
       orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
       select: { ...pipelineSelect, stages: { orderBy: { position: 'asc' }, select: stageSelect } },
     }),
-    prisma.deal.groupBy({ by: ['stageId'], where: { AND: [{ organizationId: ctx.orgId, deletedAt: null }, visibilityWhere(ctx, 'deals', 'read')] }, _count: { _all: true } }),
+    prisma.deal.groupBy({ by: ['stageId'], where: { AND: [{ organizationId: ctx.orgId }, visibilityWhere(ctx, 'deals', 'read')] }, _count: { _all: true, deletedAt: true } }),
     writablePipelineIds(ctx.orgId, ctx.plan),
   ])
-  const byStage = new Map(counts.map((c) => [c.stageId, c._count._all]))
+  const byStage = new Map(counts.map(c => [c.stageId, c._count._all - (c._count.deletedAt ?? 0)]))
+  const totalByStage = new Map(counts.map(c => [c.stageId, c._count._all]))
   return pipelines.map(({ archivedAt, ...p }) => ({
     ...p,
     archived: Boolean(archivedAt),
     readOnly: writable ? !writable.has(p.id) : false,
-    stages: p.stages.map((s) => ({ ...s, dealCount: byStage.get(s.id) ?? 0 })),
+    stages: p.stages.map((s) => ({ ...s, dealCount: byStage.get(s.id) ?? 0, totalDealCount: totalByStage.get(s.id) ?? 0 })),
+    totalDealCount: p.stages.reduce((n, s) => n + (totalByStage.get(s.id) ?? 0), 0),
     dealCount: p.stages.reduce((n, s) => n + (byStage.get(s.id) ?? 0), 0),
   }))
 }
@@ -128,51 +136,52 @@ export async function createPipeline(ctx, { name, templateKey = 'default' }) {
 }
 
 export async function updatePipeline(ctx, id, { name, isDefault }) {
-  const before = await getPipeline(ctx, id)
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async tx => {
+    await lockSettings(tx, ctx.orgId)
+    const before = await getPipeline(ctx, id, tx)
     if (isDefault && !before.isDefault) await tx.pipeline.updateMany({ where: { organizationId: ctx.orgId, isDefault: true }, data: { isDefault: false } })
     if (isDefault === false && before.isDefault) throw validationError({ isDefault: 'Make another pipeline the default instead' })
-    await tx.pipeline.update({ where: { id }, data: { ...(name !== undefined && { name }), ...(isDefault && { isDefault: true }) } })
-    await recordAudit(tx, ctx, { action: 'pipeline.update', entityType: 'pipeline', entityId: id, changes: { ...(name !== undefined && { name: [before.name, name] }), ...(isDefault && { isDefault: [false, true] }) } })
+    await tx.pipeline.update({ where: { id, organizationId: ctx.orgId }, data: { ...(name !== undefined && { name }), ...(isDefault && { isDefault: true }) } })
+    await recordAudit(tx, ctx, { action: 'pipeline.update', entityType: 'pipeline', entityId: id, changes: { ...(name !== undefined && { name: [before.name, name] }), ...(isDefault && { isDefault: [before.isDefault, true] }) } })
   })
   return getPipeline(ctx, id)
 }
 
-/**
- * Deletes a pipeline. It can't be the default. If it has deals, `moveDealsToStageId` (an open
- * stage of another pipeline) receives the open ones; won/lost deals go to that pipeline's Won/Lost.
- */
+/** Preserve every deal (including trash) and its outcome/history when removing a pipeline. */
 export async function deletePipeline(ctx, id, { moveDealsToStageId } = {}) {
-  const pipeline = await getPipeline(ctx, id)
-  if (pipeline.isDefault) throw new ApiError(409, 'The default pipeline can’t be deleted. Make another one the default first.', { code: 'PIPELINE_DEFAULT' })
-  const dealCount = await prisma.deal.count({ where: { organizationId: ctx.orgId, pipelineId: id } })
-  let target = null
-  if (dealCount) {
-    if (!moveDealsToStageId) throw new ApiError(409, 'This pipeline has deals. Choose where to move them.', { code: 'PIPELINE_NOT_EMPTY', details: { dealCount } })
-    target = await prisma.pipelineStage.findFirst({ where: { id: moveDealsToStageId, organizationId: ctx.orgId, type: 'open', pipelineId: { not: id } }, select: { id: true, pipelineId: true } })
-    if (!target) throw validationError({ moveDealsToStageId: 'Choose an open stage in another pipeline' })
+  try {
+    await prisma.$transaction(async tx => {
+      await lockSettings(tx, ctx.orgId)
+      const pipeline = await getPipeline(ctx, id, tx)
+      if (pipeline.isDefault) throw new ApiError(409, 'The default pipeline can’t be deleted. Make another one the default first.', { code: 'PIPELINE_DEFAULT' })
+      const dealCount = await tx.deal.count({ where: { organizationId: ctx.orgId, pipelineId: id } })
+      if (dealCount) {
+        if (!moveDealsToStageId) throw new ApiError(409, 'This pipeline has deals. Choose where to move them.', { code: 'PIPELINE_NOT_EMPTY', details: { dealCount } })
+        const target = await tx.pipelineStage.findFirst({ where: { id: moveDealsToStageId, organizationId: ctx.orgId, type: 'open', pipelineId: { not: id }, pipeline: { archivedAt: null } }, select: { id: true, pipelineId: true } })
+        if (!target) throw validationError({ moveDealsToStageId: 'Choose an open stage in another pipeline' })
+        const outcome = await tx.pipelineStage.findMany({ where: { organizationId: ctx.orgId, pipelineId: target.pipelineId, type: { in: ['won', 'lost'] } }, select: { id: true, type: true } })
+        const stageFor = { open: target.id, won: outcome.find(s => s.type === 'won')?.id, lost: outcome.find(s => s.type === 'lost')?.id }
+        if (!stageFor.won || !stageFor.lost) throw validationError({ moveDealsToStageId: 'Choose a pipeline with Won and Lost stages' })
+        const deals = await tx.deal.findMany({ where: { organizationId: ctx.orgId, pipelineId: id }, select: { id: true } })
+        await moveDealsForRemovalTx(tx, ctx, deals.map(d => d.id), stageFor)
+      }
+      await tx.pipeline.delete({ where: { id, organizationId: ctx.orgId } })
+      await recordAudit(tx, ctx, { action: 'pipeline.delete', entityType: 'pipeline', entityId: id, changes: { name: [pipeline.name, null], movedDeals: dealCount } })
+    })
+  } catch (error) {
+    if (error.code === 'P2003') throw new ApiError(409, 'The pipeline received another deal. Refresh and choose where to move its deals.', { code: 'PIPELINE_NOT_EMPTY' })
+    throw error
   }
-  await prisma.$transaction(async (tx) => {
-    if (target) {
-      const outcome = await tx.pipelineStage.findMany({ where: { pipelineId: target.pipelineId, type: { in: ['won', 'lost'] } }, select: { id: true, type: true } })
-      const stageFor = { open: target.id, won: outcome.find((s) => s.type === 'won').id, lost: outcome.find((s) => s.type === 'lost').id }
-      const deals = await tx.deal.findMany({ where: { organizationId: ctx.orgId, pipelineId: id }, select: { id: true, stageId: true, status: true, stageEnteredAt: true } })
-      await moveDealsForRemovalTx(tx, ctx, deals.map((d) => d.id), stageFor)
-    }
-    // History rows pointing at the deleted pipeline's stages stay (ids only, no FK).
-    await tx.pipeline.delete({ where: { id } })
-    await recordAudit(tx, ctx, { action: 'pipeline.delete', entityType: 'pipeline', entityId: id, changes: { name: [pipeline.name, null], movedDeals: dealCount } })
-  })
 }
 
 // ---------- Stages ----------
 
-async function validateRequiredFields(ctx, fields = []) {
+async function validateRequiredFields(ctx, fields = [], db = prisma) {
   const unique = [...new Set(fields)]
   const custom = unique.filter((f) => f.startsWith('cf.')).map((f) => f.slice(3))
   const bad = unique.filter((f) => !f.startsWith('cf.') && !REQUIRABLE_FIELDS.includes(f))
   if (custom.length) {
-    const defs = await prisma.customFieldDefinition.findMany({ where: { organizationId: ctx.orgId, entityType: 'deal', key: { in: custom } }, select: { key: true } })
+    const defs = await db.customFieldDefinition.findMany({ where: { organizationId: ctx.orgId, entityType: 'deal', key: { in: custom } }, select: { key: true } })
     const known = new Set(defs.map((d) => d.key))
     bad.push(...custom.filter((k) => !known.has(k)).map((k) => `cf.${k}`))
   }
@@ -187,76 +196,70 @@ async function getStage(ctx, pipelineId, stageId, db = prisma) {
 }
 
 export async function createStage(ctx, pipelineId, input) {
-  const pipeline = await getPipeline(ctx, pipelineId)
-  const requiredFields = await validateRequiredFields(ctx, input.requiredFields)
-  const openCount = pipeline.stages.filter((s) => s.type === 'open').length
-  await prisma.$transaction(async (tx) => {
-    // New open stage goes after the last open one; Won and Lost shift down.
-    await tx.pipelineStage.updateMany({ where: { pipelineId, type: { in: ['won', 'lost'] } }, data: { position: { increment: 1 } } })
-    const stage = await tx.pipelineStage.create({
-      data: { organizationId: ctx.orgId, pipelineId, name: input.name, type: 'open', position: openCount, probability: input.probability ?? 50, rottingDays: input.rottingDays ?? null, requiredFields },
-      select: { id: true },
-    })
+  await prisma.$transaction(async tx => {
+    await lockSettings(tx, ctx.orgId)
+    const pipeline = await getPipeline(ctx, pipelineId, tx)
+    const requiredFields = await validateRequiredFields(ctx, input.requiredFields, tx)
+    const openCount = pipeline.stages.filter(s => s.type === 'open').length
+    await tx.pipelineStage.updateMany({ where: { organizationId: ctx.orgId, pipelineId, type: { in: ['won', 'lost'] } }, data: { position: { increment: 1 } } })
+    const stage = await tx.pipelineStage.create({ data: { organizationId: ctx.orgId, pipelineId, name: input.name, type: 'open', position: openCount, probability: input.probability ?? 50, rottingDays: input.rottingDays ?? null, requiredFields }, select: { id: true } })
     await recordAudit(tx, ctx, { action: 'pipeline.stage_create', entityType: 'pipeline', entityId: pipelineId, changes: { stageId: stage.id, name: input.name } })
   })
   return getPipeline(ctx, pipelineId)
 }
 
 export async function updateStage(ctx, pipelineId, stageId, input) {
-  const stage = await getStage(ctx, pipelineId, stageId)
-  const system = stage.type !== 'open'
-  if (system && (input.probability !== undefined || input.rottingDays !== undefined || input.requiredFields !== undefined)) {
-    // Won/Lost can only be renamed — except required fields on Won, which teams use (e.g. PO number).
-    if (input.probability !== undefined || input.rottingDays !== undefined || (stage.type === 'lost' && input.requiredFields !== undefined)) {
-      throw validationError({ [input.probability !== undefined ? 'probability' : input.rottingDays !== undefined ? 'rottingDays' : 'requiredFields']: 'Won and Lost stages can only be renamed' })
+  await prisma.$transaction(async tx => {
+    await lockSettings(tx, ctx.orgId)
+    const stage = await getStage(ctx, pipelineId, stageId, tx)
+    if (stage.type !== 'open' && (input.probability !== undefined || input.rottingDays !== undefined || (stage.type === 'lost' && input.requiredFields !== undefined))) {
+      throw validationError({ [input.probability !== undefined ? 'probability' : input.rottingDays !== undefined ? 'rottingDays' : 'requiredFields']: 'Won and Lost stages can only be renamed (Won may also require fields)' })
     }
-  }
-  const data = {
-    ...(input.name !== undefined && { name: input.name }),
-    ...(input.probability !== undefined && { probability: input.probability }),
-    ...(input.rottingDays !== undefined && { rottingDays: input.rottingDays }),
-    ...(input.requiredFields !== undefined && { requiredFields: await validateRequiredFields(ctx, input.requiredFields) }),
-  }
-  await prisma.$transaction(async (tx) => {
-    await tx.pipelineStage.update({ where: { id: stageId }, data })
+    const data = { ...(input.name !== undefined && { name: input.name }), ...(input.probability !== undefined && { probability: input.probability }), ...(input.rottingDays !== undefined && { rottingDays: input.rottingDays }), ...(input.requiredFields !== undefined && { requiredFields: await validateRequiredFields(ctx, input.requiredFields, tx) }) }
+    await tx.pipelineStage.update({ where: { id: stageId, organizationId: ctx.orgId, pipelineId }, data })
     await recordAudit(tx, ctx, { action: 'pipeline.stage_update', entityType: 'pipeline', entityId: pipelineId, changes: { stageId, ...data } })
   })
   return getPipeline(ctx, pipelineId)
 }
 
-/** Deletes an open stage; its deals (if any) move to `moveDealsToStageId` in the same pipeline. */
 export async function deleteStage(ctx, pipelineId, stageId, { moveDealsToStageId } = {}) {
-  const pipeline = await getPipeline(ctx, pipelineId)
-  const stage = pipeline.stages.find((s) => s.id === stageId)
-  if (!stage) throw ApiError.notFound('Stage not found')
-  if (stage.type !== 'open') throw new ApiError(409, 'Won and Lost stages can’t be deleted.', { code: 'STAGE_SYSTEM' })
-  if (pipeline.stages.filter((s) => s.type === 'open').length <= 1) throw new ApiError(409, 'A pipeline needs at least one open stage.', { code: 'STAGE_LAST' })
-  const deals = await prisma.deal.findMany({ where: { organizationId: ctx.orgId, stageId }, select: { id: true, stageEnteredAt: true } })
-  let target = null
-  if (deals.length) {
-    target = pipeline.stages.find((s) => s.id === moveDealsToStageId && s.type === 'open' && s.id !== stageId)
-    if (!target) throw new ApiError(409, 'This stage has deals. Choose another open stage to move them to.', { code: 'STAGE_NOT_EMPTY', details: { dealCount: deals.length } })
+  try {
+    await prisma.$transaction(async tx => {
+      await lockSettings(tx, ctx.orgId)
+      const pipeline = await getPipeline(ctx, pipelineId, tx)
+      const stage = pipeline.stages.find(s => s.id === stageId)
+      if (!stage) throw ApiError.notFound('Stage not found')
+      if (stage.type !== 'open') throw new ApiError(409, 'Won and Lost stages can’t be deleted.', { code: 'STAGE_SYSTEM' })
+      if (pipeline.stages.filter(s => s.type === 'open').length <= 1) throw new ApiError(409, 'A pipeline needs at least one open stage.', { code: 'STAGE_LAST' })
+      const deals = await tx.deal.findMany({ where: { organizationId: ctx.orgId, stageId }, select: { id: true } })
+      if (deals.length) {
+        const target = pipeline.stages.find(s => s.id === moveDealsToStageId && s.type === 'open' && s.id !== stageId)
+        if (!target) throw new ApiError(409, 'This stage has deals, including any in the bin. Choose another open stage to move them to.', { code: 'STAGE_NOT_EMPTY', details: { dealCount: deals.length } })
+        await moveDealsForRemovalTx(tx, ctx, deals.map(d => d.id), { open: target.id })
+      }
+      await tx.pipelineStage.delete({ where: { id: stageId, organizationId: ctx.orgId, pipelineId } })
+      await tx.pipelineStage.updateMany({ where: { organizationId: ctx.orgId, pipelineId, position: { gt: stage.position } }, data: { position: { decrement: 1 } } })
+      await recordAudit(tx, ctx, { action: 'pipeline.stage_delete', entityType: 'pipeline', entityId: pipelineId, changes: { stageId, name: stage.name, movedDeals: deals.length } })
+    })
+  } catch (error) {
+    if (error.code === 'P2003') throw new ApiError(409, 'The stage received another deal. Refresh and choose a destination before deleting it.', { code: 'STAGE_NOT_EMPTY' })
+    throw error
   }
-  await prisma.$transaction(async (tx) => {
-    if (target) {
-      await moveDealsForRemovalTx(tx, ctx, deals.map((d) => d.id), { open: target.id })
-    }
-    await tx.pipelineStage.delete({ where: { id: stageId } })
-    await tx.pipelineStage.updateMany({ where: { pipelineId, position: { gt: stage.position } }, data: { position: { decrement: 1 } } })
-    await recordAudit(tx, ctx, { action: 'pipeline.stage_delete', entityType: 'pipeline', entityId: pipelineId, changes: { stageId, name: stage.name, movedDeals: deals.length } })
-  })
   return getPipeline(ctx, pipelineId)
 }
 
-/** PATCH /pipelines/:id/stages/order { stageIds } — open stages in their new order; Won/Lost stay last. */
 export async function reorderStages(ctx, pipelineId, stageIds) {
-  const pipeline = await getPipeline(ctx, pipelineId)
-  const open = pipeline.stages.filter((s) => s.type === 'open')
-  const openIds = new Set(open.map((s) => s.id))
-  const ids = stageIds.filter((id) => openIds.has(id))
-  if (ids.length !== open.length || stageIds.length !== open.length || new Set(ids).size !== ids.length) throw validationError({ stageIds: 'List every open stage exactly once' })
-  const system = pipeline.stages.filter((s) => s.type !== 'open').sort((a, b) => (a.type === 'won' ? -1 : b.type === 'won' ? 1 : 0))
-  await prisma.$transaction([...ids, ...system.map((s) => s.id)].map((id, position) => prisma.pipelineStage.update({ where: { id }, data: { position } })))
+  await prisma.$transaction(async tx => {
+    await lockSettings(tx, ctx.orgId)
+    const pipeline = await getPipeline(ctx, pipelineId, tx)
+    const open = pipeline.stages.filter(s => s.type === 'open')
+    const openIds = new Set(open.map(s => s.id))
+    if (stageIds.length !== open.length || new Set(stageIds).size !== stageIds.length || stageIds.some(id => !openIds.has(id))) throw validationError({ stageIds: 'List every open stage exactly once' })
+    const system = ['won', 'lost'].flatMap(type => pipeline.stages.filter(s => s.type === type).map(s => s.id))
+    const ordering = Prisma.join([...stageIds, ...system].map((id, position) => Prisma.sql`(${id}::uuid, ${position}::integer)`))
+    await tx.$executeRaw(Prisma.sql`UPDATE pipeline_stages AS stage SET position = ordering.pos, updated_at = NOW() FROM (VALUES ${ordering}) AS ordering(id, pos) WHERE stage.organization_id = ${ctx.orgId}::uuid AND stage.pipeline_id = ${pipelineId}::uuid AND stage.id = ordering.id`)
+    await recordAudit(tx, ctx, { action: 'pipeline.stage_reorder', entityType: 'pipeline', entityId: pipelineId, changes: { stageIds } })
+  })
   return getPipeline(ctx, pipelineId)
 }
 

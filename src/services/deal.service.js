@@ -330,6 +330,8 @@ async function listWhere(ctx, query) {
   if (query.companyId) and.push({ companyId: query.companyId })
   if (query.contactId) and.push({ contacts: { some: { contactId: query.contactId } } })
   if (query.leadId) and.push({ leadId: query.leadId })
+  if (query.sourceId) and.push({ sourceId: query.sourceId })
+  if (query.campaignId) and.push({ lead: { organizationId: ctx.orgId, campaignId: query.campaignId, deletedAt: null } })
   if (query.q) {
     const q = query.q.trim()
     const companies = await prisma.company.findMany({ where: { organizationId: ctx.orgId, deletedAt: null, name: { contains: q, mode: 'insensitive' } }, select: { id: true }, take: 200 })
@@ -376,8 +378,8 @@ export async function board(ctx, query) {
     ? await prisma.pipeline.findFirst({ where: { id: query.pipelineId, organizationId: ctx.orgId, archivedAt: null }, select: { id: true, name: true } })
     : await prisma.pipeline.findFirst({ where: { organizationId: ctx.orgId, archivedAt: null }, orderBy: [{ isDefault: 'desc' }, { position: 'asc' }], select: { id: true, name: true } })
   if (!pipeline) throw ApiError.notFound('Pipeline not found')
-  const stages = await prisma.pipelineStage.findMany({ where: { pipelineId: pipeline.id }, orderBy: { position: 'asc' }, select: stageSelect })
-  const base = await listWhere(ctx, { ...query, pipelineId: pipeline.id, status: undefined, stageId: undefined })
+  const stages = await prisma.pipelineStage.findMany({ where: { organizationId: ctx.orgId, pipelineId: pipeline.id }, orderBy: { position: 'asc' }, select: stageSelect })
+  const base = await listWhere(ctx, { ...query, pipelineId: pipeline.id })
   const since = new Date(Date.now() - BOARD_CLOSED_DAYS * DAY_MS)
   const scope = { OR: [{ status: 'open' }, { closedAt: { gte: since } }] }
   const where = { AND: [...base, scope] }
@@ -487,6 +489,7 @@ export async function moveDealTx(tx, ctx, deal, { stageId, pipelineId, position,
     pipelineId: target.pipelineId,
     status: to,
     stageEnteredAt: now,
+    lastActivityAt: now,
     position: position ?? (await topPosition(tx, target.id)),
     ...(to === 'open' && { wonAt: null, lostAt: null, closedAt: null, lostReasonId: null, lostNote: null }),
     ...(to === 'won' && { wonAt: now, lostAt: null, closedAt: now, lostReasonId: null, lostNote: null }),

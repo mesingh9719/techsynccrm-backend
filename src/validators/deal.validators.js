@@ -110,6 +110,8 @@ export const dealListQuery = recordListQuery({
   companyId: z.uuid().optional(),
   contactId: z.uuid().optional(),
   leadId: z.uuid().optional(),
+  campaignId: z.uuid().optional(),
+  sourceId: z.uuid().optional(),
   closeFrom: z.iso.date().optional(),
   closeTo: z.iso.date().optional(),
   closedFrom: z.iso.datetime({ offset: true }).optional(),
@@ -121,6 +123,13 @@ export const dealListQuery = recordListQuery({
 export const boardQuery = z
   .object({
     pipelineId: z.uuid().optional(),
+    campaignId: z.uuid().optional(),
+    sourceId: z.uuid().optional(),
+    stageId: z.string().max(400).optional(),
+    status: z.string().max(40).optional(),
+    rotting: queryBool,
+    createdFrom: z.string().max(40).optional(),
+    createdTo: z.string().max(40).optional(),
     ownerId: z.string().max(400).optional(),
     q: z.string().trim().max(100).optional(),
     tag: z.string().max(400).optional(),

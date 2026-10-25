@@ -827,6 +827,7 @@ model LostReason {
 
 /// An unqualified enquiry. Converts into a contact (+ company, + deal from M09).
 model Lead {
+  deals Deal[] @relation("DealLead")
   campaignId String? @map("campaign_id") @db.Uuid
   campaign Campaign? @relation(fields: [organizationId, campaignId], references: [organizationId, id], onDelete: NoAction, onUpdate: NoAction)
   facebookDeliveries FacebookLeadDelivery[]
@@ -1091,6 +1092,7 @@ model Deal {
   deletedAt           DateTime?  @map("deleted_at") @db.Timestamptz(6)
 
   organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lead Lead? @relation("DealLead", fields: [organizationId, leadId], references: [organizationId, id], onDelete: NoAction, onUpdate: NoAction, map: "deals_organization_id_lead_id_fkey")
   pipeline     Pipeline           @relation(fields: [pipelineId], references: [id])
   stage        PipelineStage      @relation(fields: [stageId], references: [id])
   contacts     DealContact[]
@@ -1098,6 +1100,8 @@ model Deal {
 
   // Partial list index deals_live_created_idx (organization_id, created_at DESC, id DESC)
   // WHERE deleted_at IS NULL is managed in SQL (20261024010000), like deals_board_idx.
+  @@index([organizationId, leadId])
+  @@index([organizationId, sourceId])
   @@index([organizationId, pipelineId, stageId])
   @@index([organizationId, ownerId, status])
   @@index([organizationId, status, closedAt])
