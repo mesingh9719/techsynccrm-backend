@@ -25,6 +25,17 @@ describe('Google configuration and credential compatibility', () => {
       }
     } finally { verify.mockRestore() }
   })
+  it.each(['calendar', 'drive', 'sheets'])('identifies the disabled %s API without exposing provider payloads', async (api) => {
+    const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(JSON.stringify({ error: { status: 'PERMISSION_DENIED', message: 'private-provider-value', details: [{ reason: 'SERVICE_DISABLED', metadata: { consumer: 'private-project-value' } }] } }), { status: 403 }))
+    try {
+      await expect(googleProvider.request('private-token', api, 'fixture')).rejects.toMatchObject({ code: `GOOGLE_${api.toUpperCase()}_API_DISABLED`, providerStatus: 403 })
+      try { await googleProvider.request('private-token', api, 'fixture') } catch (error) { expect(error.message).not.toContain('private-provider-value'); expect(JSON.stringify(error)).not.toContain('private-project-value') }
+    } finally { fetch.mockRestore() }
+  })
+  it('keeps ordinary Google permission errors distinct from disabled APIs', async () => {
+    const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ error: { status: 'PERMISSION_DENIED' } }), { status: 403 }))
+    try { await expect(googleProvider.request('fixture', 'drive', 'files')).rejects.toMatchObject({ code: 'GOOGLE_PERMISSION_DENIED' }) } finally { fetch.mockRestore() }
+  })
   it('accepts a shared Google project while requiring a valid callback and encryption', () => {
     expect(configurationStatus(config).ready).toBe(true)
     expect(configurationStatus({ ...config, clientId: fixture.env.GOOGLE_GMAIL_CLIENT_ID, projectNumber: '987654321' })).toMatchObject({ ready: true, missing: [], sharedProject: true })

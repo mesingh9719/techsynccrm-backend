@@ -1,4 +1,5 @@
 import { reportRoutes } from './report.routes.js'
+import { templateRoutes } from './template.routes.js'
 import { emailFoundationRoutes } from '../email-integration/routes.js'
 import { gmailRoutes, emailRoutes, emailTemplateRoutes, gmailWebhookRoutes } from './gmail.routes.js'
 import { importRoutes, exportRoutes } from './transfer.routes.js'
@@ -33,6 +34,7 @@ router.use('/email', emailFoundationRoutes)
 router.use('/integrations/gmail', gmailRoutes)
 router.use('/emails', emailRoutes)
 router.use('/email-templates', emailTemplateRoutes)
+router.use('/templates', templateRoutes)
 router.use('/webhooks/gmail', gmailWebhookRoutes)
 router.use('/integrations/facebook', facebookRoutes)
 router.use('/webhooks/in/facebook', facebookWebhookRoutes)

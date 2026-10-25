@@ -28,7 +28,7 @@ emailRoutes.get('/threads/:id/messages', id, validate(s.gmailList, 'query'), c.m
 emailRoutes.get('/:id', id, c.message)
 export const emailTemplateRoutes = Router()
 emailTemplateRoutes.use(requireOrg, noStore)
-emailTemplateRoutes.get('/', c.templates)
+emailTemplateRoutes.get('/', validate(s.gmailList, 'query'), c.templates)
 emailTemplateRoutes.post('/', validate(s.emailTemplate), c.templateSave)
 emailTemplateRoutes.patch('/:id', id, validate(s.emailTemplate), c.templateSave)
 emailTemplateRoutes.delete('/:id', id, c.templateDelete)

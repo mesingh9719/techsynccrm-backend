@@ -1788,13 +1788,20 @@ model EmailTemplate {
   organizationId String @map("organization_id") @db.Uuid
   ownerId String? @map("owner_id") @db.Uuid
   shared Boolean @default(false)
+  channel String @default("email")
+  category String @default("general")
+  archivedAt DateTime? @map("archived_at") @db.Timestamptz(6)
   name String
   subject String
   bodyHtml String @map("body_html")
+  bodyText String @default("") @map("body_text")
+  recordType String @default("any") @map("record_type")
+  variables Json @default("[]")
   version Int @default(1)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
   @@index([organizationId, shared, ownerId, updatedAt(sort: Desc), id])
+  @@index([organizationId, channel, archivedAt, updatedAt(sort: Desc), id], map: "email_templates_library_idx")
   @@map("email_templates")
 }
 

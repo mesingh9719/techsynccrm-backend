@@ -6,6 +6,7 @@ import { validationError } from '../lib/records.js'
 import { parseIsoDate } from '../lib/time.js'
 import { ApiError } from '../utils/ApiError.js'
 import { assertWithinLimit } from './entitlements.service.js'
+import { assertFieldNotReferenced, lockTemplateFields } from '../lib/templateFieldDependencies.js'
 
 /**
  * Custom fields (M07): definitions per entity type, and validation/filtering of the values stored
@@ -134,6 +135,8 @@ export async function updateDefinition(ctx, id, input) {
     ...(input.archived !== undefined && { archivedAt: input.archived ? (def.archivedAt ?? new Date()) : null }),
   }
   const updated = await prisma.$transaction(async (tx) => {
+    await lockTemplateFields(tx, ctx.orgId)
+    if (input.archived === true || input.type && input.type !== def.type) await assertFieldNotReferenced(tx, ctx, def)
     const row = await tx.customFieldDefinition.update({ where: { id }, data, select: definitionSelect })
     await recordAudit(tx, ctx, { action: 'custom_field.update', entityType: 'custom_field', entityId: id, changes: data })
     return row
@@ -148,6 +151,8 @@ export async function deleteDefinition(ctx, id) {
     throw new ApiError(409, 'Records have values for this field. Archive it instead — archived fields are hidden but keep their data.', { code: 'FIELD_IN_USE' })
   }
   await prisma.$transaction(async (tx) => {
+    await lockTemplateFields(tx, ctx.orgId)
+    await assertFieldNotReferenced(tx, ctx, def)
     await tx.customFieldDefinition.delete({ where: { id } })
     await recordAudit(tx, ctx, { action: 'custom_field.delete', entityType: 'custom_field', entityId: id, changes: { key: [def.key, null] } })
   })

@@ -11,6 +11,8 @@ import { provider } from './provider.js'
 import { permitEmail, ownAccount, assertThreadAccess, sendRecord } from './access.js'
 import { requireConfiguration, settings, gmailError } from './config.js'
 import { cleanHtml, plainText, fillTemplate, normalizeEmail, excluded, safeHeader } from './content.js'
+import { renderTemplate } from '../../services/templateRendering.service.js'
+import { ApiError } from '../../utils/ApiError.js'
 
 export const fileTypes = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'text/plain', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])
 export async function attachmentFiles(ctx, ids) {
@@ -56,8 +58,16 @@ export async function queueSend(ctx, input, idempotencyKey) {
   if (await prisma.emailSuppression.count({ where: { organizationId: ctx.orgId, recipientKey: to } })) throw gmailError('EMAIL_SUPPRESSED', 'This email address is suppressed. Review the contact before sending.')
   const files = await attachmentFiles(ctx, input.attachmentFileIds)
   const fields = { firstName: record.firstName, lastName: record.lastName, name: record.displayName, company: record.companyName || '', owner: ctx.user?.fullName || (await prisma.user.findUnique({ where: { id: ctx.userId }, select: { fullName: true } }))?.fullName, workspace: ctx.organization?.name || (await prisma.organization.findUnique({ where: { id: ctx.orgId }, select: { name: true } }))?.name }
-  const subject = safeHeader(fillTemplate(input.subject, fields)).trim()
-  const html = cleanHtml(fillTemplate(`${input.bodyHtml}${account.signatureHtml ? `<br>${account.signatureHtml}` : ''}`, fields, true))
+  let resolved = null
+  if (input.templateId) {
+    resolved = await renderTemplate(ctx, input.templateId, { entityType: input.entityType, entityId: input.entityId, to, subject: input.subject, bodyHtml: input.bodyHtml, values: input.variableValues || {}, expectedVersion: input.templateVersion })
+    if (resolved.channel !== 'email') throw gmailError('TEMPLATE_CONTEXT_MISMATCH', 'Choose an email template.', 422)
+    if (!resolved.valid) throw new ApiError(422, 'Complete the template values before sending.', { code: 'VALIDATION_ERROR', details: { fields: resolved.errors } })
+    if (input.templateRenderHash && input.templateRenderHash !== resolved.renderHash) throw gmailError('TEMPLATE_PREVIEW_CHANGED', 'Recipient details changed since your preview. Refresh the template preview and review the updated message before sending.', 409)
+  }
+  const subject = safeHeader(resolved ? resolved.subject : fillTemplate(input.subject, fields)).trim()
+  const signature = account.signatureHtml ? `<br>${cleanHtml(fillTemplate(account.signatureHtml, fields, true))}` : ''
+  const html = cleanHtml(`${resolved ? resolved.bodyHtml : fillTemplate(input.bodyHtml, fields, true)}${signature}`)
   if (Buffer.byteLength(html) > 200000 || !plainText(html)) throw gmailError('EMAIL_BODY_INVALID', 'Write a message under 200 KB.', 422)
   let reply = null, replyContent = null
   if (input.replyToMessageId) {
@@ -68,7 +78,7 @@ export async function queueSend(ctx, input, idempotencyKey) {
     if (![normalizeEmail(replyContent.from), ...replyContent.to.map(normalizeEmail)].includes(to)) throw gmailError('EMAIL_RECIPIENT_INVALID', 'Choose the recipient from this conversation.', 422)
   }
   const id = crypto.randomUUID(), now = new Date(Math.floor(Date.now() / 1000) * 1000), rfcMessageId = `<${id}@mail.techsynccrm.invalid>`
-  const content = { from: account.email, to: [to], subject, html, text: plainText(html), rfcMessageId, date: now.toISOString(), inReplyTo: reply?.rfcMessageId || null,
+  const content = { from: account.email, to: [to], subject, html, text: plainText(html), ...(resolved && { template: { id: resolved.templateId, version: resolved.templateVersion } }), rfcMessageId, date: now.toISOString(), inReplyTo: reply?.rfcMessageId || null,
     references: [...new Set([...(replyContent?.references || []), ...(reply ? [reply.rfcMessageId] : [])])].slice(-30), attachments: files.map((f) => ({ id: f.id, name: f.originalName, contentType: f.contentType, size: Number(f.sizeBytes) })) }
   const key = await provider.unwrapKey(account)
   try {
@@ -81,7 +91,7 @@ export async function queueSend(ctx, input, idempotencyKey) {
         await tx.emailRecordLink.create({ data: { organizationId: ctx.orgId, threadId, [input.entityType === 'lead' ? 'leadId' : 'contactId']: input.entityId } })
       }
       const row = await tx.emailMessage.create({ data: { id, organizationId: ctx.orgId, accountId: account.id, threadId, actorId: ctx.userId, direction: 'outbound', status: 'queued', contentEnc: seal(key, account, `message:${id}`, content), rfcMessageId, generation: account.generation, idempotencyKey, requestHash, attachmentFileIds: input.attachmentFileIds, occurredAt: now, expiresAt: new Date(now.getTime() + settings().retentionDays * 86400000) } })
-      await recordAudit(tx, ctx, { action: 'email.queued', entityType: 'email_message', entityId: id })
+      await recordAudit(tx, ctx, { action: 'email.queued', entityType: 'email_message', entityId: id, ...(resolved && { changes: { templateId: resolved.templateId, templateVersion: resolved.templateVersion } }) })
       return messageStatus(row)
     })
   } catch (err) {
@@ -107,21 +117,9 @@ export async function threadMessages(ctx, id, query) {
   const result = buildPage(rows, page)
   return { ...result, items: await Promise.all(result.items.map(async (r) => ({ ...messageStatus(r), content: r.expiresAt > new Date() ? await contentOf(r) : null }))) }
 }
-export async function templates(ctx) {
-  return prisma.emailTemplate.findMany({ where: { organizationId: ctx.orgId, OR: [{ ownerId: ctx.userId }, { shared: true }] }, orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }], take: 100 })
-}
-export async function saveTemplate(ctx, input, id) {
-  permitEmail(ctx, 'email.templates.write.own')
-  const old = id && await prisma.emailTemplate.findFirst({ where: { id, organizationId: ctx.orgId, OR: [{ ownerId: ctx.userId }, ...(hasPermission(ctx.permissions, 'email.templates.manage') ? [{ shared: true }] : [])] } })
-  if (id && !old) throw gmailError('NOT_FOUND', 'This template is unavailable.', 404)
-  if ((input.shared || old?.shared) && !hasPermission(ctx.permissions, 'email.templates.manage')) throw gmailError('FORBIDDEN', 'Ask an owner or admin to manage shared templates.', 403)
-  const data = { ...input, bodyHtml: cleanHtml(input.bodyHtml), subject: safeHeader(input.subject) }
-  return id ? prisma.emailTemplate.update({ where: { id, organizationId: ctx.orgId }, data: { ...data, version: { increment: 1 } } }) : prisma.emailTemplate.create({ data: { ...data, organizationId: ctx.orgId, ownerId: ctx.userId } })
-}
-export async function deleteTemplate(ctx, id) {
-  permitEmail(ctx, 'email.templates.write.own')
-  const row = await prisma.emailTemplate.findFirst({ where: { id, organizationId: ctx.orgId } })
-  if (!row || row.ownerId !== ctx.userId && !hasPermission(ctx.permissions, 'email.templates.manage')) throw gmailError('NOT_FOUND', 'This template is unavailable.', 404)
-  if (row.shared && !hasPermission(ctx.permissions, 'email.templates.manage')) throw gmailError('FORBIDDEN', 'Ask an admin to manage shared templates.', 403)
-  await prisma.emailTemplate.delete({ where: { id, organizationId: ctx.orgId } }); return { deleted: true }
+// Compatibility exports: the Gmail composer and the central library share one store.
+export { saveTemplate, deleteTemplate } from '../../services/template.service.js'
+export async function templates(ctx, query = {}) {
+  const { listTemplates } = await import('../../services/template.service.js')
+  return listTemplates(ctx, { ...query, channel: 'email', status: 'active' })
 }

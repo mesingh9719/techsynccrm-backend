@@ -102,7 +102,7 @@ export async function updateCalendarEvent(ctx, id, input) {
   const before = await ownEvent(fresh, id)
   assertBinding(before, connection)
   if (before.task.status !== 'open' || before.task.deletedAt || before.task.assigneeId !== ctx.userId || before.task.createdById !== ctx.userId) throw googleError('GOOGLE_TASK_CHANGED', 'The task is closed, removed or reassigned. Manage it from Tasks.')
-  if (input.includeMeet && !before.calendar.meetSupported) throw googleError('GOOGLE_MEET_UNAVAILABLE', 'This calendar does not support Meet.')
+  if (input.includeMeet && !before.includeMeet && !before.calendar.meetSupported) throw googleError('GOOGLE_MEET_UNAVAILABLE', 'This calendar does not support Meet.')
   if (before.includeMeet && !input.includeMeet) throw googleError('GOOGLE_MEET_IMMUTABLE', 'Keep the existing Meet conference or cancel this meeting and create a new one.')
   if (before.status === 'conflict') throw googleError('GOOGLE_REMOTE_CONFLICT', 'This meeting changed in Google Calendar. Review it there before creating a replacement.')
   const row = await prisma.$transaction(async (tx) => {

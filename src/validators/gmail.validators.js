@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { CONSENT_VERSION } from '../integrations/gmail/config.js'
 import { listQuerySchema } from '../lib/pagination.js'
+import { variableValuesSchema } from './template.validators.js'
 
 const email = z.email().max(254).transform((v) => v.toLowerCase())
 const exclusions = {
@@ -21,6 +22,8 @@ export const emailSend = z.object({
   subject: z.string().trim().min(1).max(998).refine((v) => !/[\r\n\0]/.test(v)),
   bodyHtml: z.string().min(1).max(100000), templateId: z.uuid().optional(), replyToMessageId: z.uuid().optional(),
   attachmentFileIds: z.array(z.uuid()).max(3).default([]),
-}).strict()
-export const emailTemplate = z.object({ name: z.string().trim().min(1).max(120), subject: z.string().min(1).max(998).refine((v) => !/[\r\n\0]/.test(v)), bodyHtml: z.string().min(1).max(100000), shared: z.boolean().default(false) }).strict()
+  templateVersion: z.number().int().positive().optional(), variableValues: variableValuesSchema.optional(),
+  templateRenderHash: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+}).strict().refine((v) => v.templateId || !v.templateVersion && !v.variableValues && !v.templateRenderHash, 'Select a template before providing template variable values.')
+export const emailTemplate = z.object({ name: z.string().trim().min(1).max(120), subject: z.string().min(1).max(998).refine((v) => !/[\r\n\0]/.test(v)), bodyHtml: z.string().min(1).max(100000), shared: z.boolean().default(false), expectedVersion: z.number().int().positive().optional() }).strict()
 export { listQuerySchema as gmailList }

@@ -303,4 +303,23 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('Calendar, Meet and Sheets with 
     await runGoogleSheet(row.id); expect((await sheetRow(row.id)).createAttempted).toBe(false)
     await runGoogleSheet(row.id); expect((await sheetRow(row.id)).status).toBe('ready'); expect(fake.files.size).toBe(1)
   })
+  it('retains the disabled API identity and retries the same spreadsheet after enablement', async () => {
+    const row = await createSheet()
+    googleProvider.request.mockRejectedValueOnce(Object.assign(googleError('GOOGLE_DRIVE_API_DISABLED', 'API disabled', 409), { providerStatus: 403 }))
+    await runGoogleSheet(row.id)
+    expect((await sheetRow(row.id)).lastError).toBe('GOOGLE_DRIVE_API_DISABLED')
+    expect((await call(`/sheets/${row.id}`)).data.sheet.lastError).toBe('GOOGLE_DRIVE_API_DISABLED')
+    expect((await call(`/sheets/${row.id}/retry`, { method: 'POST' })).status).toBe(200)
+    await runGoogleSheet(row.id)
+    expect((await sheetRow(row.id)).status).toBe('ready'); expect(fake.files.size).toBe(1)
+  })
+  it('keeps an existing Meet link when calendar capabilities later change', async () => {
+    const row = await createMeeting(); await syncCalendarEvent(row.id)
+    await prisma.googleCalendarLink.updateMany({ where: { organizationId: org.id }, data: { meetSupported: false } })
+    const { requestId: _request, ...input } = meetingInput({ title: 'Same Meet, updated title', revision: 1 })
+    expect((await call(`/calendar/events/${row.id}`, { method: 'PATCH', body: input })).status).toBe(200)
+    await syncCalendarEvent(row.id)
+    expect((await eventRow(row.id)).meetUrl).toBe('https://meet.google.com/abc-defg-hij')
+  })
+
 })

@@ -29,9 +29,12 @@ export const googleProvider = {
     try { response = await fetch(url, { method, headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json', ...headers }, ...(body && { body: JSON.stringify(body) }), signal: AbortSignal.timeout(20000) }) }
     catch { throw googleError('GOOGLE_REMOTE_UNCERTAIN', 'Google did not confirm this operation. Check its status before retrying.', 503) }
     if (!response.ok) {
-      let reason
-      try { const data = await response.json(); reason = data.error?.errors?.[0]?.reason || data.error?.status } catch { /* No provider payload escapes. */ }
-      const code = response.status === 404 || response.status === 410 ? 'GOOGLE_REMOTE_NOT_FOUND' : response.status === 409 ? 'GOOGLE_REMOTE_EXISTS' : response.status === 412 ? 'GOOGLE_REMOTE_CONFLICT' : response.status === 429 ? 'GOOGLE_RATE_LIMITED' : response.status === 401 ? 'GOOGLE_RECONNECT_REQUIRED' : ['accessNotConfigured', 'SERVICE_DISABLED'].includes(reason) ? 'GOOGLE_API_DISABLED' : response.status === 403 ? 'GOOGLE_PERMISSION_DENIED' : response.status === 400 ? 'GOOGLE_REQUEST_REJECTED' : 'GOOGLE_UNAVAILABLE'
+      let disabled = false
+      try {
+        const data = await response.json(), error = data.error
+        disabled = [error?.status, ...(error?.errors || []).map((entry) => entry.reason), ...(error?.details || []).map((entry) => entry.reason)].some((reason) => ['accessNotConfigured', 'SERVICE_DISABLED', 'API_DISABLED'].includes(reason))
+      } catch { /* No provider payload escapes. */ }
+      const code = response.status === 404 || response.status === 410 ? 'GOOGLE_REMOTE_NOT_FOUND' : response.status === 409 ? 'GOOGLE_REMOTE_EXISTS' : response.status === 412 ? 'GOOGLE_REMOTE_CONFLICT' : response.status === 429 ? 'GOOGLE_RATE_LIMITED' : response.status === 401 ? 'GOOGLE_RECONNECT_REQUIRED' : disabled ? `GOOGLE_${api.toUpperCase()}_API_DISABLED` : response.status === 403 ? 'GOOGLE_PERMISSION_DENIED' : response.status === 400 ? 'GOOGLE_REQUEST_REJECTED' : 'GOOGLE_UNAVAILABLE'
       throw Object.assign(googleError(code, 'Google could not complete this request. Check the connection, enabled APIs and resource access.', response.status >= 500 || response.status === 429 ? 503 : 409), { providerStatus: response.status })
     }
     if (response.status === 204) return {}

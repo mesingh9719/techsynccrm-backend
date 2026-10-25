@@ -18,8 +18,10 @@ vi.mock('../../src/jobs/queue.js', () => ({ enqueue: fixture.queue }))
 vi.mock('../../src/email/mailer.js', () => ({ sendEmail: vi.fn(), queueEmail: vi.fn() }))
 vi.mock('../../src/storage/objectStore.js', () => ({ objectStore: { bytes: vi.fn() } }))
 
+import { permissionsFor } from '../../src/config/permissions.js'
 import { prisma } from '../../src/db/prisma.js'
 import { gmailRoutes, emailRoutes, emailTemplateRoutes } from '../../src/routes/gmail.routes.js'
+import { templateRoutes } from '../../src/routes/template.routes.js'
 import { activityRoutes } from '../../src/routes/activity.routes.js'
 import { errorHandler } from '../../src/middlewares/errorHandler.js'
 import { signAccessToken } from '../../src/services/token.service.js'
@@ -72,7 +74,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('Gmail HTTP, queue and real data
     await prisma.membership.create({ data: { organizationId: other.id, userId: users[0].id, role: 'owner' } })
     lead = await prisma.lead.create({ data: { organizationId: org.id, firstName: 'Customer', displayName: 'Customer', ownerId: users[0].id, emails: [{ value: 'customer@example.test', primary: true }], primaryEmail: 'customer@example.test' } })
     await prisma.leadEmail.create({ data: { organizationId: org.id, leadId: lead.id, email: 'customer@example.test' } })
-    const app = express(); app.use(express.json()); app.use(cookieParser()); app.use('/integrations/gmail', gmailRoutes); app.use('/emails', emailRoutes); app.use('/email-templates', emailTemplateRoutes); app.use('/activities', activityRoutes); app.use(errorHandler)
+    const app = express(); app.use(express.json()); app.use(cookieParser()); app.use('/integrations/gmail', gmailRoutes); app.use('/emails', emailRoutes); app.use('/email-templates', emailTemplateRoutes); app.use('/templates', templateRoutes); app.use('/activities', activityRoutes); app.use(errorHandler)
     server = await new Promise((resolve) => { const s = app.listen(0, '127.0.0.1', () => resolve(s)) }); base = `http://127.0.0.1:${server.address().port}`
   })
   beforeEach(() => {
@@ -271,6 +273,47 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('Gmail HTTP, queue and real data
     expect((await prisma.gmailSyncState.findFirst({ where: { accountId: account.id } })).scanState).toBeNull()
     await prisma.emailMailboxCopy.deleteMany({ where: { organizationId: org.id, accountId: account.id, gmailMessageId: { startsWith: 'cap-fixture-' } } })
   })
+  it('renders selected template variables on send, preserves safe links, and stores only rendered content and template provenance', async () => {
+    const created = await request('/templates', { method: 'POST', values: { name: 'Dynamic send', channel: 'email', category: 'meeting', shared: true, recordType: 'lead', subject: '{{lead.first_name}} · {{project_name}}', bodyHtml: '<p>Hi {{lead.first_name}}, {{optional_note}}</p><a href="{{meeting_link}}">Meet</a>', variables: [{ key: 'project_name', label: 'Project name', type: 'text', defaultValue: 'CRM rollout' }, { key: 'meeting_link', label: 'Meeting link', type: 'url', required: true }, { key: 'optional_note', label: 'Optional note', type: 'text', required: false }] } })
+    expect(created.status).toBe(201)
+    const template = created.data.data.template
+    const values = { ...draft(), templateId: template.id, templateVersion: template.version, subject: template.subject, bodyHtml: template.bodyHtml, variableValues: { meeting_link: 'https://example.com/customer?a=1&b=2' } }
+    const preview = await request(`/templates/${template.id}/render`, { method: 'POST', values: { entityType: 'lead', entityId: lead.id, to: values.to, expectedVersion: template.version, values: values.variableValues } })
+    expect(preview.data.data.valid).toBe(true)
+    values.templateRenderHash = preview.data.data.renderHash
+    const changed = await request('/emails/send', { method: 'POST', values: { ...values, templateRenderHash: '0'.repeat(64) }, headers: { 'idempotency-key': crypto.randomUUID() } })
+    expect(changed.data.error.code).toBe('TEMPLATE_PREVIEW_CHANGED')
+    const queued = await request('/emails/send', { method: 'POST', values, headers: { 'idempotency-key': crypto.randomUUID() } })
+    expect(queued.status).toBe(202)
+    const message = await request(`/emails/${queued.data.data.message.id}`)
+    expect(message.data.data.message.content.subject).toBe(preview.data.data.subject)
+    expect(message.data.data.message.content.html).toContain(preview.data.data.bodyHtml)
+    expect(message.data.data.message.content.template).toEqual({ id: template.id, version: template.version })
+    expect(message.data.data.message.content).not.toHaveProperty('variableValues')
+    expect(message.data.data.message.content.html).not.toContain('{{')
+    const audit = await prisma.auditLog.findFirst({ where: { organizationId: org.id, entityId: queued.data.data.message.id, action: 'email.queued' } })
+    expect(audit.changes).toEqual({ templateId: template.id, templateVersion: template.version })
+    const denied = await request('/emails/send', { method: 'POST', values: { ...values, variableValues: {} }, headers: { 'idempotency-key': crypto.randomUUID() } })
+    expect(denied.status).toBe(422)
+    expect((await request('/emails/send', { method: 'POST', values: { ...values, variableValues: { meeting_link: 'javascript:alert(1)' } }, headers: { 'idempotency-key': crypto.randomUUID() } })).status).toBe(422)
+    expect((await request('/emails/send', { method: 'POST', values: { ...values, templateId: crypto.randomUUID() }, headers: { 'idempotency-key': crypto.randomUUID() } })).status).toBe(404)
+    expect((await request('/emails/send', { method: 'POST', values: { ...values, templateVersion: template.version + 1 }, headers: { 'idempotency-key': crypto.randomUUID() } })).status).toBe(409)
+  })
+  it.skipIf(!process.env.PLAYWRIGHT_MODULE)('creates, renames, completes and sends template variables in Chrome through the real API', async () => {
+    await prisma.customFieldDefinition.create({ data: { organizationId: org.id, entityType: 'lead', key: 'favourite_plan', label: 'Favourite plan', type: 'text' } })
+    await prisma.lead.update({ where: { id: lead.id }, data: { customFields: { favourite_plan: 'Growth' } } })
+    const summary = { id: org.id, name: org.name, slug: org.slug, plan: 'growth', role: 'owner', permissions: permissionsFor('owner') }
+    const organization = { ...summary, timezone: 'Asia/Kolkata', country: 'IN', currency: 'INR', locale: 'en-IN', logoUrl: null, seatSelectionRequired: false, trialActive: false, trialEndsAt: null, unreadNotificationCount: 0, entitlements: { features: ['files', 'emailSync'], limits: { users: null, records: null, pipelines: null, customFields: null, webForms: null, storageGb: 10 }, upgrades: {} }, usage: { users: 3, records: 1, pipelines: 1, storageBytes: 0, updatedAt: new Date().toISOString() } }
+    const user = { id: users[0].id, fullName: users[0].fullName, email: users[0].email, emailVerified: true, onboardingCompleted: true, termsUpToDate: true, twoFactorEnabled: false, avatarUrl: null, organization: summary, createdAt: new Date().toISOString() }
+    const { verifyTemplateVariables } = await import('../../../frontend/test/template-variables.browser.mjs')
+    const sent = await verifyTemplateVariables({ base, user, organization, accessToken: signAccessToken(users[0], org.id, sessions[0]).accessToken, lead: { id: lead.id, firstName: lead.firstName, displayName: lead.displayName, primaryEmail: lead.primaryEmail, emails: lead.emails } })
+    const stored = await request(`/emails/${sent.result.data.message.id}`)
+    expect(stored.data.data.message.content.html).toContain('Private project A')
+    expect(stored.data.data.message.content.html).toContain('Growth')
+    const template = await prisma.emailTemplate.findFirst({ where: { organizationId: org.id, id: sent.input.templateId } })
+    expect(template.variables.find((v) => v.key === 'project_title').defaultValue).toBe('CRM rollout')
+    expect(JSON.stringify(template.variables)).not.toContain('Private project A')
+  }, 120000)
   it('marks only an authenticated, correlated structured Google hard bounce and suppresses its recipient', async () => {
     const queued = await request('/emails/send', { method: 'POST', values: draft(), headers: { 'idempotency-key': crypto.randomUUID() } })
     await sendQueued({ organizationId: org.id, messageId: queued.data.data.message.id })
