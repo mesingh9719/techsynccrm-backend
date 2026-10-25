@@ -1,0 +1,1 @@
+{"deletedAttributionWithoutDeadLink":true,"publicBrowserSubmit":true,"utmAttribution":true,"configuredAssignment":true,"repeatDedupe":true,"firstTouchPreserved":true,"noImplicitDeal":true,"invalidInput":400,"foreignTenant":404,"closedForm":410,"submissions":2}

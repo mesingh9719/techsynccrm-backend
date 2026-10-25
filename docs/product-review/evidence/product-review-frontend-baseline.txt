@@ -1,0 +1,15 @@
+
+> techsync-crm@0.0.0 test
+> node --test test/*.test.mjs
+
+✔ test/behavior.test.mjs (3322.387045ms)
+✔ test/campaign-pipeline.test.mjs (919.821765ms)
+✔ test/email-foundation.test.mjs (1200.289293ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3331.466895

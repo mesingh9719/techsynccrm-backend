@@ -1,0 +1,13 @@
+
+> techsync-crm-backend@1.0.0 test
+> vitest run test/integration/product-review.test.js test/integration/related-visibility.test.js
+
+
+ RUN  v5.0.5 /home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend
+
+
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+   Start at  12:59:42
+   Duration  1.43s (tests 52%, import 35%, transform 12%)
+

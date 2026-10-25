@@ -1,0 +1,2802 @@
+[
+  {
+    "file": "backend/src/routes/activity.routes.js",
+    "line": 27,
+    "router": "timelineRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/timeline",
+    "authorizationExpression": "validate(timelineQuery, 'query'), a.timeline)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/activity.routes.js",
+    "line": 32,
+    "router": "activityRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/activities",
+    "authorizationExpression": "validate(logActivitySchema), a.logActivity)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/activity.routes.js",
+    "line": 33,
+    "router": "activityRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/activities",
+    "authorizationExpression": "id, validate(updateActivitySchema), a.updateActivity)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/activity.routes.js",
+    "line": 34,
+    "router": "activityRoutes",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": "/activities",
+    "authorizationExpression": "id, a.deleteActivity)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/activity.routes.js",
+    "line": 35,
+    "router": "activityRoutes",
+    "method": "POST",
+    "localPath": "/:id/pin",
+    "mount": "/activities",
+    "authorizationExpression": "id, validate(pinSchema), a.pinActivity)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/activity.routes.js",
+    "line": 39,
+    "router": "taskRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/tasks",
+    "authorizationExpression": "permit('tasks.read'), validate(taskListQuery, 'query'), a.listTasks)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/activity.routes.js",
+    "line": 40,
+    "router": "taskRoutes",
+    "method": "GET",
+    "localPath": "/summary",
+    "mount": "/tasks",
+    "authorizationExpression": "permit('tasks.read'), a.summary)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/activity.routes.js",
+    "line": 41,
+    "router": "taskRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/tasks",
+    "authorizationExpression": "permit('tasks.create'), validate(createTaskSchema), a.createTask)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/activity.routes.js",
+    "line": 42,
+    "router": "taskRoutes",
+    "method": "POST",
+    "localPath": "/bulk",
+    "mount": "/tasks",
+    "authorizationExpression": "permit('tasks.update'), validate(taskBulkSchema), a.bulkTasks)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/activity.routes.js",
+    "line": 43,
+    "router": "taskRoutes",
+    "method": "GET",
+    "localPath": "/:id",
+    "mount": "/tasks",
+    "authorizationExpression": "permit('tasks.read'), id, a.getTask)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/activity.routes.js",
+    "line": 44,
+    "router": "taskRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/tasks",
+    "authorizationExpression": "permit('tasks.update'), id, validate(updateTaskSchema), a.updateTask)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/activity.routes.js",
+    "line": 45,
+    "router": "taskRoutes",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": "/tasks",
+    "authorizationExpression": "permit('tasks.delete'), id, a.deleteTask)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/activity.routes.js",
+    "line": 46,
+    "router": "taskRoutes",
+    "method": "POST",
+    "localPath": "/:id/complete",
+    "mount": "/tasks",
+    "authorizationExpression": "permit('tasks.update'), id, validate(completeTaskSchema), a.completeTask)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/activity.routes.js",
+    "line": 47,
+    "router": "taskRoutes",
+    "method": "POST",
+    "localPath": "/:id/reopen",
+    "mount": "/tasks",
+    "authorizationExpression": "permit('tasks.update'), id, a.reopenTask)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/activity.routes.js",
+    "line": 48,
+    "router": "taskRoutes",
+    "method": "POST",
+    "localPath": "/:id/cancel",
+    "mount": "/tasks",
+    "authorizationExpression": "permit('tasks.update'), id, a.cancelTask)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/assignment.routes.js",
+    "line": 10,
+    "router": "assignmentRuleRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/assignment-rules",
+    "authorizationExpression": "assignment.listRules)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/assignment.routes.js",
+    "line": 11,
+    "router": "assignmentRuleRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/assignment-rules",
+    "authorizationExpression": "validate(schema.assignmentRuleSchema), assignment.createRule)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/assignment.routes.js",
+    "line": 13,
+    "router": "assignmentRuleRoutes",
+    "method": "PATCH",
+    "localPath": "/order",
+    "mount": "/assignment-rules",
+    "authorizationExpression": "validate(schema.ruleOrderSchema), assignment.orderRules)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/assignment.routes.js",
+    "line": 14,
+    "router": "assignmentRuleRoutes",
+    "method": "POST",
+    "localPath": "/test",
+    "mount": "/assignment-rules",
+    "authorizationExpression": "validate(schema.assignmentTestSchema), assignment.test)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/assignment.routes.js",
+    "line": 15,
+    "router": "assignmentRuleRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/assignment-rules",
+    "authorizationExpression": "validate(schema.ruleIdParams, 'params'), validate(schema.assignmentRuleSchema), assignment.updateRule)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/assignment.routes.js",
+    "line": 16,
+    "router": "assignmentRuleRoutes",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": "/assignment-rules",
+    "authorizationExpression": "validate(schema.ruleIdParams, 'params'), assignment.deleteRule)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/assignment.routes.js",
+    "line": 20,
+    "router": "workingHoursRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/working-hours",
+    "authorizationExpression": "permit('settings.workspace.manage'), assignment.getHours)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/assignment.routes.js",
+    "line": 21,
+    "router": "workingHoursRoutes",
+    "method": "PUT",
+    "localPath": "/",
+    "mount": "/working-hours",
+    "authorizationExpression": "permit('settings.workspace.manage'), validate(schema.workingHoursSchema), assignment.saveHours)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/assignment.routes.js",
+    "line": 25,
+    "router": "outOfOfficeRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/users/me/out-of-office",
+    "authorizationExpression": "assignment.listAbsences)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/assignment.routes.js",
+    "line": 26,
+    "router": "outOfOfficeRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/users/me/out-of-office",
+    "authorizationExpression": "validate(schema.outOfOfficeSchema), assignment.addAbsence)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/assignment.routes.js",
+    "line": 27,
+    "router": "outOfOfficeRoutes",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": "/users/me/out-of-office",
+    "authorizationExpression": "validate(schema.absenceIdParams, 'params'), assignment.deleteAbsence)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/auth.routes.js",
+    "line": 44,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/signup",
+    "mount": null,
+    "authorizationExpression": "signupLimiter, validate(signupSchema), auth.signup)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/auth.routes.js",
+    "line": 45,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/login",
+    "mount": null,
+    "authorizationExpression": "loginLimiter, validate(loginSchema), auth.login)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/auth.routes.js",
+    "line": 46,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/login/2fa",
+    "mount": null,
+    "authorizationExpression": "twoFactorLimiter, validate(loginSecondFactorSchema), auth.loginSecondFactor)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/auth.routes.js",
+    "line": 47,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/refresh",
+    "mount": null,
+    "authorizationExpression": "auth.refresh)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/auth.routes.js",
+    "line": 48,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/logout",
+    "mount": null,
+    "authorizationExpression": "auth.logout)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/auth.routes.js",
+    "line": 49,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/logout-all",
+    "mount": null,
+    "authorizationExpression": "requireAuth, auth.logoutAll)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/auth.routes.js",
+    "line": 50,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/me",
+    "mount": null,
+    "authorizationExpression": "requireAuth, auth.me)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/auth.routes.js",
+    "line": 51,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/switch-organization",
+    "mount": null,
+    "authorizationExpression": "requireAuth, validate(switchOrganizationSchema), auth.switchOrganization)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/auth.routes.js",
+    "line": 53,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/verify-email",
+    "mount": null,
+    "authorizationExpression": "verificationLimiter, validate(verifyEmailSchema), auth.verifyEmail)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/auth.routes.js",
+    "line": 54,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/resend-verification",
+    "mount": null,
+    "authorizationExpression": "verificationLimiter, requireAuth, auth.resendVerification)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/auth.routes.js",
+    "line": 55,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/forgot-password",
+    "mount": null,
+    "authorizationExpression": "passwordResetLimiter, validate(forgotPasswordSchema), auth.forgotPassword)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/auth.routes.js",
+    "line": 56,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/reset-password",
+    "mount": null,
+    "authorizationExpression": "passwordResetLimiter, validate(resetPasswordSchema), auth.resetPassword)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/auth.routes.js",
+    "line": 58,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/accept-terms",
+    "mount": null,
+    "authorizationExpression": "requireAuth, validate(acceptTermsSchema), auth.acceptTerms)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/auth.routes.js",
+    "line": 59,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/confirm-email-change",
+    "mount": null,
+    "authorizationExpression": "emailChangeLimiter, validate(verifyEmailSchema), auth.confirmEmailChange)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/auth.routes.js",
+    "line": 60,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/cancel-email-change",
+    "mount": null,
+    "authorizationExpression": "emailChangeLimiter, validate(verifyEmailSchema), auth.cancelEmailChange)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/auth.routes.js",
+    "line": 63,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/signup-with-invite",
+    "mount": null,
+    "authorizationExpression": "invitationLimiter, validate(signupWithInviteSchema), auth.signupWithInvite)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/auth.routes.js",
+    "line": 64,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/accept-invitation",
+    "mount": null,
+    "authorizationExpression": "invitationLimiter, requireAuth, validate(acceptInvitationSchema), auth.acceptInvitation)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/campaign.routes.js",
+    "line": 18,
+    "router": "campaignRoutes",
+    "method": "GET",
+    "localPath": "/options",
+    "mount": "/campaigns",
+    "authorizationExpression": "permit('campaigns.read'), campaigns.options)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/campaign.routes.js",
+    "line": 19,
+    "router": "campaignRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/campaigns",
+    "authorizationExpression": "permit('campaigns.read'), validate(campaignListQuery, 'query'), campaigns.list)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/campaign.routes.js",
+    "line": 20,
+    "router": "campaignRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/campaigns",
+    "authorizationExpression": "permit('campaigns.create'), validate(createCampaignSchema), campaigns.create)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/campaign.routes.js",
+    "line": 27,
+    "router": "campaignRoutes",
+    "method": "GET",
+    "localPath": "/:id",
+    "mount": "/campaigns",
+    "authorizationExpression": "permit('campaigns.read'), params, campaigns.get)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/campaign.routes.js",
+    "line": 28,
+    "router": "campaignRoutes",
+    "method": "GET",
+    "localPath": "/:id/meta-status",
+    "mount": "/campaigns",
+    "authorizationExpression": "permit('campaigns.read', 'settings.workspace.manage'), params, campaigns.metaState)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/campaign.routes.js",
+    "line": 36,
+    "router": "campaignRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/campaigns",
+    "authorizationExpression": "permit('campaigns.update'), params, validate(updateCampaignSchema), campaigns.update)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/campaign.routes.js",
+    "line": 37,
+    "router": "campaignRoutes",
+    "method": "POST",
+    "localPath": "/:id/status",
+    "mount": "/campaigns",
+    "authorizationExpression": "permit('campaigns.update'), params, validate(campaignStatusSchema), campaigns.setStatus)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/campaign.routes.js",
+    "line": 38,
+    "router": "campaignRoutes",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": "/campaigns",
+    "authorizationExpression": "permit('campaigns.delete'), params, campaigns.remove)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 48,
+    "router": "contactRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/contacts",
+    "authorizationExpression": "permit('contacts.read'), validate(contactListQuery, 'query'), crm.listContacts)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 49,
+    "router": "contactRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/contacts",
+    "authorizationExpression": "permit('contacts.create'), allow, validate(createContactSchema), crm.createContact)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 50,
+    "router": "contactRoutes",
+    "method": "POST",
+    "localPath": "/check-duplicates",
+    "mount": "/contacts",
+    "authorizationExpression": "permit('contacts.read'), validate(checkDuplicatesSchema), crm.checkContactDuplicates)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 51,
+    "router": "contactRoutes",
+    "method": "POST",
+    "localPath": "/merge",
+    "mount": "/contacts",
+    "authorizationExpression": "permit('contacts.update'), validate(mergeSchema), crm.mergeContacts)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 52,
+    "router": "contactRoutes",
+    "method": "POST",
+    "localPath": "/bulk",
+    "mount": "/contacts",
+    "authorizationExpression": "permit('contacts.update'), validate(bulkSchema), crm.bulkContacts)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 53,
+    "router": "contactRoutes",
+    "method": "GET",
+    "localPath": "/:id",
+    "mount": "/contacts",
+    "authorizationExpression": "permit('contacts.read'), validate(idParams, 'params'), crm.getContact)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 54,
+    "router": "contactRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/contacts",
+    "authorizationExpression": "permit('contacts.update'), allow, validate(idParams, 'params'), validate(updateContactSchema), crm.updateContact)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 55,
+    "router": "contactRoutes",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": "/contacts",
+    "authorizationExpression": "permit('contacts.delete'), validate(idParams, 'params'), crm.deleteContact)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 56,
+    "router": "contactRoutes",
+    "method": "POST",
+    "localPath": "/:id/restore",
+    "mount": "/contacts",
+    "authorizationExpression": "permit('contacts.delete'), validate(idParams, 'params'), crm.restoreContact)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 60,
+    "router": "companyRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/companies",
+    "authorizationExpression": "permit('companies.read'), validate(companyListQuery, 'query'), crm.listCompanies)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 61,
+    "router": "companyRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/companies",
+    "authorizationExpression": "permit('companies.create'), allow, validate(createCompanySchema), crm.createCompany)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 62,
+    "router": "companyRoutes",
+    "method": "POST",
+    "localPath": "/check-duplicates",
+    "mount": "/companies",
+    "authorizationExpression": "permit('companies.read'), validate(companyDuplicatesSchema), crm.checkCompanyDuplicates)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 63,
+    "router": "companyRoutes",
+    "method": "POST",
+    "localPath": "/merge",
+    "mount": "/companies",
+    "authorizationExpression": "permit('companies.update'), validate(mergeSchema), crm.mergeCompanies)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 64,
+    "router": "companyRoutes",
+    "method": "POST",
+    "localPath": "/bulk",
+    "mount": "/companies",
+    "authorizationExpression": "permit('companies.update'), validate(bulkSchema), crm.bulkCompanies)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 65,
+    "router": "companyRoutes",
+    "method": "GET",
+    "localPath": "/:id",
+    "mount": "/companies",
+    "authorizationExpression": "permit('companies.read'), validate(idParams, 'params'), crm.getCompany)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 66,
+    "router": "companyRoutes",
+    "method": "GET",
+    "localPath": "/:id/contacts",
+    "mount": "/companies",
+    "authorizationExpression": "permit('companies.read'), validate(idParams, 'params'), crm.listCompanyContacts)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 67,
+    "router": "companyRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/companies",
+    "authorizationExpression": "permit('companies.update'), allow, validate(idParams, 'params'), validate(updateCompanySchema), crm.updateCompany)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 68,
+    "router": "companyRoutes",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": "/companies",
+    "authorizationExpression": "permit('companies.delete'), validate(idParams, 'params'), crm.deleteCompany)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 69,
+    "router": "companyRoutes",
+    "method": "POST",
+    "localPath": "/:id/restore",
+    "mount": "/companies",
+    "authorizationExpression": "permit('companies.delete'), validate(idParams, 'params'), crm.restoreCompany)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 74,
+    "router": "tagRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/tags",
+    "authorizationExpression": "crm.listTags)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 75,
+    "router": "tagRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/tags",
+    "authorizationExpression": "permit('contacts.create'), validate(tagSchema), crm.createTag)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 76,
+    "router": "tagRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/tags",
+    "authorizationExpression": "permit('settings.workspace.manage'), validate(idParams, 'params'), validate(updateTagSchema), crm.updateTag)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 77,
+    "router": "tagRoutes",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": "/tags",
+    "authorizationExpression": "permit('settings.workspace.manage'), validate(idParams, 'params'), crm.deleteTag)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 81,
+    "router": "customFieldRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/custom-fields",
+    "authorizationExpression": "validate(customFieldListQuery, 'query'), crm.listCustomFields)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 82,
+    "router": "customFieldRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/custom-fields",
+    "authorizationExpression": "permit('settings.customFields.manage'), validate(createCustomFieldSchema), crm.createCustomField)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 83,
+    "router": "customFieldRoutes",
+    "method": "PATCH",
+    "localPath": "/order",
+    "mount": "/custom-fields",
+    "authorizationExpression": "permit('settings.customFields.manage'), validate(reorderCustomFieldsSchema), crm.reorderCustomFields)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 84,
+    "router": "customFieldRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/custom-fields",
+    "authorizationExpression": "permit('settings.customFields.manage'), validate(idParams, 'params'), validate(updateCustomFieldSchema), crm.updateCustomField)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/crm.routes.js",
+    "line": 85,
+    "router": "customFieldRoutes",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": "/custom-fields",
+    "authorizationExpression": "permit('settings.customFields.manage'), validate(idParams, 'params'), crm.deleteCustomField)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 36,
+    "router": "pipelineRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/pipelines",
+    "authorizationExpression": "deals.listPipelines)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 37,
+    "router": "pipelineRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/pipelines",
+    "authorizationExpression": "manage, validate(createPipelineSchema), deals.createPipeline)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 38,
+    "router": "pipelineRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/pipelines",
+    "authorizationExpression": "manage, id, validate(updatePipelineSchema), deals.updatePipeline)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 39,
+    "router": "pipelineRoutes",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": "/pipelines",
+    "authorizationExpression": "manage, id, validate(deletePipelineSchema), deals.deletePipeline)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 40,
+    "router": "pipelineRoutes",
+    "method": "POST",
+    "localPath": "/:id/stages",
+    "mount": "/pipelines",
+    "authorizationExpression": "manage, id, validate(createStageSchema), deals.createStage)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 41,
+    "router": "pipelineRoutes",
+    "method": "PATCH",
+    "localPath": "/:id/stages/order",
+    "mount": "/pipelines",
+    "authorizationExpression": "manage, id, validate(reorderStagesSchema), deals.reorderStages)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 42,
+    "router": "pipelineRoutes",
+    "method": "PATCH",
+    "localPath": "/:id/stages/:stageId",
+    "mount": "/pipelines",
+    "authorizationExpression": "manage, validate(stageParams, 'params'), validate(updateStageSchema), deals.updateStage)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 43,
+    "router": "pipelineRoutes",
+    "method": "DELETE",
+    "localPath": "/:id/stages/:stageId",
+    "mount": "/pipelines",
+    "authorizationExpression": "manage, validate(stageParams, 'params'), validate(deleteStageSchema), deals.deleteStage)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 47,
+    "router": "pipelineTemplateRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/pipeline-templates",
+    "authorizationExpression": "deals.listTemplates)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 51,
+    "router": "dealRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/deals",
+    "authorizationExpression": "permit('deals.read'), validate(dealListQuery, 'query'), deals.list)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 52,
+    "router": "dealRoutes",
+    "method": "GET",
+    "localPath": "/board",
+    "mount": "/deals",
+    "authorizationExpression": "permit('deals.read'), validate(boardQuery, 'query'), deals.board)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 53,
+    "router": "dealRoutes",
+    "method": "GET",
+    "localPath": "/forecast",
+    "mount": "/deals",
+    "authorizationExpression": "permit('deals.read'), validate(forecastQuery, 'query'), deals.forecast)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 54,
+    "router": "dealRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/deals",
+    "authorizationExpression": "permit('deals.create'), validate(createDealSchema), deals.create)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 55,
+    "router": "dealRoutes",
+    "method": "POST",
+    "localPath": "/bulk",
+    "mount": "/deals",
+    "authorizationExpression": "permit('deals.update'), validate(dealBulkSchema), deals.bulk)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 56,
+    "router": "dealRoutes",
+    "method": "GET",
+    "localPath": "/:id",
+    "mount": "/deals",
+    "authorizationExpression": "permit('deals.read'), id, deals.get)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 57,
+    "router": "dealRoutes",
+    "method": "GET",
+    "localPath": "/:id/history",
+    "mount": "/deals",
+    "authorizationExpression": "permit('deals.read'), id, deals.history)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 58,
+    "router": "dealRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/deals",
+    "authorizationExpression": "permit('deals.update'), id, validate(updateDealSchema), deals.update)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 59,
+    "router": "dealRoutes",
+    "method": "POST",
+    "localPath": "/:id/move",
+    "mount": "/deals",
+    "authorizationExpression": "permit('deals.update'), id, validate(moveDealSchema), deals.move)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 60,
+    "router": "dealRoutes",
+    "method": "POST",
+    "localPath": "/:id/contacts",
+    "mount": "/deals",
+    "authorizationExpression": "permit('deals.update'), id, validate(dealContactSchema), deals.addContact)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 61,
+    "router": "dealRoutes",
+    "method": "DELETE",
+    "localPath": "/:id/contacts/:contactId",
+    "mount": "/deals",
+    "authorizationExpression": "permit('deals.update'), validate(contactParams, 'params'), deals.removeContact)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 62,
+    "router": "dealRoutes",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": "/deals",
+    "authorizationExpression": "permit('deals.delete'), id, deals.remove)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/deal.routes.js",
+    "line": 63,
+    "router": "dealRoutes",
+    "method": "POST",
+    "localPath": "/:id/restore",
+    "mount": "/deals",
+    "authorizationExpression": "permit('deals.delete'), id, deals.restore)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 10,
+    "router": "facebookRoutes",
+    "method": "GET",
+    "localPath": "/callback",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "facebook.callback)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 11,
+    "router": "facebookRoutes",
+    "method": "POST",
+    "localPath": "/deauthorize",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "providerLimit(), facebook.deauthorize)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 12,
+    "router": "facebookRoutes",
+    "method": "POST",
+    "localPath": "/data-deletion",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "providerLimit(), facebook.dataDeletion)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 13,
+    "router": "facebookRoutes",
+    "method": "GET",
+    "localPath": "/data-deletion/status/:code",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "providerLimit(), validate(schema.facebookDeletionCode, 'params'), facebook.deletionStatus)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 16,
+    "router": "facebookRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "facebook.status)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 17,
+    "router": "facebookRoutes",
+    "method": "POST",
+    "localPath": "/connect",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "facebook.login)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 18,
+    "router": "facebookRoutes",
+    "method": "POST",
+    "localPath": "/sdk/challenge",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "facebook.sdkChallenge)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 19,
+    "router": "facebookRoutes",
+    "method": "POST",
+    "localPath": "/sdk/connect",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "validate(schema.facebookSdkLogin), facebook.sdkConnect)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 20,
+    "router": "facebookRoutes",
+    "method": "DELETE",
+    "localPath": "/",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "facebook.disconnect)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 21,
+    "router": "facebookRoutes",
+    "method": "GET",
+    "localPath": "/pages",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "validate(schema.facebookCursorQuery, 'query'), facebook.pages)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 22,
+    "router": "facebookRoutes",
+    "method": "POST",
+    "localPath": "/pages",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "validate(schema.facebookConnectPage), facebook.connectPage)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 23,
+    "router": "facebookRoutes",
+    "method": "DELETE",
+    "localPath": "/pages/:pageId",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "validate(schema.facebookPageParams, 'params'), facebook.disconnectPage)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 24,
+    "router": "facebookRoutes",
+    "method": "GET",
+    "localPath": "/pages/:pageId/forms",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "validate(schema.facebookPageParams, 'params'), validate(schema.facebookCursorQuery, 'query'), facebook.forms)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 25,
+    "router": "facebookRoutes",
+    "method": "PUT",
+    "localPath": "/pages/:pageId/forms/:formId",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "validate(schema.facebookFormParams, 'params'), validate(schema.facebookFormSettings), facebook.configureForm)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 26,
+    "router": "facebookRoutes",
+    "method": "POST",
+    "localPath": "/forms/:id/sync",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "validate(schema.facebookUuidParams, 'params'), facebook.sync)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 27,
+    "router": "facebookRoutes",
+    "method": "GET",
+    "localPath": "/ad-accounts",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "validate(schema.facebookCursorQuery, 'query'), facebook.adAccounts)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 28,
+    "router": "facebookRoutes",
+    "method": "GET",
+    "localPath": "/campaigns",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "validate(schema.facebookCampaignQuery, 'query'), facebook.campaigns)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 29,
+    "router": "facebookRoutes",
+    "method": "GET",
+    "localPath": "/deliveries",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "validate(schema.facebookDeliveryQuery, 'query'), facebook.deliveries)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 30,
+    "router": "facebookRoutes",
+    "method": "POST",
+    "localPath": "/deliveries/:id/retry",
+    "mount": "/integrations/facebook",
+    "authorizationExpression": "validate(schema.facebookUuidParams, 'params'), facebook.retry)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 33,
+    "router": "facebookWebhookRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/webhooks/in/facebook",
+    "authorizationExpression": "facebook.verifyWebhook)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/facebook.routes.js",
+    "line": 34,
+    "router": "facebookWebhookRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/webhooks/in/facebook",
+    "authorizationExpression": "facebook.webhook)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/file.routes.js",
+    "line": 12,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/upload-intent",
+    "mount": null,
+    "authorizationExpression": "permit('tasks.create'), validate(uploadIntentSchema), f.intent)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/file.routes.js",
+    "line": 13,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/",
+    "mount": null,
+    "authorizationExpression": "permit('tasks.create'), upload, validate(optionalFileRef), f.upload)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/file.routes.js",
+    "line": 14,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/",
+    "mount": null,
+    "authorizationExpression": "validate(fileListQuery, 'query'), f.list)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/file.routes.js",
+    "line": 15,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/:id/complete",
+    "mount": null,
+    "authorizationExpression": "id, f.complete)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/file.routes.js",
+    "line": 16,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/:id/restore",
+    "mount": null,
+    "authorizationExpression": "id, f.restore)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/file.routes.js",
+    "line": 17,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/:id/links",
+    "mount": null,
+    "authorizationExpression": "id, validate(fileRef), f.link)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/file.routes.js",
+    "line": 18,
+    "router": "router",
+    "method": "DELETE",
+    "localPath": "/:id/links/:entityType/:entityId",
+    "mount": null,
+    "authorizationExpression": "validate(fileLinkParams, 'params'), f.unlink)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/file.routes.js",
+    "line": 19,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/:id",
+    "mount": null,
+    "authorizationExpression": "id, f.getOne)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/file.routes.js",
+    "line": 20,
+    "router": "router",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": null,
+    "authorizationExpression": "id, f.remove)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/gmail.routes.js",
+    "line": 14,
+    "router": "gmailRoutes",
+    "method": "GET",
+    "localPath": "/callback",
+    "mount": "/integrations/gmail",
+    "authorizationExpression": "limited(), c.callback)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/gmail.routes.js",
+    "line": 16,
+    "router": "gmailRoutes",
+    "method": "GET",
+    "localPath": "/me",
+    "mount": "/integrations/gmail",
+    "authorizationExpression": "c.me)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/gmail.routes.js",
+    "line": 17,
+    "router": "gmailRoutes",
+    "method": "POST",
+    "localPath": "/oauth/start",
+    "mount": "/integrations/gmail",
+    "authorizationExpression": "limited(10), validate(s.gmailStart), c.start)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/gmail.routes.js",
+    "line": 18,
+    "router": "gmailRoutes",
+    "method": "PATCH",
+    "localPath": "/me",
+    "mount": "/integrations/gmail",
+    "authorizationExpression": "validate(s.gmailSettings), c.settingsUpdate)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/gmail.routes.js",
+    "line": 19,
+    "router": "gmailRoutes",
+    "method": "POST",
+    "localPath": "/me/sync",
+    "mount": "/integrations/gmail",
+    "authorizationExpression": "limited(6), c.sync)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/gmail.routes.js",
+    "line": 20,
+    "router": "gmailRoutes",
+    "method": "GET",
+    "localPath": "/accounts",
+    "mount": "/integrations/gmail",
+    "authorizationExpression": "permit('email.connections.manage'), validate(s.gmailList, 'query'), c.accounts)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/gmail.routes.js",
+    "line": 21,
+    "router": "gmailRoutes",
+    "method": "DELETE",
+    "localPath": "/accounts/:id",
+    "mount": "/integrations/gmail",
+    "authorizationExpression": "id, c.disconnect)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/gmail.routes.js",
+    "line": 22,
+    "router": "gmailRoutes",
+    "method": "POST",
+    "localPath": "/accounts/:id/delete-history",
+    "mount": "/integrations/gmail",
+    "authorizationExpression": "id, limited(3), c.historyDelete)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/gmail.routes.js",
+    "line": 25,
+    "router": "emailRoutes",
+    "method": "POST",
+    "localPath": "/send",
+    "mount": "/emails",
+    "authorizationExpression": "limited(30), validate(s.emailSend), c.send)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/gmail.routes.js",
+    "line": 26,
+    "router": "emailRoutes",
+    "method": "GET",
+    "localPath": "/threads",
+    "mount": "/emails",
+    "authorizationExpression": "validate(s.emailRecordQuery, 'query'), c.threads)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/gmail.routes.js",
+    "line": 27,
+    "router": "emailRoutes",
+    "method": "GET",
+    "localPath": "/threads/:id/messages",
+    "mount": "/emails",
+    "authorizationExpression": "id, validate(s.gmailList, 'query'), c.messages)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/gmail.routes.js",
+    "line": 28,
+    "router": "emailRoutes",
+    "method": "GET",
+    "localPath": "/:id",
+    "mount": "/emails",
+    "authorizationExpression": "id, c.message)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/gmail.routes.js",
+    "line": 31,
+    "router": "emailTemplateRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/email-templates",
+    "authorizationExpression": "validate(s.gmailList, 'query'), c.templates)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/gmail.routes.js",
+    "line": 32,
+    "router": "emailTemplateRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/email-templates",
+    "authorizationExpression": "validate(s.emailTemplate), c.templateSave)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/gmail.routes.js",
+    "line": 33,
+    "router": "emailTemplateRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/email-templates",
+    "authorizationExpression": "id, validate(s.emailTemplate), c.templateSave)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/gmail.routes.js",
+    "line": 34,
+    "router": "emailTemplateRoutes",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": "/email-templates",
+    "authorizationExpression": "id, c.templateDelete)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/gmail.routes.js",
+    "line": 36,
+    "router": "gmailWebhookRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/webhooks/gmail",
+    "authorizationExpression": "limited(600), c.push)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/googleAuth.routes.js",
+    "line": 24,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/config",
+    "mount": null,
+    "authorizationExpression": "(_req, res) => res.json({ success: true, data: googleConfiguration() }))",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/googleAuth.routes.js",
+    "line": 25,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/start",
+    "mount": null,
+    "authorizationExpression": "validate(startSchema), guarded(async (req, res) => {",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/googleAuth.routes.js",
+    "line": 30,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/callback",
+    "mount": null,
+    "authorizationExpression": "async (req, res) => {",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/googleAuth.routes.js",
+    "line": 40,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/complete",
+    "mount": null,
+    "authorizationExpression": "guarded(async (req, res) => {",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/index.js",
+    "line": 40,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/health",
+    "mount": null,
+    "authorizationExpression": "getHealth)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/internal.routes.js",
+    "line": 14,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/inbound",
+    "mount": null,
+    "authorizationExpression": "validate(inboundListQuerySchema, 'query'), forms.listInbound)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/internal.routes.js",
+    "line": 17,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/organizations/:id/extend-trial",
+    "mount": null,
+    "authorizationExpression": "validate(organizationIdParamSchema, 'params'), validate(extendTrialSchema), plans.extendTrial)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/internal.routes.js",
+    "line": 18,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/organizations/:id/plan",
+    "mount": null,
+    "authorizationExpression": "validate(organizationIdParamSchema, 'params'), validate(setPlanSchema), plans.setPlan)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 36,
+    "router": "leadRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/leads",
+    "authorizationExpression": "permit('leads.read'), validate(leadListQuery, 'query'), leads.list)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 37,
+    "router": "leadRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/leads",
+    "authorizationExpression": "permit('leads.create'), allow, validate(createLeadSchema), leads.create)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 38,
+    "router": "leadRoutes",
+    "method": "POST",
+    "localPath": "/check-duplicates",
+    "mount": "/leads",
+    "authorizationExpression": "permit('leads.read'), validate(leadDuplicatesSchema), leads.checkDuplicates)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 39,
+    "router": "leadRoutes",
+    "method": "POST",
+    "localPath": "/bulk",
+    "mount": "/leads",
+    "authorizationExpression": "permit('leads.update'), validate(leadBulkSchema), leads.bulk)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 40,
+    "router": "leadRoutes",
+    "method": "GET",
+    "localPath": "/:id",
+    "mount": "/leads",
+    "authorizationExpression": "permit('leads.read'), params, leads.get)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 41,
+    "router": "leadRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/leads",
+    "authorizationExpression": "permit('leads.update'), allow, params, validate(updateLeadSchema), leads.update)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 42,
+    "router": "leadRoutes",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": "/leads",
+    "authorizationExpression": "permit('leads.delete'), params, leads.remove)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 43,
+    "router": "leadRoutes",
+    "method": "POST",
+    "localPath": "/:id/restore",
+    "mount": "/leads",
+    "authorizationExpression": "permit('leads.delete'), params, leads.restore)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 44,
+    "router": "leadRoutes",
+    "method": "POST",
+    "localPath": "/:id/status",
+    "mount": "/leads",
+    "authorizationExpression": "permit('leads.update'), params, validate(leadStatusSchema), leads.changeStatus)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 45,
+    "router": "leadRoutes",
+    "method": "POST",
+    "localPath": "/:id/claim",
+    "mount": "/leads",
+    "authorizationExpression": "permit('leads.read'), params, leads.claim)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 46,
+    "router": "leadRoutes",
+    "method": "POST",
+    "localPath": "/:id/assign",
+    "mount": "/leads",
+    "authorizationExpression": "permit('records.assign'), params, validate(assignLeadSchema), leads.assign)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 47,
+    "router": "leadRoutes",
+    "method": "GET",
+    "localPath": "/:id/conversion",
+    "mount": "/leads",
+    "authorizationExpression": "permit('leads.update'), params, leads.conversionSuggestions)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 48,
+    "router": "leadRoutes",
+    "method": "POST",
+    "localPath": "/:id/convert",
+    "mount": "/leads",
+    "authorizationExpression": "permit('leads.update'), params, validate(convertLeadSchema), leads.convert)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 53,
+    "router": "leadSourceRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/lead-sources",
+    "authorizationExpression": "leads.listSources)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 54,
+    "router": "leadSourceRoutes",
+    "method": "GET",
+    "localPath": "/suggestions",
+    "mount": "/lead-sources",
+    "authorizationExpression": "permit('settings.workspace.manage'), leads.listSourceSuggestions)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 55,
+    "router": "leadSourceRoutes",
+    "method": "PATCH",
+    "localPath": "/order",
+    "mount": "/lead-sources",
+    "authorizationExpression": "permit('settings.workspace.manage'), validate(sourceOrderSchema), leads.orderSources)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 56,
+    "router": "leadSourceRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/lead-sources",
+    "authorizationExpression": "permit('settings.workspace.manage'), validate(sourceSchema), leads.createSource)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 57,
+    "router": "leadSourceRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/lead-sources",
+    "authorizationExpression": "permit('settings.workspace.manage'), params, validate(updateSourceSchema), leads.updateSource)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 58,
+    "router": "leadSourceRoutes",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": "/lead-sources",
+    "authorizationExpression": "permit('settings.workspace.manage'), params, leads.deleteSource)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 62,
+    "router": "lostReasonRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/lost-reasons",
+    "authorizationExpression": "validate(lostReasonQuery, 'query'), leads.listLostReasons)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 63,
+    "router": "lostReasonRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/lost-reasons",
+    "authorizationExpression": "permit('settings.workspace.manage'), validate(lostReasonSchema), leads.createLostReason)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 64,
+    "router": "lostReasonRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/lost-reasons",
+    "authorizationExpression": "permit('settings.workspace.manage'), params, validate(updateLostReasonSchema), leads.updateLostReason)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 68,
+    "router": "savedViewRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/saved-views",
+    "authorizationExpression": "validate(savedViewQuery, 'query'), leads.listViews)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 69,
+    "router": "savedViewRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/saved-views",
+    "authorizationExpression": "validate(savedViewSchema), leads.createView)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 70,
+    "router": "savedViewRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/saved-views",
+    "authorizationExpression": "params, validate(updateSavedViewSchema), leads.updateView)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/lead.routes.js",
+    "line": 71,
+    "router": "savedViewRoutes",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": "/saved-views",
+    "authorizationExpression": "params, leads.deleteView)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/meta.routes.js",
+    "line": 7,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/plans",
+    "mount": null,
+    "authorizationExpression": "plans.catalogue)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/notification.routes.js",
+    "line": 11,
+    "router": "notificationRoutes",
+    "method": "GET",
+    "localPath": "/stream",
+    "mount": "/notifications",
+    "authorizationExpression": "validate(streamQuery, 'query'), async (req, res, next) => {",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/notification.routes.js",
+    "line": 16,
+    "router": "notificationRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/notifications",
+    "authorizationExpression": "validate(notificationListQuery, 'query'), n.list)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/notification.routes.js",
+    "line": 17,
+    "router": "notificationRoutes",
+    "method": "GET",
+    "localPath": "/unread-count",
+    "mount": "/notifications",
+    "authorizationExpression": "n.count)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/notification.routes.js",
+    "line": 18,
+    "router": "notificationRoutes",
+    "method": "POST",
+    "localPath": "/read-all",
+    "mount": "/notifications",
+    "authorizationExpression": "n.readAll)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/notification.routes.js",
+    "line": 19,
+    "router": "notificationRoutes",
+    "method": "POST",
+    "localPath": "/stream-ticket",
+    "mount": "/notifications",
+    "authorizationExpression": "rateLimit({ windowMs: 60_000, limit: 30, standardHeaders: 'draft-8', legacyHeaders: false }), n.ticket)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/notification.routes.js",
+    "line": 20,
+    "router": "notificationRoutes",
+    "method": "POST",
+    "localPath": "/:id/read",
+    "mount": "/notifications",
+    "authorizationExpression": "validate(idParams, 'params'), n.read)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/notification.routes.js",
+    "line": 24,
+    "router": "notificationPreferenceRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": null,
+    "authorizationExpression": "n.preferences)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/notification.routes.js",
+    "line": 25,
+    "router": "notificationPreferenceRoutes",
+    "method": "PUT",
+    "localPath": "/",
+    "mount": null,
+    "authorizationExpression": "validate(notificationPreferencesSchema), n.updatePreferences)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/organization.routes.js",
+    "line": 20,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/",
+    "mount": null,
+    "authorizationExpression": "requireAuth, orgs.list)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/organization.routes.js",
+    "line": 21,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/",
+    "mount": null,
+    "authorizationExpression": "requireAuth, validate(createOrganizationSchema), orgs.create)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/organization.routes.js",
+    "line": 23,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/current",
+    "mount": null,
+    "authorizationExpression": "requireOrg, orgs.getCurrent)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/organization.routes.js",
+    "line": 24,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/current/storage",
+    "mount": null,
+    "authorizationExpression": "requireOrg, orgs.getStorage)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/organization.routes.js",
+    "line": 25,
+    "router": "router",
+    "method": "PATCH",
+    "localPath": "/current",
+    "mount": null,
+    "authorizationExpression": "requireOrg, permit('settings.workspace.manage'), validate(updateOrganizationSchema), orgs.updateCurrent)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/organization.routes.js",
+    "line": 26,
+    "router": "router",
+    "method": "DELETE",
+    "localPath": "/current",
+    "mount": null,
+    "authorizationExpression": "requireOrg, permit('organization.delete'), validate(deleteOrganizationSchema), orgs.deleteCurrent)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/organization.routes.js",
+    "line": 27,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/current/transfer-ownership",
+    "mount": null,
+    "authorizationExpression": "requireOrg, permit('ownership.transfer'), validate(transferOwnershipSchema), transferOwnership)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/organization.routes.js",
+    "line": 30,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/current/upgrade-request",
+    "mount": null,
+    "authorizationExpression": "requireOrg, validate(upgradeRequestSchema), plans.upgradeRequest)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/organization.routes.js",
+    "line": 31,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/current/seat-selection",
+    "mount": null,
+    "authorizationExpression": "requireOrg, requireRole('owner'), validate(seatSelectionSchema), plans.seatSelection)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/organization.routes.js",
+    "line": 33,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/current/checklist",
+    "mount": null,
+    "authorizationExpression": "requireOrg, orgs.getChecklist)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/organization.routes.js",
+    "line": 34,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/current/checklist/dismiss",
+    "mount": null,
+    "authorizationExpression": "requireOrg, orgs.dismissChecklist)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/public.routes.js",
+    "line": 25,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/contact",
+    "mount": null,
+    "authorizationExpression": "formLimiter(), validate(contactSchema), forms.submitContact)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/public.routes.js",
+    "line": 27,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/demo-slots",
+    "mount": null,
+    "authorizationExpression": "validate(demoSlotsQuerySchema, 'query'), forms.getDemoSlots)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/public.routes.js",
+    "line": 28,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/demo-requests",
+    "mount": null,
+    "authorizationExpression": "formLimiter(), validate(demoSchema), forms.requestDemo)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/public.routes.js",
+    "line": 30,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/newsletter",
+    "mount": null,
+    "authorizationExpression": "formLimiter(), validate(newsletterSchema), forms.subscribeNewsletter)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/public.routes.js",
+    "line": 31,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/newsletter/confirm",
+    "mount": null,
+    "authorizationExpression": "formLimiter(30), validate(tokenSchema), forms.confirmNewsletter)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/public.routes.js",
+    "line": 32,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/newsletter/unsubscribe",
+    "mount": null,
+    "authorizationExpression": "formLimiter(30), validate(tokenSchema), forms.unsubscribeNewsletter)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/public.routes.js",
+    "line": 35,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/forms/:key",
+    "mount": null,
+    "authorizationExpression": "formLimiter(120), validate(webFormKeyParams, 'params'), webForms.getPublic)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/public.routes.js",
+    "line": 36,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/forms/:key/view",
+    "mount": null,
+    "authorizationExpression": "formLimiter(60), validate(webFormKeyParams, 'params'), webForms.view)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/public.routes.js",
+    "line": 37,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/forms/:key/submit",
+    "mount": null,
+    "authorizationExpression": "formLimiter(), validate(webFormKeyParams, 'params'), validate(publicSubmissionSchema), webForms.submit)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/public.routes.js",
+    "line": 40,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/invitations/:token",
+    "mount": null,
+    "authorizationExpression": "formLimiter(60), validate(tokenParams, 'params'), lookupInvitation)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/report.routes.js",
+    "line": 19,
+    "router": "reportRoutes",
+    "method": "GET",
+    "localPath": "/kpis",
+    "mount": "/reports",
+    "authorizationExpression": "q, handler(reports.kpis))",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/report.routes.js",
+    "line": 20,
+    "router": "reportRoutes",
+    "method": "GET",
+    "localPath": "/revenue-series",
+    "mount": "/reports",
+    "authorizationExpression": "q, handler(reports.revenueSeries))",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/report.routes.js",
+    "line": 21,
+    "router": "reportRoutes",
+    "method": "GET",
+    "localPath": "/leads-by-source",
+    "mount": "/reports",
+    "authorizationExpression": "q, handler(reports.leadsBySource))",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/report.routes.js",
+    "line": 22,
+    "router": "reportRoutes",
+    "method": "GET",
+    "localPath": "/funnel",
+    "mount": "/reports",
+    "authorizationExpression": "q, handler(reports.funnel))",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/report.routes.js",
+    "line": 23,
+    "router": "reportRoutes",
+    "method": "GET",
+    "localPath": "/leaderboard",
+    "mount": "/reports",
+    "authorizationExpression": "q, handler(reports.leaderboard))",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/report.routes.js",
+    "line": 24,
+    "router": "reportRoutes",
+    "method": "GET",
+    "localPath": "/first-response",
+    "mount": "/reports",
+    "authorizationExpression": "q, handler(reports.firstResponse))",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/report.routes.js",
+    "line": 25,
+    "router": "reportRoutes",
+    "method": "GET",
+    "localPath": "/follow-ups",
+    "mount": "/reports",
+    "authorizationExpression": "q, handler(reports.followUps))",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/report.routes.js",
+    "line": 29,
+    "router": "reportRoutes",
+    "method": "GET",
+    "localPath": "/:report/export",
+    "mount": "/reports",
+    "authorizationExpression": "permit('records.export'), q, async (req, res) => {",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/superadmin.routes.js",
+    "line": 29,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/me",
+    "mount": null,
+    "authorizationExpression": "async (req, res) => {",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/superadmin.routes.js",
+    "line": 36,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/overview",
+    "mount": null,
+    "authorizationExpression": "async (_req, res) =>",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/superadmin.routes.js",
+    "line": 39,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/clients",
+    "mount": null,
+    "authorizationExpression": "validate(clientListSchema, 'query'), async (req, res) =>",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/superadmin.routes.js",
+    "line": 66,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/queries",
+    "mount": null,
+    "authorizationExpression": "validate(queryListSchema, 'query'), async (req, res) =>",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/team.routes.js",
+    "line": 21,
+    "router": "memberRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/members",
+    "authorizationExpression": "validate(listMembersQuery, 'query'), team.listMembers)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/team.routes.js",
+    "line": 22,
+    "router": "memberRoutes",
+    "method": "GET",
+    "localPath": "/options",
+    "mount": "/members",
+    "authorizationExpression": "validate(memberOptionsQuery, 'query'), team.memberOptions)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/team.routes.js",
+    "line": 23,
+    "router": "memberRoutes",
+    "method": "PATCH",
+    "localPath": "/:userId",
+    "mount": "/members",
+    "authorizationExpression": "permit('members.manage'), validate(userIdParams, 'params'), validate(updateMemberSchema), team.updateMember)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/team.routes.js",
+    "line": 24,
+    "router": "memberRoutes",
+    "method": "POST",
+    "localPath": "/:userId/deactivate",
+    "mount": "/members",
+    "authorizationExpression": "permit('members.manage'), validate(userIdParams, 'params'), validate(deactivateMemberSchema), team.deactivateMember)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/team.routes.js",
+    "line": 25,
+    "router": "memberRoutes",
+    "method": "POST",
+    "localPath": "/:userId/reactivate",
+    "mount": "/members",
+    "authorizationExpression": "permit('members.manage'), validate(userIdParams, 'params'), team.reactivateMember)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/team.routes.js",
+    "line": 29,
+    "router": "invitationRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/invitations",
+    "authorizationExpression": "team.listInvitations)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/team.routes.js",
+    "line": 30,
+    "router": "invitationRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/invitations",
+    "authorizationExpression": "validate(createInvitationsSchema), team.createInvitations)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/team.routes.js",
+    "line": 31,
+    "router": "invitationRoutes",
+    "method": "POST",
+    "localPath": "/:id/resend",
+    "mount": "/invitations",
+    "authorizationExpression": "validate(idParams, 'params'), team.resendInvitation)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/team.routes.js",
+    "line": 32,
+    "router": "invitationRoutes",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": "/invitations",
+    "authorizationExpression": "validate(idParams, 'params'), team.revokeInvitation)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/team.routes.js",
+    "line": 36,
+    "router": "teamRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/teams",
+    "authorizationExpression": "team.listTeams)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/team.routes.js",
+    "line": 37,
+    "router": "teamRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/teams",
+    "authorizationExpression": "permit('members.manage'), validate(createTeamSchema), team.createTeam)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/team.routes.js",
+    "line": 38,
+    "router": "teamRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/teams",
+    "authorizationExpression": "permit('members.manage'), validate(idParams, 'params'), validate(updateTeamSchema), team.updateTeam)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/team.routes.js",
+    "line": 39,
+    "router": "teamRoutes",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": "/teams",
+    "authorizationExpression": "permit('members.manage'), validate(idParams, 'params'), team.deleteTeam)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/template.routes.js",
+    "line": 9,
+    "router": "templateRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/templates",
+    "authorizationExpression": "validate(schemas.templateList, 'query'), controller.list)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/template.routes.js",
+    "line": 10,
+    "router": "templateRoutes",
+    "method": "GET",
+    "localPath": "/variables",
+    "mount": "/templates",
+    "authorizationExpression": "validate(schemas.variableCatalogueQuery, 'query'), controller.variables)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/template.routes.js",
+    "line": 11,
+    "router": "templateRoutes",
+    "method": "POST",
+    "localPath": "/preview",
+    "mount": "/templates",
+    "authorizationExpression": "validate(schemas.templatePreview), controller.preview)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/template.routes.js",
+    "line": 12,
+    "router": "templateRoutes",
+    "method": "POST",
+    "localPath": "/:id/render",
+    "mount": "/templates",
+    "authorizationExpression": "validate(schemas.templateId, 'params'), validate(schemas.templateRender), controller.render)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/template.routes.js",
+    "line": 13,
+    "router": "templateRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/templates",
+    "authorizationExpression": "validate(schemas.templateCreate), controller.create)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/template.routes.js",
+    "line": 14,
+    "router": "templateRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/templates",
+    "authorizationExpression": "validate(schemas.templateId, 'params'), validate(schemas.templateUpdate), controller.update)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/transfer.routes.js",
+    "line": 10,
+    "router": "importRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/imports",
+    "authorizationExpression": "t.importHistory)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/transfer.routes.js",
+    "line": 11,
+    "router": "importRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/imports",
+    "authorizationExpression": "validate(createImportSchema), t.createImport)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/transfer.routes.js",
+    "line": 12,
+    "router": "importRoutes",
+    "method": "GET",
+    "localPath": "/:id/dataset",
+    "mount": "/imports",
+    "authorizationExpression": "id, validate(datasetQuery, 'query'), t.importDataset)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/transfer.routes.js",
+    "line": 13,
+    "router": "importRoutes",
+    "method": "GET",
+    "localPath": "/:id/preview",
+    "mount": "/imports",
+    "authorizationExpression": "id, validate(previewQuery, 'query'), t.previewImport)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/transfer.routes.js",
+    "line": 14,
+    "router": "importRoutes",
+    "method": "GET",
+    "localPath": "/:id/attention-data",
+    "mount": "/imports",
+    "authorizationExpression": "id, t.importAttentionData)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/transfer.routes.js",
+    "line": 15,
+    "router": "importRoutes",
+    "method": "GET",
+    "localPath": "/:id/attention",
+    "mount": "/imports",
+    "authorizationExpression": "id, t.importAttention)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/transfer.routes.js",
+    "line": 16,
+    "router": "importRoutes",
+    "method": "GET",
+    "localPath": "/:id",
+    "mount": "/imports",
+    "authorizationExpression": "id, t.importStatus)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/transfer.routes.js",
+    "line": 17,
+    "router": "importRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/imports",
+    "authorizationExpression": "id, validate(updateImportSchema), t.updateImport)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/transfer.routes.js",
+    "line": 18,
+    "router": "importRoutes",
+    "method": "POST",
+    "localPath": "/:id/preview",
+    "mount": "/imports",
+    "authorizationExpression": "id, validate(previewQuery, 'query'), t.previewImport)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/transfer.routes.js",
+    "line": 19,
+    "router": "importRoutes",
+    "method": "POST",
+    "localPath": "/:id/start",
+    "mount": "/imports",
+    "authorizationExpression": "id, validate(startImportSchema), t.startImport)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/transfer.routes.js",
+    "line": 20,
+    "router": "importRoutes",
+    "method": "POST",
+    "localPath": "/:id/cancel",
+    "mount": "/imports",
+    "authorizationExpression": "id, t.cancelImport)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/transfer.routes.js",
+    "line": 21,
+    "router": "importRoutes",
+    "method": "POST",
+    "localPath": "/:id/undo",
+    "mount": "/imports",
+    "authorizationExpression": "id, t.undoImport)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/transfer.routes.js",
+    "line": 22,
+    "router": "importRoutes",
+    "method": "GET",
+    "localPath": "/:id/errors",
+    "mount": "/imports",
+    "authorizationExpression": "id, t.importErrors)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/transfer.routes.js",
+    "line": 25,
+    "router": "exportRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/exports",
+    "authorizationExpression": "t.exportHistory)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/transfer.routes.js",
+    "line": 26,
+    "router": "exportRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/exports",
+    "authorizationExpression": "validate(exportSchema), t.createExport)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/transfer.routes.js",
+    "line": 27,
+    "router": "exportRoutes",
+    "method": "GET",
+    "localPath": "/:id",
+    "mount": "/exports",
+    "authorizationExpression": "id, t.exportStatus)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/user.routes.js",
+    "line": 35,
+    "router": "router",
+    "method": "PUT",
+    "localPath": "/me/onboarding",
+    "mount": null,
+    "authorizationExpression": "requireVerified, validate(onboardingSchema), auth.completeOnboarding)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/user.routes.js",
+    "line": 36,
+    "router": "router",
+    "method": "PATCH",
+    "localPath": "/me",
+    "mount": null,
+    "authorizationExpression": "validate(profileSchema), account.updateProfile)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/user.routes.js",
+    "line": 37,
+    "router": "router",
+    "method": "DELETE",
+    "localPath": "/me",
+    "mount": null,
+    "authorizationExpression": "sensitiveLimiter, validate(passwordOnlySchema), account.deleteAccount)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/user.routes.js",
+    "line": 39,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/me/password",
+    "mount": null,
+    "authorizationExpression": "sensitiveLimiter, validate(changePasswordSchema), account.changePassword)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/user.routes.js",
+    "line": 40,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/me/email",
+    "mount": null,
+    "authorizationExpression": "sensitiveLimiter, validate(changeEmailSchema), account.requestEmailChange)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/user.routes.js",
+    "line": 41,
+    "router": "router",
+    "method": "DELETE",
+    "localPath": "/me/email",
+    "mount": null,
+    "authorizationExpression": "account.discardEmailChange)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/user.routes.js",
+    "line": 43,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/me/sessions",
+    "mount": null,
+    "authorizationExpression": "account.listSessions)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/user.routes.js",
+    "line": 44,
+    "router": "router",
+    "method": "DELETE",
+    "localPath": "/me/sessions",
+    "mount": null,
+    "authorizationExpression": "account.revokeOtherSessions)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/user.routes.js",
+    "line": 45,
+    "router": "router",
+    "method": "DELETE",
+    "localPath": "/me/sessions/:sessionId",
+    "mount": null,
+    "authorizationExpression": "validate(sessionIdParams, 'params'), account.revokeSession)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/user.routes.js",
+    "line": 47,
+    "router": "router",
+    "method": "GET",
+    "localPath": "/me/2fa",
+    "mount": null,
+    "authorizationExpression": "account.twoFactorStatus)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/user.routes.js",
+    "line": 48,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/me/2fa/setup",
+    "mount": null,
+    "authorizationExpression": "account.twoFactorSetup)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/user.routes.js",
+    "line": 49,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/me/2fa/enable",
+    "mount": null,
+    "authorizationExpression": "sensitiveLimiter, validate(twoFactorCodeSchema), account.twoFactorEnable)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/user.routes.js",
+    "line": 50,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/me/2fa/disable",
+    "mount": null,
+    "authorizationExpression": "sensitiveLimiter, validate(reauthSchema), account.twoFactorDisable)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/user.routes.js",
+    "line": 51,
+    "router": "router",
+    "method": "POST",
+    "localPath": "/me/2fa/recovery-codes",
+    "mount": null,
+    "authorizationExpression": "sensitiveLimiter, validate(reauthSchema), account.twoFactorRecoveryCodes)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/webForm.routes.js",
+    "line": 10,
+    "router": "webFormRoutes",
+    "method": "GET",
+    "localPath": "/",
+    "mount": "/forms",
+    "authorizationExpression": "forms.list)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/webForm.routes.js",
+    "line": 11,
+    "router": "webFormRoutes",
+    "method": "POST",
+    "localPath": "/",
+    "mount": "/forms",
+    "authorizationExpression": "validate(schema.createWebFormSchema), forms.create)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/webForm.routes.js",
+    "line": 12,
+    "router": "webFormRoutes",
+    "method": "GET",
+    "localPath": "/:id",
+    "mount": "/forms",
+    "authorizationExpression": "validate(schema.webFormIdParams, 'params'), forms.getOne)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/webForm.routes.js",
+    "line": 13,
+    "router": "webFormRoutes",
+    "method": "PATCH",
+    "localPath": "/:id",
+    "mount": "/forms",
+    "authorizationExpression": "validate(schema.webFormIdParams, 'params'), validate(schema.updateWebFormSchema), forms.update)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/webForm.routes.js",
+    "line": 14,
+    "router": "webFormRoutes",
+    "method": "DELETE",
+    "localPath": "/:id",
+    "mount": "/forms",
+    "authorizationExpression": "validate(schema.webFormIdParams, 'params'), forms.remove)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/webForm.routes.js",
+    "line": 15,
+    "router": "webFormRoutes",
+    "method": "GET",
+    "localPath": "/:id/submissions",
+    "mount": "/forms",
+    "authorizationExpression": "validate(schema.webFormIdParams, 'params'), validate(schema.submissionsQuery, 'query'), forms.submissions)",
+    "verification": "Not individually certified; see tests and role matrix"
+  },
+  {
+    "file": "backend/src/routes/webForm.routes.js",
+    "line": 16,
+    "router": "webFormRoutes",
+    "method": "GET",
+    "localPath": "/:id/embed-code",
+    "mount": "/forms",
+    "authorizationExpression": "validate(schema.webFormIdParams, 'params'), forms.embedCode)",
+    "verification": "Not individually certified; see tests and role matrix"
+  }
+]

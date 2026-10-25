@@ -1,0 +1,179 @@
+{
+  "results": [
+    "Real lead detail renders from API",
+    "dashboard: desktop/mobile render, no document overflow",
+    "leads: desktop/mobile render, no document overflow",
+    "campaigns: desktop/mobile render, no document overflow",
+    "pipeline: desktop/mobile render, no document overflow",
+    "tasks: desktop/mobile render, no document overflow",
+    "contacts: desktop/mobile render, no document overflow",
+    "companies: desktop/mobile render, no document overflow",
+    "templates: desktop/mobile render, no document overflow",
+    "integrations: desktop/mobile render, no document overflow",
+    "reports: desktop/mobile render, no document overflow",
+    "settings: desktop/mobile render, no document overflow",
+    "Reports real filters, source links, authorized CSV download, response/compliance",
+    "Task quick-add UI persists in Postgres",
+    "Call completion + note + conversion API writes reflected on lead timeline"
+  ],
+  "errors": [],
+  "failures": [],
+  "accessibility": [
+    {
+      "page": "lead-detail-desktop",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "dashboard-desktop",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "dashboard-mobile",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "leads-desktop",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "leads-mobile",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "campaigns-desktop",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "campaigns-mobile",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "pipeline-desktop",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "pipeline-mobile",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "tasks-desktop",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "tasks-mobile",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "contacts-desktop",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "contacts-mobile",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "companies-desktop",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "companies-mobile",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "templates-desktop",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "templates-mobile",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "integrations-desktop",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "integrations-mobile",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "reports-desktop",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "reports-mobile",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "settings-desktop",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "settings-mobile",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "reports-response-desktop",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "converted-lead-desktop",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    },
+    {
+      "page": "converted-lead-mobile",
+      "unnamedButtons": 0,
+      "main": 1,
+      "h1": 1
+    }
+  ]
+}

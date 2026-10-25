@@ -1,0 +1,20 @@
+
+> techsync-crm-backend@1.0.0 test
+> vitest run
+
+
+ RUN  v5.0.5 /home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend
+
+[07:06:30] [32mINFO[39m: [36mweb form submission captured[39m [90m{"component":"web-forms","formId":"22222222-2222-4222-8222-222222222222","leadId":"lead-1","outcome":"created"}[39m
+[07:06:30] [32mINFO[39m: [36mweb form submission captured[39m [90m{"component":"web-forms","formId":"22222222-2222-4222-8222-222222222222","leadId":"lead-1","outcome":"merged_into_open"}[39m
+[07:06:30] [32mINFO[39m: [36mweb form submission discarded as spam[39m [90m{"component":"web-forms","formId":"22222222-2222-4222-8222-222222222222","ip":"203.0.113.9"}[39m
+[07:06:30] [33mWARN[39m: [36mweb form submission refused: workspace record limit reached[39m [90m{"component":"web-forms","formId":"22222222-2222-4222-8222-222222222222"}[39m
+
+ Test Files  33 passed | 12 skipped (45)
+      Tests  286 passed | 144 skipped (430)
+   Start at  12:36:25
+   Duration  6.09s (import 72%, transform 17%, tests 10%, worker 1%)
+
+    Isolate  45 workers spawned · ~308ms startup each (spawn + environment, per file)
+             at least ~951ms faster with isolate: false — reuses workers across files instead of one per file
+

@@ -1,0 +1,12 @@
+{
+  "results": [
+    "Sales rep saves note from phone viewport",
+    "Sales rep logs call; lead becomes contacted",
+    "Phone stage confirmation persists",
+    "WhatsApp opens normalized +91 URL; no message sent",
+    "Sales rep adds and completes follow-up from phone viewport"
+  ],
+  "errors": [],
+  "failures": [],
+  "limitation": "Phone-sized Chrome; actual telephony and WhatsApp provider delivery not performed"
+}

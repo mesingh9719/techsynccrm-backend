@@ -1,0 +1,142 @@
+{
+  "dataset": {
+    "leads": 100000,
+    "deals": 20000,
+    "tasks": 20000,
+    "activities": 30000,
+    "events": 20000
+  },
+  "environment": "Disposable local Postgres 16; HTTP includes JWT/membership authorization; sequential warm requests, not production load",
+  "results": [
+    {
+      "endpoint": "kpis",
+      "samples": 20,
+      "medianMs": 31.7,
+      "p95Ms": 45.6,
+      "maxMs": 112.2
+    },
+    {
+      "endpoint": "revenue-series",
+      "samples": 20,
+      "medianMs": 10.9,
+      "p95Ms": 12.1,
+      "maxMs": 14.3
+    },
+    {
+      "endpoint": "leads-by-source",
+      "samples": 20,
+      "medianMs": 29.3,
+      "p95Ms": 32.1,
+      "maxMs": 34.2
+    },
+    {
+      "endpoint": "funnel",
+      "samples": 20,
+      "medianMs": 522,
+      "p95Ms": 589.2,
+      "maxMs": 661.6
+    },
+    {
+      "endpoint": "leaderboard",
+      "samples": 20,
+      "medianMs": 128.2,
+      "p95Ms": 147.2,
+      "maxMs": 153
+    },
+    {
+      "endpoint": "first-response",
+      "samples": 20,
+      "medianMs": 105.5,
+      "p95Ms": 112.1,
+      "maxMs": 113.2
+    },
+    {
+      "endpoint": "follow-ups",
+      "samples": 20,
+      "medianMs": 47.3,
+      "p95Ms": 51.5,
+      "maxMs": 56.7
+    }
+  ],
+  "plan": [
+    {
+      "QUERY PLAN": [
+        {
+          "Plan": {
+            "Node Type": "Aggregate",
+            "Strategy": "Plain",
+            "Partial Mode": "Simple",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 325.29,
+            "Total Cost": 325.3,
+            "Plan Rows": 1,
+            "Plan Width": 32,
+            "Actual Startup Time": 1.513,
+            "Actual Total Time": 1.513,
+            "Actual Rows": 1,
+            "Actual Loops": 1,
+            "Shared Hit Blocks": 100,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Index Only Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Scan Direction": "Forward",
+                "Index Name": "deals_report_won_period_idx",
+                "Relation Name": "deals",
+                "Alias": "deals",
+                "Startup Cost": 0.29,
+                "Total Cost": 312.79,
+                "Plan Rows": 5000,
+                "Plan Width": 8,
+                "Actual Startup Time": 0.027,
+                "Actual Total Time": 1.095,
+                "Actual Rows": 10000,
+                "Actual Loops": 1,
+                "Index Cond": "((organization_id = 'fcd547fc-cb64-42d1-a675-97b0d07d5ded'::uuid) AND (won_at >= '2026-10-01 00:00:00+05:30'::timestamp with time zone) AND (won_at < '2026-10-31 00:00:00+05:30'::timestamp with time zone))",
+                "Rows Removed by Index Recheck": 0,
+                "Heap Fetches": 0,
+                "Shared Hit Blocks": 100,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0
+              }
+            ]
+          },
+          "Planning": {
+            "Shared Hit Blocks": 4,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0
+          },
+          "Planning Time": 0.132,
+          "Triggers": [],
+          "Execution Time": 1.528
+        }
+      ]
+    }
+  ]
+}

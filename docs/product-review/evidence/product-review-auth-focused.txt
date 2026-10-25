@@ -1,0 +1,22 @@
+
+> techsync-crm-backend@1.0.0 test
+> vitest run test/integration/googleAuth.test.js test/integration/product-review.test.js
+
+
+ RUN  v5.0.5 /home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend
+
+[07:16:08] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:16:08] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:16:08] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:16:08] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:16:09] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:16:09] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:16:09] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:16:09] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:16:09] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+
+ Test Files  2 passed (2)
+      Tests  20 passed (20)
+   Start at  12:46:07
+   Duration  1.85s (tests 53%, import 34%, transform 13%)
+

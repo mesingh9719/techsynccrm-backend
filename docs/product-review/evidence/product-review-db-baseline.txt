@@ -1,0 +1,379 @@
+
+> techsync-crm-backend@1.0.0 test
+> vitest run
+
+
+ RUN  v5.0.5 /home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend
+
+[07:07:59] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:07:59] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:07:59] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:07:59] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+stdout | test/integration/googleAuth.test.js > Google sign-in and sign-up with real local database > creates a passwordless verified Google account, preserves the selected plan and issues a normal rotating session
+prisma:error 
+Invalid `prisma.userToken.updateMany()` invocation in
+/home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend/src/services/userToken.service.js:16:22
+
+  13 export async function createUserToken(userId, type, ttlMs, payload) {
+  14   const token = crypto.randomBytes(32).toString('base64url')
+  15   await prisma.$transaction([
+→ 16     prisma.userToken.updateMany({
+           where: {
+             userId: "c4d50b23-ae01-4a29-862d-c9d88737b9bf",
+             type: "google_signin",
+                   ~~~~~~~~~~~~~~~
+             usedAt: null
+           },
+           data: {
+             usedAt: new Date("2026-10-25T07:08:00.423Z")
+           }
+         })
+
+Invalid value for argument `type`. Expected UserTokenType.
+prisma:error 
+Invalid `prisma.userToken.create()` invocation in
+/home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend/src/services/userToken.service.js:17:22
+
+  14 const token = crypto.randomBytes(32).toString('base64url')
+  15 await prisma.$transaction([
+  16   prisma.userToken.updateMany({ where: { userId, type, usedAt: null }, data: { usedAt: new Date() } }),
+→ 17   prisma.userToken.create({
+         data: {
+           userId: "c4d50b23-ae01-4a29-862d-c9d88737b9bf",
+           type: "google_signin",
+           tokenHash: "15d4f8b617fe36342b83124686969df5414f70898e549325b429d14fd3644939",
+           expiresAt: new Date("2026-10-25T07:13:00.423Z"),
+           payload: {
+             subject: "93e29e67-b417-4878-a521-c054fbd83f32",
+             email: "google-2ac3356f-e995-4a0b-8073-7d9c7691b96f@gmail.com",
+             remember: true,
+             returnTo: "/app/leads"
+           }
+         }
+       })
+
+Invalid value for argument `type`. Expected UserTokenType.
+
+[07:08:00] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+stdout | test/integration/googleAuth.test.js > Google sign-in and sign-up with real local database > links a verified Google-authoritative existing account without duplicating it or changing its workspace
+prisma:error 
+Invalid `tx.user.update()` invocation in
+/home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend/src/services/googleAuth.service.js:44:28
+
+  41 if (user) {
+  42   // Prevent pre-registration hijacking and unsafe linking of external email identities.
+  43   if (user.deletedAt || user.googleSubject || !user.emailVerifiedAt || !identity.authoritative || user.lockedUntil && user.lockedUntil > new Date()) throw googleError('GOOGLE_LINK_REQUIRED', 'Use email sign-in. Verify your email or reset your password first; existing external Google email addresses require email sign-in.', 409)
+→ 44   user = await tx.user.update({
+         where: {
+           id: "0820128a-e302-46bc-b9c1-189ee12d08e4",
+           email: "local-548f876a-f285-40f2-ad9e-0e4de876d98d@gmail.com",
+           deletedAt: null,
+       +   googleSubject: String
+         },
+         data: {
+           googleSubject: "6c1a32e2-d395-444a-b825-488de65ae962"
+         }
+       })
+
+Argument `googleSubject` must not be null.
+
+[07:08:00] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+stdout | test/integration/googleAuth.test.js > Google sign-in and sign-up with real local database > requires the existing local second factor and sets no full session until it succeeds
+prisma:error 
+Invalid `prisma.userToken.updateMany()` invocation in
+/home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend/src/services/userToken.service.js:16:22
+
+  13 export async function createUserToken(userId, type, ttlMs, payload) {
+  14   const token = crypto.randomBytes(32).toString('base64url')
+  15   await prisma.$transaction([
+→ 16     prisma.userToken.updateMany({
+           where: {
+             userId: "74bcee9f-a5f2-4f19-80ba-9c53a80ec3c6",
+             type: "google_signin",
+                   ~~~~~~~~~~~~~~~
+             usedAt: null
+           },
+           data: {
+             usedAt: new Date("2026-10-25T07:08:00.740Z")
+           }
+         })
+
+Invalid value for argument `type`. Expected UserTokenType.
+prisma:error 
+Invalid `prisma.userToken.create()` invocation in
+/home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend/src/services/userToken.service.js:17:22
+
+  14 const token = crypto.randomBytes(32).toString('base64url')
+  15 await prisma.$transaction([
+  16   prisma.userToken.updateMany({ where: { userId, type, usedAt: null }, data: { usedAt: new Date() } }),
+→ 17   prisma.userToken.create({
+         data: {
+           userId: "74bcee9f-a5f2-4f19-80ba-9c53a80ec3c6",
+           type: "google_signin",
+           tokenHash: "4e9fd8e7b596ba0e91d418e0a5d3f5cc27e28f52e07928153d9315e53141a43a",
+           expiresAt: new Date("2026-10-25T07:13:00.740Z"),
+           payload: {
+             subject: "7873d187-362f-4503-85ac-d9485181b210",
+             email: "google-050fd998-aa94-40bb-b005-d98c4056ee25@gmail.com",
+             remember: false,
+             returnTo: null
+           }
+         }
+       })
+
+Invalid value for argument `type`. Expected UserTokenType.
+
+stdout | test/integration/googleAuth.test.js > Google sign-in and sign-up with real local database > keeps account lockouts, deletion and changed provider bindings effective
+prisma:error 
+Invalid `prisma.userToken.updateMany()` invocation in
+/home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend/src/services/userToken.service.js:16:22
+
+  13 export async function createUserToken(userId, type, ttlMs, payload) {
+  14   const token = crypto.randomBytes(32).toString('base64url')
+  15   await prisma.$transaction([
+→ 16     prisma.userToken.updateMany({
+           where: {
+             userId: "5555b37f-2aa0-4d32-8b98-dfde5444dae0",
+             type: "google_signin",
+                   ~~~~~~~~~~~~~~~
+             usedAt: null
+           },
+           data: {
+             usedAt: new Date("2026-10-25T07:08:00.774Z")
+           }
+         })
+
+Invalid value for argument `type`. Expected UserTokenType.
+prisma:error 
+Invalid `prisma.userToken.create()` invocation in
+/home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend/src/services/userToken.service.js:17:22
+
+  14 const token = crypto.randomBytes(32).toString('base64url')
+  15 await prisma.$transaction([
+  16   prisma.userToken.updateMany({ where: { userId, type, usedAt: null }, data: { usedAt: new Date() } }),
+→ 17   prisma.userToken.create({
+         data: {
+           userId: "5555b37f-2aa0-4d32-8b98-dfde5444dae0",
+           type: "google_signin",
+           tokenHash: "27f3ccf9bdf7b68a72bc687dfd819bf57301c6942feafd7acecfba3c8f0ef5c2",
+           expiresAt: new Date("2026-10-25T07:13:00.774Z"),
+           payload: {
+             subject: "11dca4d9-a1d0-4af8-a36b-6545e85077b6",
+             email: "google-de993a92-5741-43e0-80db-2a730203f551@gmail.com",
+             remember: false,
+             returnTo: null
+           }
+         }
+       })
+
+Invalid value for argument `type`. Expected UserTokenType.
+
+[07:08:00] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:08:00] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+stdout | test/integration/googleAuth.test.js > Google sign-in and sign-up with real local database > keeps external email signup behind inbox verification and sanitizes return paths
+prisma:error 
+Invalid `prisma.userToken.updateMany()` invocation in
+/home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend/src/services/userToken.service.js:16:22
+
+  13 export async function createUserToken(userId, type, ttlMs, payload) {
+  14   const token = crypto.randomBytes(32).toString('base64url')
+  15   await prisma.$transaction([
+→ 16     prisma.userToken.updateMany({
+           where: {
+             userId: "78790118-5fd4-432c-b851-de36c1b668c1",
+             type: "google_signin",
+                   ~~~~~~~~~~~~~~~
+             usedAt: null
+           },
+           data: {
+             usedAt: new Date("2026-10-25T07:08:00.829Z")
+           }
+         })
+
+Invalid value for argument `type`. Expected UserTokenType.
+prisma:error 
+Invalid `prisma.userToken.create()` invocation in
+/home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend/src/services/userToken.service.js:17:22
+
+  14 const token = crypto.randomBytes(32).toString('base64url')
+  15 await prisma.$transaction([
+  16   prisma.userToken.updateMany({ where: { userId, type, usedAt: null }, data: { usedAt: new Date() } }),
+→ 17   prisma.userToken.create({
+         data: {
+           userId: "78790118-5fd4-432c-b851-de36c1b668c1",
+           type: "google_signin",
+           tokenHash: "111b064a167d81e19779b984a6a363bfb3dd71ac3e6c387a1d679166c31d73da",
+           expiresAt: new Date("2026-10-25T07:13:00.829Z"),
+           payload: {
+             subject: "f78babb8-56f9-4733-8618-82e0c8d8dbf8",
+             email: "google-4870f4c9-03b5-4cbe-bea3-e757ca2dc2a0@example.test",
+             remember: false,
+             returnTo: null
+           }
+         }
+       })
+
+Invalid value for argument `type`. Expected UserTokenType.
+
+ ❯ test/integration/googleAuth.test.js (11 tests | 5 failed) 1388ms
+   ❯ Google sign-in and sign-up with real local database (11)
+     × creates a passwordless verified Google account, preserves the selected plan and issues a normal rotating session 655ms
+     × links a verified Google-authoritative existing account without duplicating it or changing its workspace 99ms
+     × requires the existing local second factor and sets no full session until it succeeds 35ms
+     × keeps account lockouts, deletion and changed provider bindings effective 32ms
+     × keeps external email signup behind inbox verification and sanitizes return paths 60ms
+[07:08:01] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:08:01] [32mINFO[39m: [36mGmail send completed[39m [90m{"component":"gmail","accountId":"4eb422c9-e926-455a-bc92-f16071c9d7bc","messageId":"0597f64e-5500-45dd-b108-e677afc1c025","outcome":"provider_accepted"}[39m
+[07:08:01] [32mINFO[39m: [36mGmail sync completed[39m [90m{"component":"gmail","accountId":"4eb422c9-e926-455a-bc92-f16071c9d7bc","outcome":"synced"}[39m
+[07:08:01] [32mINFO[39m: [36mGmail sync completed[39m [90m{"component":"gmail","accountId":"4eb422c9-e926-455a-bc92-f16071c9d7bc","outcome":"synced"}[39m
+[07:08:01] [33mWARN[39m: [36mGmail send needs attention[39m [90m{"component":"gmail","messageId":"8d20bdb0-eb02-401c-813a-f12876df912e","outcome":"unknown","code":"[redacted]"}[39m
+[07:08:02] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:08:02] [32mINFO[39m: [36mGmail sync completed[39m [90m{"component":"gmail","accountId":"4eb422c9-e926-455a-bc92-f16071c9d7bc","outcome":"synced"}[39m
+[07:08:02] [33mWARN[39m: [36mGmail send needs attention[39m [90m{"component":"gmail","messageId":"04239a4b-55e2-4288-9ed7-addb13e4b586","outcome":"failed","code":"[redacted]"}[39m
+(node:633308) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[07:08:02] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:08:03] [32mINFO[39m: [36mGmail sync completed[39m [90m{"component":"gmail","accountId":"4eb422c9-e926-455a-bc92-f16071c9d7bc","outcome":"synced"}[39m
+[07:08:03] [32mINFO[39m: [36mGmail send completed[39m [90m{"component":"gmail","accountId":"4eb422c9-e926-455a-bc92-f16071c9d7bc","messageId":"c6a810f5-6222-444e-9df1-d50e0040927a","outcome":"provider_accepted"}[39m
+[07:08:04] [32mINFO[39m: [36mweb form submission captured[39m [90m{"component":"web-forms","formId":"22222222-2222-4222-8222-222222222222","leadId":"lead-1","outcome":"created"}[39m
+[07:08:04] [32mINFO[39m: [36mweb form submission captured[39m [90m{"component":"web-forms","formId":"22222222-2222-4222-8222-222222222222","leadId":"lead-1","outcome":"merged_into_open"}[39m
+[07:08:04] [32mINFO[39m: [36mweb form submission discarded as spam[39m [90m{"component":"web-forms","formId":"22222222-2222-4222-8222-222222222222","ip":"203.0.113.9"}[39m
+[07:08:04] [33mWARN[39m: [36mweb form submission refused: workspace record limit reached[39m [90m{"component":"web-forms","formId":"22222222-2222-4222-8222-222222222222"}[39m
+[07:08:04] [33mWARN[39m: [36mnotification delivery will retry[39m [90m{"component":"notifications","batchId":"13bf11a4-aaac-489b-a04d-f41a90b58d66"}[39m
+    err: {
+      "type": "Object",
+      "message": "SMTP unavailable",
+      "stack":
+          Error: SMTP unavailable
+              at /home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend/test/integration/m11.test.js:258:32
+              at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+              at async file:///home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:20
+    }
+ ❯ test/integration/m11.test.js (29 tests | 1 failed) 5485ms
+   ❯ M11 real Postgres integration (TEST_DATABASE_URL) (29)
+     × builds digest sections in user time, suppresses empty digests and schedules once per date 47ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/integration/googleAuth.test.js > Google sign-in and sign-up with real local database > creates a passwordless verified Google account, preserves the selected plan and issues a normal rotating session
+AssertionError: expected 'https://example.test/auth/google/comp…' to be 'https://example.test/auth/google/comp…' // Object.is equality
+
+Expected: "https://example.test/auth/google/complete"
+Received: "https://example.test/auth/google/complete?error=GOOGLE_AUTH_UNAVAILABLE"
+
+ ❯ test/integration/googleAuth.test.js:91:100
+     89|   it('creates a passwordless verified Google account, preserves the se…
+     90|     const person = identity(), flow = await authorize(person, { intent…
+     91|     expect(flow.callback.status).toBe(303); expect(flow.callback.respo…
+       |                                                                                                    ^
+     92|     const result = await request('/google/complete', { method: 'POST',…
+     93|     expect(result.status).toBe(200); expect(result.body.data.user).toM…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  test/integration/googleAuth.test.js > Google sign-in and sign-up with real local database > links a verified Google-authoritative existing account without duplicating it or changing its workspace
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ test/integration/googleAuth.test.js:112:27
+    110|     await prisma.membership.create({ data: { organizationId: org.id, u…
+    111|     const flow = await authorize(person), result = await request('/goo…
+    112|     expect(result.status).toBe(200); expect(result.body.data.user.id).…
+       |                           ^
+    113|     expect(verifyAccessToken(result.body.data.accessToken).org).toBe(o…
+    114|     expect((await prisma.user.findUnique({ where: { id: user.id } })).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  test/integration/googleAuth.test.js > Google sign-in and sign-up with real local database > requires the existing local second factor and sets no full session until it succeeds
+TypeError: Cannot read properties of undefined (reading 'twoFactorRequired')
+ ❯ test/integration/googleAuth.test.js:128:29
+    126|     const person = identity(), user = await localUser({ email: person.…
+    127|     const flow = await authorize(person), result = await request('/goo…
+    128|     expect(result.body.data.twoFactorRequired).toBe(true); expect(cook…
+       |                             ^
+    129|     fixture.factor.mockResolvedValueOnce(false)
+    130|     const input = { challengeToken: result.body.data.challengeToken, c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  test/integration/googleAuth.test.js > Google sign-in and sign-up with real local database > keeps account lockouts, deletion and changed provider bindings effective
+AssertionError: expected 'TOKEN_INVALID' to be 'ACCOUNT_LOCKED' // Object.is equality
+
+Expected: "ACCOUNT_LOCKED"
+Received: "TOKEN_INVALID"
+
+ ❯ test/integration/googleAuth.test.js:138:113
+    136|     const person = identity(), user = await localUser({ email: person.…
+    137|     const flow = await authorize(person)
+    138|     expect((await request('/google/complete', { method: 'POST', cookie…
+       |                                                                                                                 ^
+    139|     await prisma.user.update({ where: { id: user.id }, data: { lockedU…
+    140|     const second = await authorize(person)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  test/integration/googleAuth.test.js > Google sign-in and sign-up with real local database > keeps external email signup behind inbox verification and sanitizes return paths
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ test/integration/googleAuth.test.js:150:27
+    148|     const flow = await authorize(person, { intent: 'signup', acceptTer…
+    149|     const result = await request('/google/complete', { method: 'POST',…
+    150|     expect(result.status).toBe(200); expect(result.body.data.user.emai…
+       |                           ^
+    151|   })
+    152|   it('preserves password login and never exposes the password hash', a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  test/integration/m11.test.js > M11 real Postgres integration (TEST_DATABASE_URL) > builds digest sections in user time, suppresses empty digests and schedules once per date
+TypeError: Cannot read properties of undefined (reading 'items')
+ ❯ test/integration/m11.test.js:274:58
+    272|     expect(sections.find((s) => s.label === 'Overdue tasks').items.som…
+    273|     expect(sections.find((s) => s.label === 'Today’s tasks').items.som…
+    274|     expect(sections.find((s) => s.label === 'Idle deals').items).toHav…
+       |                                                          ^
+    275|     await queueNotificationDigests(now); await queueNotificationDigest…
+    276|     expect(await prisma.notificationEmailBatch.count({ where: { organi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed | 43 passed (45)
+      Tests  6 failed | 422 passed | 2 skipped (430)
+   Start at  12:37:56
+   Duration  12.95s (tests 59%, import 34%, transform 7%)
+
+    Isolate  45 workers spawned · ~215ms startup each (spawn + environment, per file)
+             at least ~663ms faster with isolate: false — reuses workers across files instead of one per file
+

@@ -1,0 +1,27 @@
+
+> techsync-crm-backend@1.0.0 test
+> vitest run test/integration/templates.test.js test/integration/gmail.test.js
+
+
+ RUN  v5.0.5 /home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend
+
+[07:39:32] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:39:32] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:39:32] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:39:32] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:39:32] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:39:32] [32mINFO[39m: [36mGmail send completed[39m [90m{"component":"gmail","accountId":"7fec2820-b0da-4459-9343-ac1bc7a51940","messageId":"982f82f3-da01-4bca-9994-ece1711dde94","outcome":"provider_accepted"}[39m
+[07:39:32] [32mINFO[39m: [36mGmail sync completed[39m [90m{"component":"gmail","accountId":"7fec2820-b0da-4459-9343-ac1bc7a51940","outcome":"synced"}[39m
+[07:39:32] [32mINFO[39m: [36mGmail sync completed[39m [90m{"component":"gmail","accountId":"7fec2820-b0da-4459-9343-ac1bc7a51940","outcome":"synced"}[39m
+[07:39:32] [33mWARN[39m: [36mGmail send needs attention[39m [90m{"component":"gmail","messageId":"02aa3658-0e1b-4652-b767-4036c50eddcf","outcome":"unknown","code":"[redacted]"}[39m
+[07:39:32] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:39:32] [32mINFO[39m: [36mGmail sync completed[39m [90m{"component":"gmail","accountId":"7fec2820-b0da-4459-9343-ac1bc7a51940","outcome":"synced"}[39m
+[07:39:32] [33mWARN[39m: [36mGmail send needs attention[39m [90m{"component":"gmail","messageId":"f6814cfc-8d39-4990-bd34-7247cbea32be","outcome":"failed","code":"[redacted]"}[39m
+[07:39:33] [32mINFO[39m: [36mGmail sync completed[39m [90m{"component":"gmail","accountId":"7fec2820-b0da-4459-9343-ac1bc7a51940","outcome":"synced"}[39m
+[07:39:41] [32mINFO[39m: [36mGmail send completed[39m [90m{"component":"gmail","accountId":"7fec2820-b0da-4459-9343-ac1bc7a51940","messageId":"7659576a-aa01-4772-b585-917c7f53b91b","outcome":"provider_accepted"}[39m
+
+ Test Files  2 passed (2)
+      Tests  38 passed (38)
+   Start at  13:09:31
+   Duration  31.98s (tests 96%, import 3%, transform 1%)
+

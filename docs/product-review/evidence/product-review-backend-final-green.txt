@@ -1,0 +1,67 @@
+
+> techsync-crm-backend@1.0.0 test
+> vitest run
+
+
+ RUN  v5.0.5 /home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend
+
+[07:36:43] [33mWARN[39m: [36mnotification delivery will retry[39m [90m{"component":"notifications","batchId":"66083b28-627b-4b08-ad7d-ca25c0ac05a8"}[39m
+    err: {
+      "type": "Object",
+      "message": "SMTP unavailable",
+      "stack":
+          Error: SMTP unavailable
+              at /home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend/test/integration/m11.test.js:258:32
+              at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+              at async file:///home/butcher/Desktop/workspace/TECHSYNCHRONIC-PROJECT/techsync-crm/backend/node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:20
+    }
+(node:655487) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[07:36:55] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:36:55] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:36:55] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:36:55] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:36:55] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:36:55] [32mINFO[39m: [36mGmail send completed[39m [90m{"component":"gmail","accountId":"5e6a209e-9288-48da-ab3e-fa6496e3a6b3","messageId":"ae64032e-4497-489c-bd3c-edb9833a905a","outcome":"provider_accepted"}[39m
+[07:36:55] [32mINFO[39m: [36mGmail sync completed[39m [90m{"component":"gmail","accountId":"5e6a209e-9288-48da-ab3e-fa6496e3a6b3","outcome":"synced"}[39m
+[07:36:55] [32mINFO[39m: [36mGmail sync completed[39m [90m{"component":"gmail","accountId":"5e6a209e-9288-48da-ab3e-fa6496e3a6b3","outcome":"synced"}[39m
+[07:36:55] [33mWARN[39m: [36mGmail send needs attention[39m [90m{"component":"gmail","messageId":"ca0968aa-740e-4abe-8af7-b934de10b3ca","outcome":"unknown","code":"[redacted]"}[39m
+[07:36:55] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:36:56] [32mINFO[39m: [36mGmail sync completed[39m [90m{"component":"gmail","accountId":"5e6a209e-9288-48da-ab3e-fa6496e3a6b3","outcome":"synced"}[39m
+[07:36:56] [33mWARN[39m: [36mGmail send needs attention[39m [90m{"component":"gmail","messageId":"ec46f0f4-8720-4dd7-84d3-95e15e6206e4","outcome":"failed","code":"[redacted]"}[39m
+[07:36:56] [32mINFO[39m: [36mGmail sync completed[39m [90m{"component":"gmail","accountId":"5e6a209e-9288-48da-ab3e-fa6496e3a6b3","outcome":"synced"}[39m
+[07:36:56] [32mINFO[39m: [36mGmail send completed[39m [90m{"component":"gmail","accountId":"5e6a209e-9288-48da-ab3e-fa6496e3a6b3","messageId":"31cc4f28-ff93-446a-9a8b-a19be41ee85f","outcome":"provider_accepted"}[39m
+[07:36:57] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:36:57] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:36:57] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:36:57] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:36:57] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:36:57] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:36:57] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:36:57] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:36:57] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:36:57] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:36:57] [33mWARN[39m: [36mGmail connection was not completed[39m [90m{"code":"[redacted]"}[39m
+[07:37:02] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:37:02] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:37:02] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:37:02] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:37:03] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:37:03] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:37:03] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:37:03] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:37:03] [33mWARN[39m: [36mGoogle sign-in did not complete[39m [90m{"code":"[redacted]"}[39m
+[07:37:12] [32mINFO[39m: [36mweb form submission captured[39m [90m{"component":"web-forms","formId":"22222222-2222-4222-8222-222222222222","leadId":"lead-1","outcome":"created"}[39m
+[07:37:12] [32mINFO[39m: [36mweb form submission captured[39m [90m{"component":"web-forms","formId":"22222222-2222-4222-8222-222222222222","leadId":"lead-1","outcome":"merged_into_open"}[39m
+[07:37:12] [32mINFO[39m: [36mweb form submission discarded as spam[39m [90m{"component":"web-forms","formId":"22222222-2222-4222-8222-222222222222","ip":"203.0.113.9"}[39m
+[07:37:12] [33mWARN[39m: [36mweb form submission refused: workspace record limit reached[39m [90m{"component":"web-forms","formId":"22222222-2222-4222-8222-222222222222"}[39m
+
+ Test Files  47 passed (47)
+      Tests  442 passed | 2 skipped (444)
+   Start at  13:06:40
+   Duration  35.26s (tests 61%, import 32%, transform 7%, worker 1%)
+
+     Import  255 modules were evaluated 436 times · 9.91s total, 32% of tracked time
+             ~4.11s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+

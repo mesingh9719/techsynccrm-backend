@@ -1,0 +1,15 @@
+Real lead detail renders from API
+dashboard: desktop/mobile render, no document overflow
+leads: desktop/mobile render, no document overflow
+campaigns: desktop/mobile render, no document overflow
+pipeline: desktop/mobile render, no document overflow
+tasks: desktop/mobile render, no document overflow
+contacts: desktop/mobile render, no document overflow
+companies: desktop/mobile render, no document overflow
+templates: desktop/mobile render, no document overflow
+integrations: desktop/mobile render, no document overflow
+reports: desktop/mobile render, no document overflow
+settings: desktop/mobile render, no document overflow
+Reports real filters, source links, authorized CSV download, response/compliance
+Task quick-add UI persists in Postgres
+Call completion + note + conversion API writes reflected on lead timeline

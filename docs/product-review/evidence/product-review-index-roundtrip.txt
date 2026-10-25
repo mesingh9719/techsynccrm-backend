@@ -1,0 +1,18 @@
+DROP INDEX
+DROP INDEX
+SET
+CREATE INDEX
+CREATE INDEX
+RESET
+SET
+psql:prisma/migrations/20261025130000_report_period_indexes/migration.sql:6: NOTICE:  relation "deals_report_won_period_idx" already exists, skipping
+CREATE INDEX
+psql:prisma/migrations/20261025130000_report_period_indexes/migration.sql:10: NOTICE:  relation "activities_report_period_idx" already exists, skipping
+CREATE INDEX
+RESET
+           relname            | indisvalid 
+------------------------------+------------
+ deals_report_won_period_idx  | t
+ activities_report_period_idx | t
+(2 rows)
+
