@@ -333,7 +333,10 @@ async function listWhere(ctx, query, { withStatus = true } = {}) {
     })
   }
   if (query.ownerId) and.push(ownerFilter(ctx, query.ownerId))
-  if (query.sourceId) and.push({ sourceId: { in: listParam(query.sourceId) } })
+  if (query.sourceId) {
+    const ids = listParam(query.sourceId)
+    and.push({ OR: [...(ids.includes('none') ? [{ sourceId: null }] : []), ...(ids.some(id => id !== 'none') ? [{ sourceId: { in: ids.filter(id => id !== 'none') } }] : [])] })
+  }
   if (query.campaignId) {
     const ids = listParam(query.campaignId)
     and.push({ OR: [...(ids.includes('none') ? [{ campaignId: null }] : []), ...(ids.some(id => id !== 'none') ? [{ campaignId: { in: ids.filter(id => id !== 'none') } }] : [])] })

@@ -1,3 +1,4 @@
+import { reportRoutes } from './report.routes.js'
 import { emailFoundationRoutes } from '../email-integration/routes.js'
 import { gmailRoutes, emailRoutes, emailTemplateRoutes, gmailWebhookRoutes } from './gmail.routes.js'
 import { importRoutes, exportRoutes } from './transfer.routes.js'
@@ -53,6 +54,7 @@ router.use('/tags', tagRoutes)
 router.use('/custom-fields', customFieldRoutes)
 router.use('/leads', leadRoutes)
 router.use('/campaigns', campaignRoutes)
+router.use('/reports', reportRoutes)
 router.use('/lead-sources', leadSourceRoutes)
 // Lead capture (M14)
 router.use('/forms', webFormRoutes)
