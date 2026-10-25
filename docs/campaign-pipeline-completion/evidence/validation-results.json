@@ -1,0 +1,52 @@
+{
+  "backend": {
+    "baselineOffline": {
+      "passed": 286,
+      "skipped": 131
+    },
+    "baselineDatabase": {
+      "passed": 408,
+      "failed": 7,
+      "skipped": 2
+    },
+    "finalOffline": {
+      "passed": 286,
+      "skipped": 144
+    },
+    "finalDatabase": {
+      "passed": 422,
+      "failed": 6,
+      "skipped": 2
+    },
+    "knownFailingTests": [
+      "googleAuth.test.js: five Google signup/signin/completion cases",
+      "m11.test.js:274: missing Idle deals digest section"
+    ],
+    "baselineIntermittentFailure": "gmail.test.js:337 purge fixture; passed in final run",
+    "newIntegrationTests": 13,
+    "largeStageRemovalRecords": 1105,
+    "migrationsRollbackReapply": "passed; preserved existing rows"
+  },
+  "frontend": {
+    "testFilesPassed": 3,
+    "typescript": "passed",
+    "build": "passed",
+    "lintExitCode": 0,
+    "existingLintWarnings": 9,
+    "browser": "passed with no uncaught errors",
+    "httpFailures": "intentional move 503, real stale 409, existing stream-ticket hard-navigation rate limit 429",
+    "viewports": [
+      [
+        1440,
+        1000
+      ],
+      [
+        390,
+        844
+      ]
+    ],
+    "publicCapture": "passed; real hosted UI, campaign/owner/source saved, repeat dedupe, foreign/invalid/closed rejected, deleted attribution retained without dead link"
+  },
+  "productionOrRemoteOperations": false,
+  "dependenciesAdded": false
+}

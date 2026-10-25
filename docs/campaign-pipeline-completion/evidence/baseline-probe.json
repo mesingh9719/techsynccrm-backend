@@ -1,0 +1,52 @@
+[
+  {
+    "id": "C1",
+    "flow": "explicit lead attribution",
+    "result": {
+      "status": 400,
+      "body": {
+        "success": false,
+        "error": {
+          "message": "Validation failed",
+          "code": "VALIDATION_ERROR",
+          "details": {
+            "fields": {
+              "_": "Nothing to update"
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "C2",
+    "flow": "qualified includes converted",
+    "expected": 3,
+    "actual": 0,
+    "converted": 3
+  },
+  {
+    "id": "C3",
+    "flow": "invalid active-to-scheduled transition",
+    "expected": 400,
+    "actual": 200
+  },
+  {
+    "id": "P1",
+    "flow": "campaign pipeline filter",
+    "expected": 23,
+    "actual": 85
+  },
+  {
+    "id": "P2",
+    "flow": "unknown source pipeline filter",
+    "expected": 0,
+    "actual": 85
+  },
+  {
+    "id": "P3",
+    "flow": "simultaneous default pipeline changes",
+    "expected": 1,
+    "actual": 1
+  }
+]
