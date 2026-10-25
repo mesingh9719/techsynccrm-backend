@@ -28,6 +28,8 @@ enum UserTokenType {
   email_change_cancel
   /// Second step of a 2FA login (never emailed). payload: { remember }
   login_challenge
+  /// Single-use Google sign-in handoff; SQL enum value already exists from 20261023111000.
+  google_signin
 }
 
 model User {

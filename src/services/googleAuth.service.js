@@ -41,7 +41,11 @@ async function userForIdentity(identity, flow, meta) {
     if (user) {
       // Prevent pre-registration hijacking and unsafe linking of external email identities.
       if (user.deletedAt || user.googleSubject || !user.emailVerifiedAt || !identity.authoritative || user.lockedUntil && user.lockedUntil > new Date()) throw googleError('GOOGLE_LINK_REQUIRED', 'Use email sign-in. Verify your email or reset your password first; existing external Google email addresses require email sign-in.', 409)
-      user = await tx.user.update({ where: { id: user.id, googleSubject: null, email: identity.email, deletedAt: null }, data: { googleSubject: identity.subject } })
+      // Nullable unique fields cannot be null in Prisma's extended unique update selector.
+      // Keep the compare-and-set guard in updateMany so concurrent provider links still lose safely.
+      const linked = await tx.user.updateMany({ where: { id: user.id, googleSubject: null, email: identity.email, deletedAt: null }, data: { googleSubject: identity.subject } })
+      if (linked.count !== 1) throw googleError('GOOGLE_LINK_REQUIRED', 'This account changed. Please sign in again.', 409)
+      user = await tx.user.findUniqueOrThrow({ where: { id: user.id } })
       await recordAudit(tx, { userId: user.id, ip: meta.ip, userAgent: meta.userAgent }, { action: 'auth.google_linked', entityType: 'user', entityId: user.id })
       return user
     }
