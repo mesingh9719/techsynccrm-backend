@@ -122,5 +122,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('pipeline completion: real tenan
   const ids=[];let cursor
   do{const page=await request(`/deals?pipelineId=${p.id}&stageId=${stage.id}&limit=100&sort=position${cursor?'&cursor='+cursor:''}`);expect(page.status).toBe(200);ids.push(...page.body.data.items.map(d=>d.id));cursor=page.body.data.nextCursor}while(cursor)
   expect(ids).toHaveLength(1105);expect(new Set(ids).size).toBe(1105)
+  const removed=await request(`/pipelines/${p.id}/stages/${stage.id}`,{method:'DELETE',body:{moveDealsToStageId:p.stages[1].id}})
+  expect(removed.status,JSON.stringify(removed.body)).toBe(200)
+  expect(await prisma.deal.count({where:{organizationId:org.id,pipelineId:p.id,stageId:p.stages[1].id}})).toBe(1105)
  },30000)
 })
