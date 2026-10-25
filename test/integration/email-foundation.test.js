@@ -88,6 +88,32 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('email foundation with real Post
     if (users) await prisma.user.deleteMany({ where: { id: { in: users.map((user) => user.id) } } })
     await prisma.$disconnect()
   })
+  it('returns the verified popup attempt and workspace after a successful callback', async () => {
+    const popupId = crypto.randomUUID()
+    const result = await request(`/connect/google/start?popupId=${popupId}&returnTo=/app/settings/gmail`)
+    expect(result.status).toBe(200)
+    const state = new URL(result.data.data.url).searchParams.get('state'), cookie = result.headers.get('set-cookie').split(';')[0]
+    expect(state).toMatch(new RegExp(`\\.${popupId}$`))
+    const completed = new URL((await finish({ state, cookie })).headers.get('location'))
+    expect(completed.pathname).toBe('/gmail/callback')
+    expect(completed.searchParams.get('popupId')).toBe(popupId)
+    expect(completed.searchParams.get('workspace')).toBe(org.id)
+    expect(completed.searchParams.get('gmail')).toBe('connected')
+  })
+  it('returns popup correlation for denied consent but never reflects a tampered OAuth state', async () => {
+    const popupId = crypto.randomUUID(), result = await request(`/connect/google/start?popupId=${popupId}`)
+    const state = new URL(result.data.data.url).searchParams.get('state'), cookie = result.headers.get('set-cookie').split(';')[0]
+    const wrong = new URL((await finish({ state: state.replace(popupId, crypto.randomUUID()), cookie })).headers.get('location'))
+    expect(wrong.searchParams.has('popupId')).toBe(false)
+    const cancelled = new URL((await finish({ state, cookie }, 'error=access_denied')).headers.get('location'))
+    expect(cancelled.searchParams.get('popupId')).toBe(popupId)
+    expect(cancelled.searchParams.get('gmail')).toBe('GMAIL_OAUTH_CANCELLED')
+    expect(fixture.provider.exchange).not.toHaveBeenCalled()
+  })
+  it('rejects invalid popup identifiers before creating an authorization request', async () => {
+    expect((await request('/connect/google/start?popupId=arbitrary-window')).status).toBe(400)
+    expect(await prisma.gmailOAuthState.count({ where: { organizationId: org.id, usedAt: null } })).toBe(0)
+  })
   it('connects with PKCE, offline access, login hint, incremental authorization and send-only permission', async () => {
     const started = await start(1)
     expect(started.url.searchParams.get('scope').split(' ')).toEqual(['openid', 'email', 'profile', 'https://www.googleapis.com/auth/gmail.send'])

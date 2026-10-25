@@ -16,6 +16,7 @@ import { newEnvelope, seal } from './vault.js'
 import { managedAccount, permitEmail, ownAccount } from './access.js'
 import { settings, configurationStatus, requireConfiguration, ACTIVE, CONSENT_VERSION, gmailError } from './config.js'
 import { cleanHtml } from './content.js'
+import { popupIdFromState, validPopupId } from './popup.js'
 
 export const validReturn = validReturnTo
 const connectionProvider = new GmailProvider()
@@ -38,7 +39,7 @@ export async function gmailMe(ctx) {
 export async function startLogin(ctx, input) {
   requireConfiguration(); permitEmail(ctx, 'email.connect'); await assertEmailEnabled(ctx.orgId)
   if (!ctx.sessionId) throw gmailError('GMAIL_OAUTH_INVALID', 'Sign into TechSync again before connecting Gmail.', 401)
-  const state = crypto.randomBytes(32).toString('base64url'), browser = crypto.randomBytes(32).toString('base64url'), nonce = crypto.randomBytes(24).toString('base64url')
+  const state = crypto.randomBytes(32).toString('base64url') + (validPopupId(input.popupId) ? `.${input.popupId}` : ''), browser = crypto.randomBytes(32).toString('base64url'), nonce = crypto.randomBytes(24).toString('base64url')
   const { codeVerifier, codeChallenge } = await oauthClient().generateCodeVerifierAsync()
   await prisma.gmailOAuthState.create({ data: { organizationId: ctx.orgId, userId: ctx.userId, sessionId: ctx.sessionId, stateHash: sha256(state), browserHash: sha256(browser), verifierEnc: encrypt(codeVerifier), nonce, returnTo: validReturn(input.returnTo), backfillDays: input.backfillDays, excludedAddresses: input.excludedAddresses, excludedDomains: input.excludedDomains, expiresAt: new Date(Date.now() + 600000) } })
   const url = connectionProvider.getAuthUrl({ state, nonce, codeChallenge, loginHint: ctx.email || ctx.user?.email || '' })
@@ -104,8 +105,8 @@ export async function finishLogin(query, browser) {
     })
   } catch (err) { if (err.code === 'P2002') throw gmailError('GMAIL_ACCOUNT_UNAVAILABLE', 'This Google account is already connected by another teammate in this workspace.'); throw err }
   if (canSyncAccount({ consentVersion, scopes })) await enqueue('gmail.sync', { organizationId: ctx.orgId, accountId: id }).catch(() => {}) // durable due-state scan recovers
-  return { returnTo: state.returnTo, orgId: ctx.orgId }
-  } catch (error) { throw Object.assign(error, { returnTo: state.returnTo, orgId: state.organizationId }) }
+  return { returnTo: state.returnTo, orgId: ctx.orgId, popupId: popupIdFromState(query.state) }
+  } catch (error) { throw Object.assign(error, { returnTo: state.returnTo, orgId: state.organizationId, popupId: popupIdFromState(query.state) }) }
 }
 export async function disconnect(ctx, id) {
   await managedAccount(ctx, id)
@@ -135,6 +136,7 @@ export const callbackDestination = (result, code) => {
   const url = new URL('/gmail/callback', env.FRONTEND_URL)
   url.searchParams.set('gmail', code || 'connected')
   if (result) { url.searchParams.set('returnTo', validReturn(result.returnTo)); url.searchParams.set('workspace', result.orgId) }
+  if (validPopupId(result?.popupId)) url.searchParams.set('popupId', result.popupId)
   return url.toString()
 }
 export async function listAccounts(ctx, query) {

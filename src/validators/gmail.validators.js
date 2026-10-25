@@ -8,6 +8,7 @@ const exclusions = {
   excludedDomains: z.array(z.string().trim().toLowerCase().max(253).regex(/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,63}$/)).max(100).default([]),
 }
 export const gmailStart = z.object({
+  popupId: z.uuidv4().optional(),
   returnTo: z.string().max(200).default('/app/settings/gmail'),
   shareWithTeam: z.literal(true), consentVersion: z.literal(CONSENT_VERSION),
   backfillDays: z.union([z.literal(0), z.literal(30)]).default(0), ...exclusions,

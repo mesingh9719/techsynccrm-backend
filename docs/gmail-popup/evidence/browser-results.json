@@ -1,0 +1,12 @@
+{
+  "results": [
+    "normal: popup closed; original page updated without reload",
+    "isolated: popup closed; original page updated without reload",
+    "storage: popup closed; original page updated without reload",
+    "polling: popup closed; original page updated without reload",
+    "denied: popup closed; original page updated without reload",
+    "cancelled: popup closed; original page updated without reload",
+    "legacy: popup closed; original page updated without reload"
+  ],
+  "errors": []
+}

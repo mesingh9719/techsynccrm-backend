@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const startQuery = z.object({ returnTo: z.string().max(200).optional() }).strict()
+export const startQuery = z.object({ returnTo: z.string().max(200).optional(), popupId: z.uuidv4().optional() }).strict()
 export const accountParams = z.object({ id: z.uuid() }).strict()
 export const teamQuery = z.object({ q: z.string().trim().max(100).default(''),
   status: z.enum(['all', 'CONNECTED', 'DISCONNECTED', 'NEEDS_RECONNECT', 'ERROR']).default('all'),

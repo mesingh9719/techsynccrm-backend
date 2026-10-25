@@ -5,7 +5,7 @@ import * as service from './service.js'
 
 const ok = (res, data) => res.json({ success: true, data })
 export const start = guarded(async (req, res) => {
-  const result = await startLogin(req.ctx, { returnTo: req.validated.query.returnTo, consentVersion: CONSENT_VERSION, backfillDays: 0, excludedAddresses: [], excludedDomains: [] })
+  const result = await startLogin(req.ctx, { returnTo: req.validated.query.returnTo, popupId: req.validated.query.popupId, consentVersion: CONSENT_VERSION, backfillDays: 0, excludedAddresses: [], excludedDomains: [] })
   res.cookie(cookieName, result.browser, cookieOptions())
   ok(res, { url: result.url, expiresAt: result.expiresAt })
 })
