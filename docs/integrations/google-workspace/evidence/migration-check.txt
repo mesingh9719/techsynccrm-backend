@@ -1,0 +1,1 @@
+PASS: additive schema applies; rollback refuses live credentials; empty rollback succeeds; transaction discarded

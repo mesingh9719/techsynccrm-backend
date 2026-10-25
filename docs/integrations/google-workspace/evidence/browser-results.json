@@ -1,0 +1,12 @@
+{
+  "results": [
+    "New workspace starts with service preferences off",
+    "Reviewed Calendar consent → PKCE OAuth callback → encrypted persisted binding",
+    "Shared selected-file scope enables Sheets only after explicit service consent",
+    "Mobile service-off, project-wide warning and persisted workspace disconnect",
+    "Team status and sanitized activity show the completed actions",
+    "Viewer cannot connect services or open team administration"
+  ],
+  "errors": [],
+  "googleRequests": 1
+}

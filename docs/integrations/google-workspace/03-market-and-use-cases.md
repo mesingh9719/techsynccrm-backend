@@ -1,0 +1,59 @@
+# Market evidence and use-case choices
+
+Research checked 25 October 2026. Vendor pages establish advertised capability, not reliability, customer adoption or willingness to pay. “Not verified” means research did not establish a native feature/tier, not that the vendor lacks it. No customer interviews or conversion measurements were performed.
+
+## Competitor comparison
+
+| Vendor | Calendar | Drive and Sheets | Tier / qualification supported by sources |
+|---|---|---|---|
+| Zoho CRM | One-/two-way calendar options and availability blocking; current guide documents unsupported recurring events and potential duplicates on reconfiguration. | Workspace integration advertises attaching Drive files. Separate Drive extension creates record folders and syncs attachments. Native continuous Sheets ingestion not established here. | Google-account guide lists Calendar in Standard/Professional/Enterprise. Drive extension is for trial/paid accounts; installation is admin controlled. Do not confuse Bigin/Recruit/Vertical Studio tiers with CRM. [Calendar](https://help.zoho.com/portal/en/kb/crm/integrations/google/google-workspace/articles/synchronize-g-suite-calendar), [editions](https://help.zoho.com/portal/en/kb/crm/integrations/google/google-account/articles/google-account-users-crm-integration), [Drive](https://help.zoho.com/portal/en/kb/crm/extensions/team-collaboration/articles/google-drive-crm-integration). |
+| HubSpot | Calendar connection and meeting availability are available across products/plans; seat/subscription limits apply to richer calendar/task use. | Sheets workflow actions create/update rows; public workflow article warns about duplicate rows on timeout. Exact first-party Drive feature/tier not verified in this pass. | Basic connected scheduling is broadly available; Sheets workflows require a qualifying Professional/Enterprise product. [Calendar](https://knowledge.hubspot.com/meetings-tool/use-meetings), [Sheets workflows](https://knowledge.hubspot.com/workflows/add-data-to-google-sheets-with-workflows). |
+| Pipedrive | Personal one-/two-way sync and activity-type selection. | Google Drive integration; Smart Docs adds document workflows. Continuous Sheets lead source not established as native here. | Current names are **Lite/Growth/Premium/Ultimate**: calendar sync all tiers; scheduler Growth+; Smart Docs paid add-on below Premium, included Premium+. Avoid obsolete Essential/Advanced comparisons. [Current plan table](https://support.pipedrive.com/en/article/what-features-do-the-pipedrive-plans-have), [sync behavior](https://support.pipedrive.com/en/article/syncing-with-your-email-calendar-or-contacts-provider). |
+| Freshsales | Per-user Google calendar selection and two-way meeting sync. | Freshworks advertises Drive for Freshdesk/Freshservice; that does not establish the same native integration for Freshsales. Sheets depth/tier not verified. | Official Free-plan guide includes Google Calendar/Contacts productivity apps for up to three users; verify account entitlements when comparing. [Calendar](https://crmsupport.freshworks.com/support/solutions/articles/50000002453-how-to-sync-my-google-calendar-), [Free tier](https://crmsupport.freshworks.com/support/solutions/articles/50000002465-how-to-activate-the-free-plan), [product distinctions](https://www.freshworks.com/platform/technology-alliances/google/). |
+| LeadSquared | Task/calendar two-way sync, user administration and logs. Meet connector creates lead meetings and invitations. | Native Drive/Sheets availability and pricing not established; do not treat third-party connectors as included. | Meet is explicitly a paid feature requiring activation; Calendar tier is not published on the cited listing, obtain a quote. [Calendar](https://www.leadsquared.com/integrations/google-calendar/), [Meet](https://help.leadsquared.com/google-meet-connector/). |
+| Kylas | Google/Outlook connection for online meetings and meeting links. | Official Sheets recipe uses developer-written Apps Script plus a webhook, rather than proving a turnkey two-way engine. Drive support/tier unverified. | Meeting article names **Elevate**; Sheets workflow requires webhook/developer setup and applicable plan access. [Meetings](https://support.kylas.io/portal/en/kb/articles/how-to-connect-your-google-outlook-calendar-to-create-online-meetings), [Sheets recipe](https://support.kylas.io/portal/en/kb/articles/how-to-transfer-data-from-kylas-to-google-sheets). |
+| Bitrix24 | Calendar synchronization and open-slot scheduling documented. | Native Drive document workflows plus marketplace Drive/Sheets connectors; listed “Free” app price does not establish portal entitlement or vendor service cost. | Free plan contains basic Calendar/Drive/CRM; verify current plan/Market availability for each extension. [Calendar](https://helpdesk.bitrix24.com/section/47483/), [Google marketplace](https://www.bitrix24.com/apps/collection/19494316/), [plan FAQ](https://helpdesk.bitrix24.com/open/25870979/). |
+
+This evidence supports **basic calendar connection/scheduling and record-linked documents as table stakes**, and selected-file exports/admin controls as expected. Reliable directional sync, clear errors, minimal permission requests and safe employee offboarding are potential differentiators. These classifications are product judgments based on the comparison, not measured market prevalence.
+
+## Clinics and coaching: hypotheses to validate
+
+Likely jobs include counselling/demo appointments, admissions callbacks, therapist/clinic follow-up slots, staff lead lists in Sheets, agency/client status reports and shared Drive documents. Clinics may handle highly sensitive clinical records; coaching may handle minors' information. Those observations justify a conservative MVP, not a claim that TechSync is a clinical-record system or compliant with a health-data regime.
+
+Start with appointment **logistics**: neutral title, time and CRM link. Do not put symptoms, diagnosis, prescriptions, identity documents, student grades or debt details into Google event descriptions by default. Prescription/report generation and automated clinical-document exports are **out of the core roadmap** pending customer need, contracts and legal review. A normal CRM Drive link remains possible with explicit authorization; avoid health-compliance marketing claims.
+
+Validate with 5–8 owners/front-desk users across both segments and 2–3 agencies: current calendars, account ownership, who shares each sheet, most common missed handoff, sensitivity of documents, acceptable sync delay, consequences of external deletion and willingness to pay. Use workflow demonstrations rather than asking whether they “want integrations.” No quantified storage savings or revenue uplift is assumed.
+
+## Ranked use cases (judgment, not measured scores)
+
+Value/effort/risk are relative to this codebase; effort includes operational and privacy costs.
+
+| Rank | Use case | Value | Effort | Compliance / failure risk | Decision |
+|---|---|---|---|---|---|
+| 1 | Explicitly scheduled follow-up/meeting → dedicated Calendar | High | M | Calendar category gate; invitations/privacy | Phase 1B; no automatic export of every task. |
+| 2 | Attach a selected Drive file by reference | High | M | Low scope burden; file access mismatch | Phase 2A; link default, no automatic sharing. |
+| 3 | Filtered lead/contact/report export to a selected/new Sheet | High | M | Export permission and external copies | Phase 2B; can release while Calendar review waits. |
+| 4 | Reschedule/cancel **linked** Calendar events back into CRM | High | L | Conflicts, pushes, token recovery | Phase 1C after one-way stability; Phase 2 may ship first. |
+| 5 | Selected Sheet as an incoming lead list | High for sheet-heavy teams | L | Row identity, duplicate creates, malformed values | Phase 3B; owner/admin, reviewed mapping, 15-minute pilot polling. |
+| 6 | CRM-owned live Sheet report/list | Medium–high | L | Accidental data export after role changes; user edits | Phase 3A; one writer, stable row keys, visible log. |
+| 7 | Optional Meet link and explicit lead invitations | Medium–high | M | Real external messages, account capability | Phase 1B bounded add-on; default no guests, no recording/transcripts. |
+| 8 | Save an existing CRM file to selected Drive folder | Medium | M | External persistence, ambiguous retries | Phase 2A; explicit per action, retain original CRM file. |
+| 9 | Own-calendar free/busy during scheduling | Medium–high | M | Extra consent; stale reads | Phase 1B optional incremental scope. Warning/refresh, no absolute double-booking guarantee. |
+| 10 | Scheduled reports to Sheets | Medium | M | M15 scheduling not already complete | Phase 3C, with timezone/recipient-current-scope checks. |
+| 11 | Public booking link / team calendar | Unproven | L | Spam, privacy, availability/race handling | Phase 4 after demand validation. |
+| 12 | Apps Script on-edit push / general two-way Sheet cell editing | Unproven | L | Script ownership, authentication, loops | Defer. Polling and separate source/destination directions are simpler. |
+| 13 | Domain-wide delegation / broad Drive discovery | Low for target pilot | L | Admin onboarding, broad data exposure | DWD Phase 4 only with enterprise sponsor; broad Drive scopes dropped from core. |
+
+## Candidate disposition: no silent omissions
+
+**Calendar:** include dedicated calendar, optional own-primary mode later, explicit timed/all-day scheduling, attendees/location, optional Meet, create/update/cancel, linked-only return sync, polling recovery, reminder ownership and Today-view alignment. Phase 1 supports single occurrences of the CRM's existing recurrence workflow; full Google recurring-series editing and “this/future/all” semantics are deferred to Phase 4. RSVP status can be displayed after Phase 1C but never completes a task automatically. Timezone changes affect future display/scheduling and must not shift existing appointments. Team calendar and public booking remain optional Phase 4.
+
+**Sheets:** include selected/new-file on-demand exports with filters/columns, report/campaign snapshots, formatting, safe text, separate outbound row sync and inbound lead source, duplicate policy, row errors, pause/reconnect and sync logs. General same-cell two-way sync is dropped from core: CRM owns outbound columns; inbound sheets own only allowlisted mapped intake fields. Scheduled report delivery is Phase 3C. Respect existing import/export permissions and a tenant export-off switch.
+
+**Drive:** include Picker search/recent files, link metadata and Open in Drive, selected destination folders, explicit save/copy, stale/deleted/no-access states, record timeline actions and optional thumbnail only after an access check. External sharing is Phase 4, explicit and recipient-specific; public-link sharing remains off. Default folder ownership is per employee/account, with opaque CRM identifiers rather than patient/lead names. Tenant/shared-drive organization is deferred until a real shared-drive test and admin ownership policy exist.
+
+## Pricing recommendation for TechSync (decision, not existing entitlement)
+
+Pilot basic Calendar, Drive links and manual Sheets export across existing plans within small limits; retain current role-based export restrictions. Consider Growth+ for continuous sync/scheduled reports after measuring support cost, and Business for enterprise delegation/team governance. Do not alter plan prices or sell “unlimited sync” on the basis of this plan. Use the [decision log](09-decision-log.md) for approval.
+
+Drive linking can avoid storing **future selected file bytes** in TechSync; it does not remove existing S3 objects, version retention, thumbnails, database/log costs, support cost, Google storage charges or egress. Copy-to-Drive while retaining S3 can increase total storage. Measure file-size mix and adoption before promising savings.
