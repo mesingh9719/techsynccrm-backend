@@ -266,6 +266,10 @@ describe.skipIf(!enabled)('M11 real Postgres integration (TEST_DATABASE_URL)', (
 
   it('builds digest sections in user time, suppresses empty digests and schedules once per date', async () => {
     const now = new Date('2026-10-19T03:00:00Z')
+    // This assertion evaluates a fixed day. Date.now()-10 days from suite setup stops being
+    // idle relative to that day as the real calendar advances; anchor the fixture to this clock.
+    const idleSince = new Date(now.getTime() - 10 * 86400000)
+    await prisma.deal.update({ where: { id: deal.id }, data: { stageEnteredAt: idleSince, lastActivityAt: idleSince } })
     await prisma.task.update({ where: { id: task.id }, data: { dueAt: new Date('2026-10-19T02:00:00Z') } })
     const todayTask = await prisma.task.create({ data: { organizationId: org.id, title: 'Today task', assigneeId: users[1].id, dueAt: new Date('2026-10-19T10:00:00Z') } })
     const sections = await digestSections(await notificationContext(org.id, users[1].id), now)
