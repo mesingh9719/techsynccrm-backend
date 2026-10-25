@@ -46,6 +46,13 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('pipeline completion: real tenan
   expect((await request(`/pipelines/${p.id}/stages/${won.id}`,{method:'PATCH',body:{probability:50}})).status).toBe(400)
   expect((await request(`/pipelines/${p.id}/stages/${won.id}`,{method:'PATCH',body:{name:'Enrolled'}})).body.data.pipeline.stages.find(s=>s.id===won.id).name).toBe('Enrolled')
  })
+ it('keeps a last open stage when two administrators delete the final pair concurrently',async()=>{
+  const p=await createPipeline('Last open concurrency'),open=p.stages.filter(s=>s.type==='open')
+  for(const stage of open.slice(2))expect((await request(`/pipelines/${p.id}/stages/${stage.id}`,{method:'DELETE',body:{}})).status).toBe(200)
+  const results=await Promise.all(open.slice(0,2).map(stage=>request(`/pipelines/${p.id}/stages/${stage.id}`,{method:'DELETE',body:{}})))
+  expect(results.map(result=>result.status).sort()).toEqual([200,409])
+  expect((await getPipeline(p.id)).stages.filter(stage=>stage.type==='open')).toHaveLength(1)
+ })
  it('keeps exactly one default under simultaneous settings writes and restricts management by role',async()=>{
   const a=await createPipeline('Default A'),b=await createPipeline('Default B')
   for(let n=0;n<3;n++){
