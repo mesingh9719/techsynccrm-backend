@@ -68,11 +68,11 @@ const AUDITED = ['firstName', 'lastName', 'title', 'emails', 'phones', 'lifecycl
 
 // ---------- Presentation ----------
 
-async function companiesFor(contactIds) {
+async function companiesFor(ctx, contactIds) {
   const map = new Map()
   if (!contactIds.length) return map
   const links = await prisma.contactCompany.findMany({
-    where: { contactId: { in: contactIds }, company: { deletedAt: null } },
+    where: { organizationId: ctx.orgId, contactId: { in: contactIds }, company: { AND: [{ organizationId: ctx.orgId, deletedAt: null }, visibilityWhere(ctx, 'companies', 'read')] } },
     select: { contactId: true, role: true, isPrimary: true, company: { select: { id: true, name: true } } },
     orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
   })
@@ -83,11 +83,11 @@ async function companiesFor(contactIds) {
   return map
 }
 
-async function present(rows) {
+async function present(ctx, rows) {
   const list = Array.isArray(rows) ? rows : [rows]
   if (!list.length) return Array.isArray(rows) ? [] : null
   const ids = list.map((r) => r.id)
-  const [owners, tags, companies] = await Promise.all([usersById(list.map((r) => r.ownerId)), tagsFor(list[0].organizationId, ENTITY, ids), companiesFor(ids)])
+  const [owners, tags, companies] = await Promise.all([usersById(list.map((r) => r.ownerId)), tagsFor(list[0].organizationId, ENTITY, ids), companiesFor(ctx, ids)])
   const out = list.map(({ organizationId: _o, ...r }) => ({
     ...r,
     owner: r.ownerId ? (owners.get(r.ownerId) ?? null) : null,
@@ -239,11 +239,11 @@ export async function listContacts(ctx, query) {
     query.count ? prisma.contact.count({ where: { AND: and } }) : null,
   ])
   const result = buildPage(rows, page)
-  return { items: await present(result.items), nextCursor: result.nextCursor, ...(total !== null && { total }) }
+  return { items: await present(ctx, result.items), nextCursor: result.nextCursor, ...(total !== null && { total }) }
 }
 
 export async function getContact(ctx, id) {
-  return present(await getForAction(ctx, id, 'read', { includeDeleted: true }))
+  return present(ctx, await getForAction(ctx, id, 'read', { includeDeleted: true }))
 }
 
 // ---------- Write ----------
@@ -278,7 +278,7 @@ export async function createContact(ctx, input, { allowDuplicate = false, tx: ex
     }
     return contact
   })
-  return externalTx ? row : present(row)
+  return externalTx ? row : present(ctx, row)
 }
 
 export async function updateContact(ctx, id, input, { expectedUpdatedAt, allowDuplicate = false, tx: externalTx } = {}) {
@@ -304,7 +304,7 @@ export async function updateContact(ctx, id, input, { expectedUpdatedAt, allowDu
     if (changes?.ownerId) await emit(tx, ctx, 'contact.assigned', { entityType: ENTITY, entityId: id }, { changes: { ownerId: changes.ownerId } })
     return row
   })
-  return externalTx ? after : present(after)
+  return externalTx ? after : present(ctx, after)
 }
 
 export async function deleteContact(ctx, id) {
@@ -326,7 +326,7 @@ export async function restoreContact(ctx, id) {
     await recordAudit(tx, ctx, { action: 'contact.restore', entityType: ENTITY, entityId: id })
     return restored
   })
-  return present(row)
+  return present(ctx, row)
 }
 
 // ---------- Merge ----------
@@ -396,7 +396,7 @@ export async function mergeContacts(ctx, { primaryId, duplicateIds, fieldChoices
     await recordAudit(tx, ctx, { action: 'contact.merge', entityType: ENTITY, entityId: primaryId, changes: { mergedIds: ids, fieldChoices, before: records } })
     return row
   })
-  return present(merged)
+  return present(ctx, merged)
 }
 
 // ---------- Bulk ----------
