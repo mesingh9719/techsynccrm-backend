@@ -33,6 +33,8 @@ Priority = severity first (Blocker > High > Medium > Low), then user/business im
 
 | PR-027 | Reports/exports | Security | Frontend CSV formula guard did not account for leading NUL/control characters as fully as the backend encoder | Spreadsheet interpretation can bypass formula-prefix guard | High | S | Fixed; shared encoder aligned and control-character regression assertions pass |
 
+| PR-028 | Import/export | Functional/UX | XLSX foundations existed, but starter templates were CSV-only, exported amounts/dates were text, and malformed workbook failures lacked actionable errors | Excel onboarding and calculations needed completion and full-flow verification | Medium | M | Fixed; native templates, typed/precision-safe XLSX, safe errors; four-entity HTTP and full lead browser journey pass |
+
 ## Coverage boundary
 
 This register is evidence-driven, not a claim that all possible issues were discovered. The route inventory contains 280 declarations including public, staff, nested routers and out-of-scope modules. Every endpoint/role/action permutation is not yet individually certified. PR-012 remains open for that exhaustive matrix. See module audits for action-level Partial states.

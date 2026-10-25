@@ -1,6 +1,6 @@
 # Product review progress
 
-Checkpoint: **25 October 2026, 13:24 IST**. Verified core implementation batch complete. **Overall ten-module program remains in progress; do not call the product market-ready.** Read this file and the gap register before continuing.
+Checkpoint: **25 October 2026, Excel import/export follow-up complete**. Verified core implementation batch complete. **Overall ten-module program remains in progress; do not call the product market-ready.** Read this file and the gap register before continuing.
 
 ## Workspace and preservation
 
@@ -19,7 +19,7 @@ Checkpoint: **25 October 2026, 13:24 IST**. Verified core implementation batch c
 
 ## Final verification
 
-- Full backend: **442 passed, zero failed, two optional browser cases skipped**, 47 files. Both optional inherited cases passed separately in a **38-test Templates/Gmail run**, using real template/email HTTP/Postgres with mocked mail/provider and simulated auth shell.
+- Full backend: **450 passed, zero failed, two optional browser cases skipped**, 47 files. Both optional inherited cases passed separately in a **38-test Templates/Gmail run**, using real template/email HTTP/Postgres with mocked mail/provider and simulated auth shell.
 - Frontend: all three test files pass, TypeScript/build pass; lint exits 0 with existing unrelated warnings. New tests cover live API filters/errors, cache write notifications, rollout stops and CSV control characters.
 - Real full-app browser: ten modules plus companies desktop/phone render without page errors/overflow; report filters/CSV, quick tasks and call/note/conversion timeline pass. Public website capture/assignment/UTM/repeat dedupe/foreign ID/closed form regression passes.
 - Real phone-sized salesperson UI: note, call log, qualification confirmation, normalized WhatsApp URL (no message sent), add/complete follow-up pass. Physical-device/provider delivery not tested.
@@ -29,9 +29,17 @@ Checkpoint: **25 October 2026, 13:24 IST**. Verified core implementation batch c
 ## Local environment
 
 - New Postgres cluster: /tmp/techsync-product-review-pg, port 55441, socket /tmp. Databases techsync_product_review (tests), techsync_product_browser (UI), techsync_product_performance (benchmark), all synthetic.
-- Local API: http://127.0.0.1:5061 via scripts/product-review-qa.js serve. Frontend: http://127.0.0.1:5181 proxying only that API. Worker not started against external providers. Runtime processes were left available for review.
+- Local API: http://127.0.0.1:5061 via scripts/product-review-qa.js serve. Frontend: http://127.0.0.1:5181 proxying only that API. Only import/export queue handlers were started via the guarded QA harness, with disposable localhost S3 HTTP storage on port 5062. No provider/mail handlers ran. Runtime processes were left available for review.
 - Test URL requires `uselibpqcompat=true&sslmode=disable` on localhost because the existing pg wrapper otherwise pins strict TLS. See QA.md commands. Do not point these commands at application databases.
 - Migration/test targets explicitly used localhost; the existing Prisma CLI config can load .env for client generation, which is schema-only. No production queries, migrations, messages, deployment or paid provisioning occurred.
+
+## Excel follow-up (PR-028)
+
+- Continued existing XLSX/CSV transfer implementation. Added permission-checked native Excel templates containing only active workspace custom fields, authenticated binary downloads with token refresh, typed amounts/dates with Excel precision protection, frozen/filterable headers and actionable malformed-workbook errors.
+- All four entities pass actual HTTP multipart upload → preview → worker → XLSX export checks. Manager team visibility, tenant isolation, formula safety and template access are covered. Existing CSV behavior is preserved.
+- Real Chrome/local API/PostgreSQL/pg-boss/AWS client: all four templates download at phone width; filled lead workbook imports through the complete UI and exports from the filtered list. Six browser checks pass, no page/API errors or overflow. Uses disposable S3 HTTP subset, not external storage. Fresh signup and 50k-row browser tests remain open.
+- Frontend tests/build/lint pass (existing unrelated lint/build warnings); full backend 450 passed, two optional skipped. Expanded manager XLSX regression also passes separately. No migration or new dependency.
+- Code commits: backend `6a4925d`, frontend `038f645`; inherited staged Gmail/Templates patches preserved. Reproduction: [Excel guide](../import-spreadsheet-editor.md); browser evidence: [results](evidence/excel-transfer-browser-results.json).
 
 ## Remaining work / resume here
 

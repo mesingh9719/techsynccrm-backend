@@ -19,7 +19,8 @@ Release requires no open Blocker/High gaps, accurate real data, scoped server ac
 | Security/password/session/2FA | account/auth routes, SecuritySettings | User, RefreshToken, RecoveryCode | Existing tests; Google schema/link fixes verified |
 | Custom fields/tags/sources/pipelines | CRM/catalogue/config routes | CustomFieldDefinition, Tag, LeadSource, PipelineStage | Working code/API tests; all UI validations Partial |
 | Notifications/hours/availability/assignment | notification/capture APIs | NotificationPreference, WorkingHours, OutOfOffice | Live settings boundary fixed; reminder delivery Partial |
-| Data export/import/bin/delete workspace | /exports, /imports, /organizations/current DELETE | ExportJob, soft-delete records, Organization | Partial; destructive production actions never exercised |
+| Excel/CSV import and export | /exports, /imports, /imports/template | ImportJob, ExportJob, File | PR-028: four-entity XLSX HTTP lifecycle plus full lead browser import/export with local storage/queue verified |
+| Recycle bin/delete workspace | record restore routes, /organizations/current DELETE | Soft-delete records, Organization | Partial; destructive production actions never exercised |
 | Plan/billing | /settings/plan live limits; billing ComingSoon | Organization.plan, OrganizationUsage, PlanChange | Partial; self-service paid billing Missing |
 | Audit viewer/API keys | No tenant audit-log viewer/developer platform routes found | AuditLog exists | Missing UI/platform capability |
 
@@ -42,3 +43,5 @@ Master issue statuses are maintained in [gap register](../03-gap-register.md). A
 ## Evidence and next checks
 
 backend/src/{config/permissions,middlewares/org,services/organization.service,routes/organization.routes}.js; frontend/src/app/pages; M04/M05/M06/M21. Current browser/API results: [QA](../QA.md), [evidence](../evidence/). Additional flows marked Partial must still be exercised with role changes, foreign IDs, invalid input, zero-state and mobile interactions before release.
+
+PR-028 Excel completion adds tenant-scoped templates, authenticated binary downloads, typed spreadsheet exports and clearer corrupt-workbook errors. See [Excel guide](../../import-spreadsheet-editor.md) and [QA evidence](../QA.md). External storage, fresh signup, 50k-row UI and the remaining settings paths still need release QA.

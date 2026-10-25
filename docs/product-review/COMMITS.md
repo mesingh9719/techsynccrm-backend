@@ -20,3 +20,9 @@ d2fac09 fix(rollout): PR-006 keep report and settings stop switches free of prev
 c8809ba fix(leads): PR-025 use factual next-step guidance
 97a6a61 fix(onboarding): PR-017 replace sample progress with real workspace actions
 49ece94 feat(crm): PR-001 PR-005 PR-006 PR-024 use real reports and settings with fresh caches
+
+## Excel follow-up (PR-028)
+
+- Backend `6a4925d`: complete Excel templates and typed exports; HTTP/worker tests and isolated browser storage/queue harness.
+- Frontend `038f645`: authenticated Excel template downloads and full UI import/export browser regression.
+- Documentation/evidence commit follows these code commits. Existing staged Gmail/Templates work remains excluded.

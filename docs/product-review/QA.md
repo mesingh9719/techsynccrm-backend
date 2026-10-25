@@ -7,7 +7,7 @@ Executed 25 October 2026 (Asia/Kolkata). **Verified core changes; full program s
 | Check | Baseline before changes | Final observed result |
 |---|---|---|
 | Backend offline | 286 passed, 144 skipped | Database suite used for final verification; no tests disabled |
-| Backend real local DB | 422 passed, six failed, two skipped | **442 passed, zero failed, two optional browser cases skipped** in full normal suite, 47 files |
+| Backend real local DB | 422 passed, six failed, two skipped | **450 passed, zero failed, two optional browser cases skipped** in full normal suite, 47 files |
 | Optional inherited Templates/Gmail browser cases | Not part of initial baseline | **38 passed** in their two integration files with Playwright enabled, including both formerly skipped browser cases; Google/mail provider mocked |
 | Frontend automated tests | Three files passed | **Three files passed**, including added live adapters, scoped cache invalidation, rollout and CSV control-character checks |
 | Frontend TypeScript/build | Passed, two dynamic-import warnings | Passed; existing router/queryClient dynamic-import warnings remain |
@@ -114,3 +114,12 @@ The review-local PostgreSQL cluster is /tmp/techsync-product-review-pg, socket /
 - [ ] Full keyboard, screen-reader, contrast, dark-mode and physical-phone device pass.
 - [ ] Every merge, bulk action, recycle/restore, custom-field and settings edge path in the UI.
 - [ ] Scheduled reports, targets, missing connectors/billing and other open High implementations.
+
+
+## Excel follow-up — PR-028
+
+Backend: all 47 files pass, **450 tests passed, two optional browser cases skipped**. The 19-case product integration file also passes after adding explicit manager XLSX isolation assertions. Frontend: all three test files pass, TypeScript/build pass, lint exits 0 with existing warnings. New tests check binary download token refresh/errors and workbook types/precision/corruption.
+
+Actual authenticated multipart XLSX uploads, mapping/preview, real worker functions and exports pass for leads, contacts, companies and deals on disposable PostgreSQL. Templates include only active custom fields for the requested entity/workspace; anonymous/viewer access fails. Filtered manager exports exclude an identically named record owned outside the team in CSV and XLSX; formula-looking text stays neutralized.
+
+The new full-app `frontend/test/excel-transfer.browser.mjs` browser script passes six checks: four mobile template downloads, filled lead template upload/mapping/preview/background import and a filtered Excel export/download. The pg-boss worker and actual AWS S3 client ran against localhost synthetic services. There were no API/page errors or document overflow. This closes the existing-tenant Excel journey with a disposable S3 HTTP subset; it does not close fresh signup or external-storage release QA. Results: [JSON](evidence/excel-transfer-browser-results.json). Reproduction and deployment requirements: [Excel guide](../import-spreadsheet-editor.md).

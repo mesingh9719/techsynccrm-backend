@@ -48,3 +48,7 @@ A	test/fixtures/reportPreview.ts
 A	test/product-review-mobile.browser.mjs
 A	test/product-review.browser.mjs
 ```
+
+## Excel follow-up (PR-028)
+
+Backend transfer controller/routes/validators/service, spreadsheet reader/writer, product/spreadsheet tests and QA-only queue/storage harness. Frontend import wizard/API, shared authenticated binary-download/blob helpers, behavior tests and `test/excel-transfer.browser.mjs`. No schema, migration, provider or dependency changes. Evidence and reproduction are linked from QA.md and ../import-spreadsheet-editor.md.
