@@ -130,9 +130,9 @@ async function present(rows) {
   const campaignIds = [...new Set(list.map(r => r.campaignId).filter(Boolean))]
   const [owners, tags, campaigns] = await Promise.all([
     usersById(list.map(r => r.ownerId)), tagsFor(list[0].organizationId, ENTITY, list.map(r => r.id)),
-    campaignIds.length ? prisma.campaign.findMany({ where: { organizationId: list[0].organizationId, id: { in: campaignIds } }, select: { id: true, name: true, code: true } }) : [],
+    campaignIds.length ? prisma.campaign.findMany({ where: { organizationId: list[0].organizationId, id: { in: campaignIds } }, select: { id: true, name: true, code: true, deletedAt: true } }) : [],
   ])
-  const campaignsById = new Map(campaigns.map(c => [c.id, c]))
+  const campaignsById = new Map(campaigns.map(({ deletedAt, ...campaign }) => [campaign.id, { ...campaign, deleted: Boolean(deletedAt) }]))
   const out = list.map(({ organizationId: _o, source, ...r }) => ({
     ...r,
     campaign: campaignsById.get(r.campaignId) ?? null,

@@ -88,7 +88,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('campaign completion: real tenan
   expect((await request(`/campaigns/${c.id}`,{method:'PATCH',role:4,body:{name:'Forbidden'}})).status).toBe(403)
   expect((await request(`/campaigns/${c.id}`,{method:'DELETE',role:4})).status).toBe(403)
   expect((await request(`/campaigns/${c.id}`,{method:'DELETE'})).status).toBe(204)
-  expect((await request(`/leads/${lead.id}`)).body.data.lead).toMatchObject({campaignId:c.id,campaign:{id:c.id,name:c.name}})
+  expect((await request(`/leads/${lead.id}`)).body.data.lead).toMatchObject({campaignId:c.id,campaign:{id:c.id,name:c.name,deleted:true}})
   expect((await request(`/campaigns/${c.id}`)).status).toBe(404)
   expect(await prisma.domainEvent.count({where:{organizationId:org.id,entityId:c.id,type:'campaign.deleted'}})).toBe(1)
  })
