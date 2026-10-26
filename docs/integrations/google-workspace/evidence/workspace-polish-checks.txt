@@ -1,0 +1,1 @@
+Custom event title survives linking a company; nested draft dismissal works; Enter moves cells; row headers stay aligned; paging resets selected cell; Sheets library fits mobile.

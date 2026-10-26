@@ -1,0 +1,11 @@
+{
+  "results": [
+    "Task view cards, title search and My tasks/Everyone filters use real API results; desktop/mobile layouts fit",
+    "Completion validates duration; failed save preserves the dialog/notes; retry logs and completes; reopen restores the task",
+    "Edit / reschedule updates the due instant and moves the task into Upcoming",
+    "Quick add clears incompatible filters, shows the created task in its due-date view and assigns it to the current user",
+    "Lead Follow-ups card fits a narrow screen; exact-date shortcuts schedule linked reminders and custom scheduling opens the task form",
+    "Viewer sees readable tasks without creation, completion or edit controls"
+  ],
+  "errors": []
+}

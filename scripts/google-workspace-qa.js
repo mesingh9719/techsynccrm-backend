@@ -15,14 +15,21 @@ Object.assign(process.env, {
 })
 if (process.argv.includes('--shared-project')) process.env.GOOGLE_GMAIL_CLIENT_ID = process.env.GOOGLE_WORKSPACE_CLIENT_ID
 const { googleProvider } = await import('../src/integrations/google/provider.js')
-const { SERVICE_SCOPES } = await import('../src/integrations/google/config.js')
+const { googleError, SERVICE_SCOPES } = await import('../src/integrations/google/config.js')
 googleProvider.exchange = async (code) => ({ refresh_token: 'fixture-refresh-only', id_token: 'fixture-identity-only', scope: `openid email profile ${code === 'denied' ? '' : `${SERVICE_SCOPES.calendar} ${SERVICE_SCOPES.drive}`}` })
 googleProvider.identity = async () => ({ subject: 'browser-fixture-subject', email: 'google-browser@example.test' })
 googleProvider.refresh = async () => ({ access_token: 'fixture-access-only', expiry_date: Date.now() + 3600000 })
 googleProvider.revoke = async () => {}
 const { fakeGoogleContent } = await import('../test/fixtures/google-content-provider.js')
 const content = fakeGoogleContent()
-googleProvider.request = content.request
+let disabledDriveOnce = process.argv.includes('--disabled-drive-once')
+googleProvider.request = async (token, api, path, options) => {
+  if (disabledDriveOnce && api === 'drive') {
+    disabledDriveOnce = false
+    throw Object.assign(googleError('GOOGLE_DRIVE_API_DISABLED', 'Synthetic disabled API for retry QA.', 409), { providerStatus: 403 })
+  }
+  return content.request(token, api, path, options)
+}
 const { prisma } = await import('../src/db/prisma.js')
 if (process.argv.includes('--reset-fixtures')) {
   const fs = await import('node:fs/promises')

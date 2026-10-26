@@ -4,14 +4,14 @@ import { googleError, fingerprint } from './config.js'
 import { currentContext, auditGoogle } from './access.js'
 import { ownResourceContext, resourceRequest, requirePermission, eventId, meetUrl, retryAt, safeCode } from './resourceAccess.js'
 import { createTask } from '../../services/task.service.js'
-import { loadRecord } from '../../services/recordRef.service.js'
-import { visibilityWhere } from '../../lib/visibility.js'
+import { loadRecord, RECORD_TYPES } from '../../services/recordRef.service.js'
+import { visibilityWhere, recordScope } from '../../lib/visibility.js'
 import { enqueue } from '../../jobs/queue.js'
 import { emit } from '../../events/outbox.js'
 
 const calendarDto = (row) => row ? { id: row.id, status: row.status, meetSupported: row.meetSupported, lastError: row.lastError, googleUrl: row.providerCalendarId ? `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(row.providerCalendarId)}` : null } : null
 const eventDto = (row) => ({ id: row.id, taskId: row.taskId, leadId: row.leadId, title: row.title, startAt: row.startAt, endAt: row.endAt, timeZone: row.timeZone, location: row.location, includeMeet: row.includeMeet, attendees: row.attendees,
-  status: row.status, meetUrl: row.meetUrl, meetStatus: row.meetStatus, revision: row.revision, lastError: row.lastError, cancelRequested: row.cancelRequested })
+  status: row.status, meetUrl: row.meetUrl, meetStatus: row.meetStatus, revision: row.revision, lastError: row.lastError, cancelRequested: row.cancelRequested, reminderOffsetMinutes: row.task?.reminderOffsetMinutes ?? null, notes: row.task?.description || '', record: row.record || null })
 function assertBinding(row, connection) {
   if (row.calendar.googleSubject !== connection.googleSubject || row.calendar.connectionId !== connection.id || row.calendar.projectNumber !== connection.projectNumber) throw googleError('GOOGLE_ACCOUNT_CHANGED', 'This meeting belongs to a previous Google account.')
 }
@@ -31,7 +31,7 @@ async function ownLink(ctx, connection, db = prisma) {
 async function ownEvent(ctx, id, db = prisma) {
   const row = await db.googleCalendarEvent.findFirst({ where: { id, organizationId: ctx.orgId, calendar: { connection: { userId: ctx.userId } } }, include: { calendar: { include: { connection: true } }, task: true } })
   if (!row) throw googleError('GOOGLE_EVENT_NOT_FOUND', 'Meeting not found.', 404)
-  if (row.leadId) await loadRecord(ctx, 'lead', row.leadId, 'read', db)
+  row.record = row.task.entityType ? await loadRecord(ctx, row.task.entityType, row.task.entityId, 'read', db) : null
   return row
 }
 export async function calendarStatus(ctx) {
@@ -71,13 +71,24 @@ export async function listCalendarEvents(ctx, { from, to, leadId }) {
   const calendar = await ownLink(ctx, connection)
   if (!calendar) return { items: [], calendar: null }
   const items = await prisma.googleCalendarEvent.findMany({ where: { organizationId: ctx.orgId, calendarLinkId: calendar.id, ...(leadId && { leadId }), startAt: { lt: new Date(to) }, endAt: { gt: new Date(from) },
-    OR: [{ leadId: null }, { lead: { is: { AND: [{ deletedAt: null }, visibilityWhere(ctx, 'leads')] } } }] }, orderBy: [{ startAt: 'asc' }, { id: 'asc' }], take: 201 })
-  return { calendar: calendarDto(calendar), items: items.slice(0, 200).map(eventDto), limited: items.length > 200 }
+    OR: [{ leadId: null }, { lead: { is: { AND: [{ deletedAt: null }, visibilityWhere(ctx, 'leads')] } } }] }, orderBy: [{ startAt: 'asc' }, { id: 'asc' }], take: 201, include: { task: { select: { entityType: true, entityId: true, reminderOffsetMinutes: true, description: true } } } })
+  // Batch only this bounded page's linked records, applying the same tenant/role visibility as CRM lists.
+  const records = new Map()
+  await Promise.all(Object.entries(RECORD_TYPES).map(async ([type, definition]) => {
+    const ids = items.filter((item) => item.task.entityType === type).map((item) => item.task.entityId)
+    if (!ids.length || !recordScope(ctx, definition.resource, 'read')) return
+    const rows = await prisma[definition.model].findMany({ where: { AND: [{ organizationId: ctx.orgId, id: { in: ids }, deletedAt: null }, visibilityWhere(ctx, definition.resource)] }, select: { id: true, [definition.name]: true } })
+    for (const row of rows) records.set(`${type}:${row.id}`, { entityType: type, entityId: row.id, name: row[definition.name] })
+  }))
+  const visible = items.slice(0, 200).filter((item) => !item.task.entityType || records.has(`${item.task.entityType}:${item.task.entityId}`))
+  return { calendar: calendarDto(calendar), items: visible.map((row) => eventDto({ ...row, record: records.get(`${row.task.entityType}:${row.task.entityId}`) })), limited: items.length > 200 }
 }
 export async function createCalendarEvent(ctx, input) {
   const { ctx: fresh, connection } = await ownResourceContext(ctx, 'calendar')
   requirePermission(fresh, 'tasks.create')
-  if (input.leadId) await loadRecord(fresh, 'lead', input.leadId)
+  const reference = input.entityType ? { entityType: input.entityType, entityId: input.entityId } : input.leadId ? { entityType: 'lead', entityId: input.leadId } : null
+  const linked = reference ? await loadRecord(fresh, reference.entityType, reference.entityId) : null
+  const record = linked ? { entityType: linked.entityType, entityId: linked.id, name: linked.name } : null
   const calendar = await ownLink(ctx, connection)
   if (!calendar || calendar.status !== 'ready') throw googleError('GOOGLE_CALENDAR_REQUIRED', 'Set up your TechSync calendar first.')
   if (input.includeMeet && !calendar.meetSupported) throw googleError('GOOGLE_MEET_UNAVAILABLE', 'This Google calendar does not support Meet conferences. Check your Google account and calendar capabilities.')
@@ -86,15 +97,15 @@ export async function createCalendarEvent(ctx, input) {
     await tx.$queryRaw`SELECT id FROM memberships WHERE organization_id = ${ctx.orgId}::uuid AND user_id = ${ctx.userId}::uuid FOR UPDATE`
     await currentContext(ctx.orgId, ctx.userId, tx)
     const existing = await tx.googleCalendarEvent.findUnique({ where: { organizationId_calendarLinkId_requestId: { organizationId: ctx.orgId, calendarLinkId: calendar.id, requestId: input.requestId } } })
-    if (existing) { if (existing.requestHash !== hash) throw googleError('GOOGLE_REQUEST_CHANGED', 'This request was already used for a different meeting.'); return existing }
-    const task = await createTask(fresh, { title: input.title, type: 'meeting', dueAt: input.startAt, reminderOffsetMinutes: 15, ...(input.leadId && { entityType: 'lead', entityId: input.leadId }) }, { db: tx })
-    const row = await tx.googleCalendarEvent.create({ data: { organizationId: ctx.orgId, calendarLinkId: calendar.id, taskId: task.id, leadId: input.leadId || null, requestId: input.requestId, requestHash: hash, connectionGeneration: connection.generation,
+    if (existing) { if (existing.requestHash !== hash) throw googleError('GOOGLE_REQUEST_CHANGED', 'This request was already used for a different meeting.'); return { ...existing, task: await tx.task.findUnique({ where: { id: existing.taskId, organizationId: ctx.orgId } }) } }
+    const task = await createTask(fresh, { title: input.title, description: input.notes || null, type: 'meeting', dueAt: input.startAt, reminderOffsetMinutes: 15, ...(reference || {}) }, { db: tx })
+    const row = await tx.googleCalendarEvent.create({ data: { organizationId: ctx.orgId, calendarLinkId: calendar.id, taskId: task.id, leadId: reference?.entityType === 'lead' ? reference.entityId : null, requestId: input.requestId, requestHash: hash, connectionGeneration: connection.generation,
       title: input.title, startAt: new Date(input.startAt), endAt: new Date(input.endAt), timeZone: input.timeZone, location: input.location || null, includeMeet: input.includeMeet, attendees: input.attendees, meetStatus: input.includeMeet ? 'pending' : 'none' } })
     await auditGoogle(tx, ctx, 'meeting_scheduled', { connectionId: connection.id, service: 'calendar', status: 'pending' })
-    return row
+    return { ...row, task }
   })
   await kick(result.id)
-  return eventDto(result)
+  return eventDto({ ...result, record })
 }
 export async function updateCalendarEvent(ctx, id, input) {
   const { ctx: fresh, connection } = await ownResourceContext(ctx, 'calendar')
@@ -110,12 +121,12 @@ export async function updateCalendarEvent(ctx, id, input) {
       includeMeet: input.includeMeet, attendees: input.attendees, revision: { increment: 1 }, status: 'queued', attempts: 0, nextAttemptAt: new Date(), lastError: null, connectionGeneration: connection.generation } })
     if (!changed.count) throw googleError('GOOGLE_REQUEST_CHANGED', 'This meeting changed. Refresh before editing.')
     const start = new Date(input.startAt), offset = before.task.reminderOffsetMinutes
-    const taskChanged = await tx.task.updateMany({ where: { id: before.taskId, organizationId: ctx.orgId, updatedAt: before.task.updatedAt, status: 'open', deletedAt: null, assigneeId: ctx.userId }, data: { title: input.title, dueAt: start, remindAt: offset != null && start > new Date() ? new Date(Math.max(Date.now(), +start - offset * 60000)) : null, reminderSentAt: null, overdueNotifiedAt: null } })
+    const taskChanged = await tx.task.updateMany({ where: { id: before.taskId, organizationId: ctx.orgId, updatedAt: before.task.updatedAt, status: 'open', deletedAt: null, assigneeId: ctx.userId }, data: { title: input.title, ...(input.notes !== undefined && { description: input.notes || null }), dueAt: start, remindAt: offset != null && start > new Date() ? new Date(Math.max(Date.now(), +start - offset * 60000)) : null, reminderSentAt: null, overdueNotifiedAt: null } })
     if (!taskChanged.count) throw googleError('GOOGLE_TASK_CHANGED', 'The task changed. Refresh before editing.')
     await emit(tx, ctx, 'task.updated', { entityType: 'task', entityId: before.taskId }, { fields: ['title', 'dueAt'] })
-    return tx.googleCalendarEvent.findUnique({ where: { id, organizationId: ctx.orgId } })
+    return tx.googleCalendarEvent.findUnique({ where: { id, organizationId: ctx.orgId }, include: { task: true } })
   })
-  await kick(id); return eventDto(row)
+  await kick(id); return eventDto({ ...row, record: before.record ? { entityType: before.record.entityType, entityId: before.record.id, name: before.record.name } : null })
 }
 export async function cancelCalendarEvent(ctx, id) {
   const { ctx: fresh, connection } = await ownResourceContext(ctx, 'calendar')
@@ -128,9 +139,9 @@ export async function cancelCalendarEvent(ctx, id) {
     if (!changed.count) throw googleError('GOOGLE_TASK_CHANGED', 'The task changed. Refresh before cancelling.')
     const changedEvent = await tx.googleCalendarEvent.updateMany({ where: { id, organizationId: ctx.orgId, revision: before.revision, ...unlocked() }, data: { cancelRequested: true, status: 'queued', revision: { increment: 1 }, connectionGeneration: connection.generation, nextAttemptAt: new Date(), attempts: 0, lastError: null } })
     if (!changedEvent.count) throw googleError('GOOGLE_OPERATION_BUSY', 'Meeting sync is running or the meeting changed. Refresh and try again.')
-    await emit(tx, ctx, 'task.cancelled', { entityType: 'task', entityId: before.taskId }); return tx.googleCalendarEvent.findUnique({ where: { id, organizationId: ctx.orgId } })
+    await emit(tx, ctx, 'task.cancelled', { entityType: 'task', entityId: before.taskId }); return tx.googleCalendarEvent.findUnique({ where: { id, organizationId: ctx.orgId }, include: { task: true } })
   })
-  await kick(id); return eventDto(row)
+  await kick(id); return eventDto({ ...row, record: before.record ? { entityType: before.record.entityType, entityId: before.record.id, name: before.record.name } : null })
 }
 export async function retryCalendarEvent(ctx, id) {
   const { ctx: fresh, connection } = await ownResourceContext(ctx, 'calendar'), before = await ownEvent(ctx, id)
@@ -139,8 +150,8 @@ export async function retryCalendarEvent(ctx, id) {
   if (before.status === 'conflict') throw googleError('GOOGLE_REMOTE_CONFLICT', 'Review conflicting changes in Google Calendar. Cancel or create a replacement from the CRM.')
   const changed = await prisma.googleCalendarEvent.updateMany({ where: { id, organizationId: ctx.orgId, revision: before.revision, ...unlocked() }, data: { status: 'queued', connectionGeneration: connection.generation, nextAttemptAt: new Date(), attempts: 0, lastError: null } })
   if (!changed.count) throw googleError('GOOGLE_OPERATION_BUSY', 'Meeting sync is running or the meeting changed. Refresh and try again.')
-  const row = await prisma.googleCalendarEvent.findUnique({ where: { id, organizationId: ctx.orgId } })
-  await kick(id); return eventDto(row)
+  const row = await prisma.googleCalendarEvent.findUnique({ where: { id, organizationId: ctx.orgId }, include: { task: true } })
+  await kick(id); return eventDto({ ...row, record: before.record ? { entityType: before.record.entityType, entityId: before.record.id, name: before.record.name } : null })
 }
 function desiredEvent(row) {
   return { id: eventId(row.id), summary: row.title, start: { dateTime: row.startAt.toISOString(), timeZone: row.timeZone }, end: { dateTime: row.endAt.toISOString(), timeZone: row.timeZone }, location: row.location || '',
@@ -161,13 +172,14 @@ export async function syncCalendarEvent(id) {
       if (!(await update({ leaseUntil: new Date(Date.now() + 120000) })).count) throw googleError('GOOGLE_OPERATION_BUSY', 'The meeting changed during sync.')
       const fresh = await currentContext(ctx.orgId, ctx.userId)
       requirePermission(fresh, 'tasks.update')
-      if (!cancel && row.leadId) await loadRecord(fresh, 'lead', row.leadId)
+      if (!cancel && row.task.entityType) await loadRecord(fresh, row.task.entityType, row.task.entityId)
       const task = await prisma.task.findUnique({ where: { id: row.taskId, organizationId: row.organizationId } })
       if (!cancel && (!task || task.updatedAt.getTime() !== row.task.updatedAt.getTime())) throw googleError('GOOGLE_TASK_CHANGED', 'The linked task changed during sync.')
       return resourceRequest(fresh, { ...connection, generation: row.connectionGeneration }, 'calendar', 'calendar', path, options)
     }
-    const cancel = row.cancelRequested || row.task.deletedAt || row.task.status === 'cancelled' || row.task.assigneeId !== connection.userId || row.lead?.deletedAt
-    if (!cancel && row.leadId) await loadRecord(ctx, 'lead', row.leadId)
+    const linked = row.task.entityType ? await prisma[RECORD_TYPES[row.task.entityType].model].findFirst({ where: { id: row.task.entityId, organizationId: row.organizationId }, select: { deletedAt: true } }) : undefined
+    const cancel = row.task.entityType && (!linked || linked.deletedAt) || row.cancelRequested || row.task.deletedAt || row.task.status === 'cancelled' || row.task.assigneeId !== connection.userId || row.lead?.deletedAt
+    if (!cancel && row.task.entityType) await loadRecord(ctx, row.task.entityType, row.task.entityId)
     if (!cancel && row.task.status === 'open' && (row.task.title !== row.title || row.task.dueAt?.getTime() !== row.startAt.getTime())) {
       if (!row.task.dueAt) { await update({ status: 'paused', lastError: 'GOOGLE_TASK_CHANGED' }); return }
       const duration = row.endAt - row.startAt, startAt = row.task.dueAt

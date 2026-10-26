@@ -19,10 +19,10 @@ async function ownSheet(ctx, id) {
   if (row.googleSubject !== row.connection.googleSubject || row.projectNumber !== row.connection.projectNumber) throw googleError('GOOGLE_ACCOUNT_CHANGED', 'This spreadsheet belongs to a previous Google account. Open it with that account in Google Sheets.')
   return row
 }
-export async function listGoogleSheets(ctx, { leadId, page = 1 }) {
+export async function listGoogleSheets(ctx, { leadId, page = 1, q, kind, status }) {
   const { connection } = await ownResourceContext(ctx, 'sheets')
   if (leadId) await loadRecord(ctx, 'lead', leadId)
-  const where = { organizationId: ctx.orgId, connectionId: connection.id, googleSubject: connection.googleSubject, projectNumber: connection.projectNumber, ...(leadId && { leadId }), OR: [{ leadId: null }, { lead: { is: { AND: [{ deletedAt: null }, visibilityWhere(ctx, 'leads')] } } }] }
+  const where = { organizationId: ctx.orgId, connectionId: connection.id, googleSubject: connection.googleSubject, projectNumber: connection.projectNumber, ...(leadId && { leadId }), ...(q && { title: { contains: q, mode: 'insensitive' } }), ...(kind && { kind }), ...(status && { status }), OR: [{ leadId: null }, { lead: { is: { AND: [{ deletedAt: null }, visibilityWhere(ctx, 'leads')] } } }] }
   const [total, items] = await Promise.all([prisma.googleSheet.count({ where }), prisma.googleSheet.findMany({ where, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], take: 25, skip: (page - 1) * 25 })])
   return { items: items.map(dto), total, page, pageSize: 25 }
 }

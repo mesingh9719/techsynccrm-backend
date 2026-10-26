@@ -46,6 +46,18 @@ Roll back application code by disabling the Google service flags and preserving 
 
 Local verification: **515 backend tests passed**, two optional skipped; all 33 new content integration cases passed. Frontend tests/build passed, with zero lint errors and ten existing warnings. All seven browser scenarios passed with no page errors, including loaded mobile Calendar/Sheets views. See [check results](evidence/content-checks.txt) and [browser results](evidence/content-browser-results.json). These use synthetic Google responses, not a real-account API pilot.
 
+## Meeting and spreadsheet UX follow-up — 26 October 2026
+
+The meeting form now groups details, dates, location/Meet and guests into sections, with a live summary, duration shortcuts and persistent actions on mobile. Selecting a lead fills an automatic title without replacing a custom one. Moving the start preserves the duration. Guest addresses are normalized and deduplicated; sending invitations still requires explicit confirmation. Closing an edited meeting or spreadsheet creation form protects unsaved work. Meeting saves and cancellations refresh linked CRM Tasks immediately. Existing Meet links remain editable when the calendar stops advertising new Meet support.
+
+Disabled API responses retain the specific Calendar, Drive or Sheets code and show the matching Console link and enablement steps. Older generic spreadsheet failures explain both required APIs. Pending/failed sheets use one status card without an action that reopens the current sheet. The editor avoids automatic focus/reconnect refreshes while editing, explains its 200-change limit and prompts only once when leaving dirty cells.
+
+Validation: **521 backend tests passed**, two optional skipped; all **six frontend test files**, production build and lint passed (ten existing lint warnings). All **nine browser scenarios** passed with no page errors against local API/Postgres and synthetic Google responses. This includes a one-time disabled Drive API, recovery of the same sheet, preserved durations, guest validation, dirty form dismissal, immediate linked-task refresh, conflicting edits, single-prompt sheet navigation, mobile layouts and viewer restrictions. No real Google account actions or deployments were performed. See [browser results](evidence/ui-browser-results.json), [desktop meeting](evidence/screenshots/ui-meeting-dialog-desktop.png), [mobile meeting](evidence/screenshots/ui-meeting-dialog-mobile.png) and [API setup notice](evidence/screenshots/ui-sheets-disabled-api-desktop.png).
+
+To reproduce the disabled-API browser case, start the guarded QA harness with `--reset-fixtures --shared-project --disabled-drive-once`, then run the frontend browser script with `QA_DISABLED_DRIVE_ONCE=true`. The failure switch exists only in the local mock harness.
+
 ## Remaining roadmap
 
 Primary/existing calendar import, availability lookup, two-way sync, recurring meetings, a shared team calendar, arbitrary existing spreadsheet selection/import, Sheets-to-CRM automation, Drive attachment browsing, recordings/transcripts and booking pages remain future work. The current pages intentionally operate on resources created through this CRM.
+
+The subsequent task/Calendar/Sheets workspace redesign and record linking are documented in [the UX follow-up](15-task-calendar-sheets-ux.md).
