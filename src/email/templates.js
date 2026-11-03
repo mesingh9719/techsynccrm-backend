@@ -463,3 +463,38 @@ export function notificationSummaryEmail({ name, organizationName, digest, secti
     text: `Hi ${name},\n\n${heading} · ${organizationName}\n\n${sections.map((s) => `${s.label}\n${s.items.map((i) => `- ${itemText(i)}\n  ${baseUrl}${i.url || '/app/notifications'}`).join('\n')}`).join('\n\n')}\n\nNotification settings: ${settingsUrl}`,
   }
 }
+
+/**
+ * Scheduled report summary (M15). `kpis` are the report KPI tiles; `sources` and `team` are already
+ * formatted { label, value } rows; `followUps` is { label, value }[]. Built with the recipient's scope.
+ */
+export function reportSummaryEmail({ name, organizationName, frequency, periodLabel, kpis, sources, team, followUps, reportUrl, settingsUrl }) {
+  const heading = `${frequency === 'weekly' ? 'Weekly' : 'Monthly'} sales report`
+  const cell = 'padding:12px;border:1px solid #e4e4e7;border-radius:10px;vertical-align:top;'
+  const tiles = kpis
+    .map((k) => `<td style="${cell}width:50%;"><div style="font-size:12px;color:#71717a;">${escape(k.label)}</div><div style="font-size:20px;font-weight:700;color:#09090b;margin-top:4px;">${escape(k.value)}</div><div style="font-size:12px;margin-top:2px;color:${k.positive ? '#047857' : '#b91c1c'};">${escape(k.delta)} <span style="color:#71717a;">${escape(k.context)}</span></div></td>`)
+  const tileRows = []
+  for (let i = 0; i < tiles.length; i += 2) tileRows.push(`<tr>${tiles[i]}${tiles[i + 1] ?? '<td></td>'}</tr>`)
+  const list = (title, rows) =>
+    rows.length
+      ? `<h2 style="font-size:15px;margin:22px 0 8px;color:#09090b;">${escape(title)}</h2><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows.map((r) => `<tr><td style="padding:6px 0;border-bottom:1px solid #f4f4f5;font-size:14px;color:#3f3f46;">${escape(r.label)}</td><td style="padding:6px 0;border-bottom:1px solid #f4f4f5;font-size:14px;color:#09090b;font-weight:600;text-align:right;">${escape(r.value)}</td></tr>`).join('')}</table>`
+      : ''
+  const body =
+    para(`Hi ${escape(name.split(' ')[0])}, here’s how <strong>${escape(organizationName)}</strong> did ${escape(periodLabel)}.`) +
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="6" style="margin:4px -6px 0;">${tileRows.join('')}</table>` +
+    list('Top lead sources', sources) +
+    list('Team performance', team) +
+    list('Response & follow-ups', followUps)
+  const textList = (title, rows) => (rows.length ? `\n${title}\n${rows.map((r) => `- ${r.label}: ${r.value}`).join('\n')}\n` : '')
+  return {
+    subject: `${heading} · ${organizationName} · ${periodLabel}`,
+    html: layout({
+      preheader: kpis.map((k) => `${k.label}: ${k.value}`).join(' · '),
+      heading,
+      body,
+      cta: { label: 'Open full report', url: reportUrl, showLink: false },
+      footnote: `You get this because you subscribed to ${frequency} reports. Change or stop them in <a href="${escape(settingsUrl)}" style="color:#3349df;">Reports</a>.`,
+    }),
+    text: `Hi ${name.split(' ')[0]},\n\n${heading} for ${organizationName}, ${periodLabel}.\n\n${kpis.map((k) => `${k.label}: ${k.value} (${k.delta} ${k.context})`).join('\n')}\n${textList('Top lead sources', sources)}${textList('Team performance', team)}${textList('Response & follow-ups', followUps)}\nFull report: ${reportUrl}\nManage report emails: ${settingsUrl}`,
+  }
+}

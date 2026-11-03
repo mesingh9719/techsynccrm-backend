@@ -3,7 +3,7 @@ import fs from 'node:fs/promises'
 import assert from 'node:assert/strict'
 const url = new URL(process.env.QA_DATABASE_URL || 'postgresql://invalid/invalid')
 if (!['localhost', '127.0.0.1'].includes(url.hostname) || url.pathname !== '/techsync_campaign_pipeline') throw new Error('Local disposable techsync_campaign_pipeline required')
-Object.assign(process.env, { DATABASE_URL: url.href, DATABASE_URL_UNPOOLED: url.href, NODE_ENV: 'test', LOG_LEVEL: 'silent', JWT_ACCESS_SECRET: 'campaign-pipeline-qa-only-012345678901234567890', DATA_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', AWS_ACCESS_KEY_ID: 'fixture-only', AWS_SECRET_ACCESS_KEY: 'fixture-only', AWS_REGION: 'us-east-1', AWS_ENDPOINT_URL_S3: 'http://127.0.0.1:9', FRONTEND_URL: 'http://127.0.0.1:5177', CORS_ORIGINS: 'http://127.0.0.1:5177', PERFORMANCE_METRICS: 'true', RATE_LIMIT_MAX: '100000', AUTH_RATE_LIMIT_MAX: '100000', EMAIL_DELIVERY: 'queue' })
+Object.assign(process.env, { DATABASE_URL: url.href, DATABASE_URL_UNPOOLED: url.href, NODE_ENV: 'test', LOG_LEVEL: 'silent', JWT_ACCESS_SECRET: 'campaign-pipeline-qa-only-012345678901234567890', DATA_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', SUPABASE_URL: 'http://127.0.0.1:9', SUPABASE_SECRET_KEY: 'fixture-only', FRONTEND_URL: 'http://127.0.0.1:5177', CORS_ORIGINS: 'http://127.0.0.1:5177', PERFORMANCE_METRICS: 'true', RATE_LIMIT_MAX: '100000', AUTH_RATE_LIMIT_MAX: '100000', EMAIL_DELIVERY: 'queue' })
 const { prisma } = await import('../src/db/prisma.js')
 const mode = process.argv[2]
 const fixturePath = '/tmp/techsync-campaign-pipeline-fixture.json'

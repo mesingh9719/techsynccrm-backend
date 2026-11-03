@@ -66,9 +66,8 @@ TEST_DATABASE_URL='<disposable database URL>' npx vitest run \
   test/integration/email-foundation.test.js test/integration/gmail.test.js
 ```
 
-For local PostgreSQL without TLS, append `sslmode=disable&uselibpqcompat=true` to the test
-connection URL so the existing Neon TLS-normalization helper does not force TLS. Never use
-this option for hosted production connections. Integration fixtures refuse remote databases
+For local PostgreSQL without TLS, leave `DATABASE_SSL_CA` unset and append `sslmode=disable`
+to the test connection URL. Never use this option for hosted (Supabase) connections. Integration fixtures refuse remote databases
 unless `TEST_DATABASE_DISPOSABLE=true` is explicitly set.
 
 From frontend:

@@ -27,7 +27,7 @@ npm run db:generate
 npm run build
 ```
 
-`db:migrate` uses `DATABASE_URL_UNPOOLED`. Review the target first. The additive migrations are `20261023090000_gmail_integration` and `20261023100000_gmail_cleanup_constraints`. Neither was applied to a production or connected Neon database during this work.
+`db:migrate` uses `DATABASE_URL_UNPOOLED`. Review the target first. The additive migrations are `20261023090000_gmail_integration` and `20261023100000_gmail_cleanup_constraints`. Neither was applied to a production or connected hosted (Supabase) database during this work.
 
 Run `npm run dev` and `npm run dev:worker` separately in backend; run `npm run dev` in frontend. Leave `GMAIL_ENABLED=false` and `GMAIL_SYNC_ENABLED=false` until the steps below are ready.
 

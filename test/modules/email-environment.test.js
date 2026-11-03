@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process'
 import { describe, expect, it } from 'vitest'
 
 const base = { NODE_ENV: 'test', JWT_ACCESS_SECRET: 'x'.repeat(40), DATA_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
-  DATABASE_URL: 'postgresql://fixture@localhost/unused', AWS_ACCESS_KEY_ID: 'fixture', AWS_SECRET_ACCESS_KEY: 'fixture', AWS_ENDPOINT_URL_S3: 'https://storage.invalid', EMAIL_FEATURE_ENABLED: 'true' }
+  DATABASE_URL: 'postgresql://fixture@localhost/unused', SUPABASE_URL: 'http://127.0.0.1:9', SUPABASE_SECRET_KEY: 'fixture', EMAIL_FEATURE_ENABLED: 'true' }
 const valid = { GOOGLE_CLIENT_ID: 'fixture-id', GOOGLE_CLIENT_SECRET: 'fixture-secret', GOOGLE_OAUTH_REDIRECT_URI: 'http://localhost:5000/api/email/connect/google/callback', APP_BASE_URL: 'http://localhost:5173', EMAIL_TOKEN_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', EMAIL_TOKEN_KEY_VERSION: '1' }
 const check = (extra) => spawnSync(process.execPath, ['--input-type=module', '-e', "await import('./src/config/env.js')"], { env: { ...base, ...extra }, encoding: 'utf8' })
 describe('email feature startup validation without network access', () => {

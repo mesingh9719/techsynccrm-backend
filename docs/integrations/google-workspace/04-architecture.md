@@ -26,7 +26,7 @@ flowchart LR
   P --> API
 ```
 
-Use `google-auth-library` already installed and small typed-by-contract provider wrappers around HTTPS. Do not add the entire Google client bundle to the browser. Extract common server envelope/refresh/OAuth helpers only behind regression-tested adapters; no credentials in DTOs, events or jobs. Reuse Neon/Postgres connection conventions and pg-boss; no Redis, service account impersonation, new hosted queue or database provider.
+Use `google-auth-library` already installed and small typed-by-contract provider wrappers around HTTPS. Do not add the entire Google client bundle to the browser. Extract common server envelope/refresh/OAuth helpers only behind regression-tested adapters; no credentials in DTOs, events or jobs. Reuse Supabase/Postgres connection conventions and pg-boss; no Redis, service account impersonation, new hosted queue or database provider.
 
 ```mermaid
 sequenceDiagram
@@ -79,7 +79,7 @@ Every tenant-owned table has UUID id, `organizationId`, created/updated timestam
 | `GoogleSyncLog` | org/service/operation, connection, actor/record refs when authorized, status/reason code, counts, timings, retryAt | `(org,service,createdAt,id)` and `(org,connection,createdAt,id)`. No cell contents, event descriptions, file bodies or OAuth responses. |
 | `GoogleRevocationOutbox` | encrypted minimal credential/envelope context and project/subject fingerprint; requestedAt, nextAttemptAt, attempts, lease, expiry | Privacy worker-owned; must survive deleting the operational connection/tenant long enough to process revocation. Avoid the existing cascading-organization-FK trap. Strict access controls and hard retention cap, then cryptographic erasure. |
 
-Use check constraints for direction/state/type invariants and tenant-composite references. Standard indexes suffice on new empty tables. Any added index on large existing Task/Activity tables must be planned separately with `CREATE INDEX CONCURRENTLY` outside a transaction, invalid-index recovery and a rollback script. No eager update/backfill of all leads or mailboxes. On an isolated synthetic local DB or schema-only Neon branch: apply, down/up, repeat backfills and verify constraints. Production rollback is first feature flags/workers off and compatible application rollback; preserve user mappings/consent history. Do not drop populated tables to “roll back” data.
+Use check constraints for direction/state/type invariants and tenant-composite references. Standard indexes suffice on new empty tables. Any added index on large existing Task/Activity tables must be planned separately with `CREATE INDEX CONCURRENTLY` outside a transaction, invalid-index recovery and a rollback script. No eager update/backfill of all leads or mailboxes. On an isolated synthetic local DB or schema-only Supabase branch or project: apply, down/up, repeat backfills and verify constraints. Production rollback is first feature flags/workers off and compatible application rollback; preserve user mappings/consent history. Do not drop populated tables to “roll back” data.
 
 ## Calendar write flow and conflict rules
 

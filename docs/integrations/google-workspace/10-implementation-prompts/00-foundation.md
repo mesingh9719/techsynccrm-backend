@@ -4,7 +4,7 @@ Executed for the owner's approved Phase 0 on 25 October 2026. See [implementatio
 
 ## Context and objective
 
-TechSync CRM serves Indian SME clinics/coaching teams. Active backend is Express JavaScript ES modules, Prisma 7/Postgres on Neon, `pg` and pg-boss; frontend is React 19/TypeScript/Tailwind 4/TanStack Query. Preserve these choices. Build one connection facade/admin experience for Google services, with a legacy Gmail adapter and a new Workspace grant profile. Do not turn Google sign-in into service consent or broaden Gmail send-only scopes.
+TechSync CRM serves Indian SME clinics/coaching teams. Active backend is Express JavaScript ES modules, Prisma 7/Postgres on Supabase, `pg` and pg-boss; frontend is React 19/TypeScript/Tailwind 4/TanStack Query. Preserve these choices. Build one connection facade/admin experience for Google services, with a legacy Gmail adapter and a new Workspace grant profile. Do not turn Google sign-in into service consent or broaden Gmail send-only scopes.
 
 Read `docs/integrations/google-workspace/{01-current-state,02-google-requirements,04-architecture,05-ux-flows,06-roadmap,07-compliance-and-verification,08-test-and-qa-plan,09-decision-log}.md`. Review actual working-tree changes before coding; Gmail/Templates files may be user-owned and staged. Work on a feature branch and keep unrelated staging/commits untouched.
 

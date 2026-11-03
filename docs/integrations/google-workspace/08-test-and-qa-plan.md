@@ -4,7 +4,7 @@ Proposed coverage, 25 October 2026. Nothing in this file is a claim that new Goo
 
 ## Environments and fixtures
 
-Use local disposable PostgreSQL or an explicitly isolated synthetic/schema-only Neon branch with existing Prisma migrations. Keep `TEST_DATABASE_URL`/direct migration targets explicit. Provider/KMS/clock mocks are default in CI; deny accidental outbound Google/storage/mail traffic. Reuse Vitest real-HTTP tests, current staged Gmail fixtures carefully, frontend Node behavioral tests and existing Playwright scripts. Avoid screenshot-only assertions: verify UI → authenticated API → persisted state → worker → provider call/result → visible state.
+Use local disposable PostgreSQL or an explicitly isolated synthetic/schema-only Supabase branch or project with existing Prisma migrations. Keep `TEST_DATABASE_URL`/direct migration targets explicit. Provider/KMS/clock mocks are default in CI; deny accidental outbound Google/storage/mail traffic. Reuse Vitest real-HTTP tests, current staged Gmail fixtures carefully, frontend Node behavioral tests and existing Playwright scripts. Avoid screenshot-only assertions: verify UI → authenticated API → persisted state → worker → provider call/result → visible state.
 
 Create two tenants; owner/admin/manager/rep/viewer; managed and unmanaged reps; one user legitimately in both tenants; same Google identity across workspace bindings; a removed/suspended member; disabled tenant flags; wrong plan; all-day/timed/recurring tasks; linked/unrelated records and files; old/new grants with partial scopes; one selected spreadsheet with multiple tabs and external edits. Synthetic emails only. Provider fake records requests without exposing credentials and can return timeout-after-commit or delayed/reordered callbacks.
 

@@ -40,7 +40,6 @@ vi.mock('../../src/email/mailer.js', () => ({
   sendEmail,
   queueEmail: sendEmail,
 }))
-vi.mock('../../src/storage/files.js', () => ({ storage: {} }))
 
 import { prisma } from '../../src/db/prisma.js'
 import router from '../../src/routes/superadmin.routes.js'

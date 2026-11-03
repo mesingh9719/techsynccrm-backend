@@ -1,6 +1,6 @@
 # Backend API performance audit — 22 October 2026
 
-Implemented on backend branch `perf/api-audit-20261022`, starting at `50eebc5`. All database operations used disposable local PostgreSQL 16.15 databases. The configured Neon database, credentials, frontend, and the separate `techsync-crm-v2` copy were not modified. No dependencies were added.
+Implemented on backend branch `perf/api-audit-20261022`, starting at `50eebc5`. All database operations used disposable local PostgreSQL 16.15 databases. The configured hosted database, credentials, frontend, and the separate `techsync-crm-v2` copy were not modified. No dependencies were added.
 
 ## Findings and implemented changes
 
@@ -14,7 +14,7 @@ Each optimization has a separate commit. Duplicate filter resolution alone reduc
 
 ## Structure, auth and frontend audit
 
-`src/app.js` applies request IDs/logging, Helmet, CORS, compression, body parsers, cookies and rate limits, then mounts `src/routes/index.js`. Route modules call controllers, which delegate business logic to services. Prisma uses one process-wide client and the pg adapter, with the pooled Neon application URL. Migrations use the unpooled URL. The pool defaults to 10 connections, 10-second connection acquisition, 30-second idle timeout; interactive transactions default to 10-second max wait and 15-second execution timeout. Effective production overrides, regions, compute size, traffic and network RTT were not inspected.
+`src/app.js` applies request IDs/logging, Helmet, CORS, compression, body parsers, cookies and rate limits, then mounts `src/routes/index.js`. Route modules call controllers, which delegate business logic to services. Prisma uses one process-wide client and the pg adapter, with the pooled application URL. Migrations use the unpooled URL. The pool defaults to 10 connections, 10-second connection acquisition, 30-second idle timeout; interactive transactions default to 10-second max wait and 15-second execution timeout. Effective production overrides, regions, compute size, traffic and network RTT were not inspected.
 
 JWT signature/algorithm/issuer/audience/expiry verification already makes **zero DB calls**. Workspace middleware subsequently reads membership, user verification/deletion/2FA and organization state on every request (three SQL statements with the current Prisma relation strategy). Managers require a fresh team lookup; seat selection may require a senior-admin lookup. Services add own/team/all visibility and organization filters. These checks, session rotation, lockout, password hashing and immediate revocation were preserved. A TTL cache would change the freshness guarantee and was not introduced.
 

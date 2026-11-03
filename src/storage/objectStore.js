@@ -1,20 +1,33 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3'
-import { createPresignedPost } from '@aws-sdk/s3-presigned-post'
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { createClient } from '@supabase/supabase-js'
 import { env } from '../config/env.js'
 
-// Same private bucket/credentials as files-sdk; explicit S3 calls expose policy and response controls.
-const client = new S3Client({ region: process.env.AWS_REGION || 'us-east-1', endpoint: process.env.AWS_ENDPOINT_URL_S3, forcePathStyle: true })
-const Bucket = env.STORAGE_BUCKET
+// Supabase Storage (private bucket) through the Storage API, authenticated with the server-only secret key.
+// Created on first use so importing this module has no side effects.
+let storage
+const bucket = () => (storage ??= createClient(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY, { auth: { persistSession: false, autoRefreshToken: false } }).storage).from(env.STORAGE_BUCKET)
+const unwrap = ({ data, error }) => { if (error) throw error; return data }
+// Signed URLs take only a download filename; inline files are served with the content type stored at upload.
+const downloadName = (disposition = '') => disposition.startsWith('attachment') ? decodeURIComponent(disposition.split("filename*=UTF-8''")[1] ?? '') || true : undefined
+
 export const objectStore = {
-  pending: (ContinuationToken) => client.send(new ListObjectsV2Command({ Bucket, Prefix: 'pending/', MaxKeys: 1000, ContinuationToken })),
-  upload: (Key, Body, ContentType) => client.send(new PutObjectCommand({ Bucket, Key, Body, ContentType })),
-  head: (Key) => client.send(new HeadObjectCommand({ Bucket, Key })),
-  async bytes(Key) {
-    const { Body } = await client.send(new GetObjectCommand({ Bucket, Key }))
-    return Buffer.from(await Body.transformToByteArray())
+  async pending(cursor) {
+    const data = unwrap(await bucket().listV2({ prefix: 'pending/', limit: 1000, cursor }))
+    return { Contents: data.objects.map((o) => ({ Key: o.key ?? o.name, LastModified: new Date(o.updated_at ?? o.created_at) })), NextContinuationToken: data.hasNext ? data.nextCursor : undefined }
   },
-  delete: (Key) => client.send(new DeleteObjectCommand({ Bucket, Key })),
-  url: (Key, contentType, disposition, expiresIn = env.STORAGE_URL_EXPIRES_IN) => getSignedUrl(client, new GetObjectCommand({ Bucket, Key, ResponseContentType: contentType, ResponseContentDisposition: disposition }), { expiresIn }),
-  intent: (Key, ContentType, size) => createPresignedPost(client, { Bucket, Key, Expires: 900, Fields: { 'Content-Type': ContentType }, Conditions: [['content-length-range', size, size], ['eq', '$Content-Type', ContentType]] }),
+  upload: async (Key, Body, ContentType) => unwrap(await bucket().upload(Key, Body, { contentType: ContentType, upsert: true })),
+  async head(Key) {
+    const info = unwrap(await bucket().info(Key))
+    return { ContentLength: info.size, ContentType: info.contentType }
+  },
+  async bytes(Key) {
+    const blob = unwrap(await bucket().download(Key))
+    return Buffer.from(await blob.arrayBuffer())
+  },
+  delete: async (Key) => unwrap(await bucket().remove([Key])),
+  url: async (Key, _contentType, disposition, expiresIn = env.STORAGE_URL_EXPIRES_IN) => unwrap(await bucket().createSignedUrl(Key, expiresIn, { download: downloadName(disposition) })).signedUrl,
+  // One-time signed upload (no upsert, so the token cannot overwrite). Size and type are verified again by completeUpload.
+  async intent(Key, ContentType) {
+    const { signedUrl } = unwrap(await bucket().createSignedUploadUrl(Key))
+    return { url: signedUrl, method: 'PUT', fields: { 'Content-Type': ContentType } }
+  },
 }

@@ -2,7 +2,7 @@
 
 Current baseline: backend 09238a6 plus the user's pre-existing local changes; branch perf/auth-dashboard-leads-latency. Earlier performance fixes are already present and are not credited to this investigation. All new measurements use PostgreSQL 16.15 on localhost:55439, database techsync_perf, containing exclusively generated data: 5 tenants, 100 users, 125,000 leads, 15,000 deals, 375,000 activities/links and 375,000 tasks. No configured remote database was contacted.
 
-30 HTTP samples per endpoint at concurrency 1 and 10, after three warmups. Raw samples and nearest-rank percentiles are in before-samples.json and before-metrics.json. Baseline EXPLAIN ANALYZE BUFFERS plans are in before-plans.json.gz. Locking SELECTs are excluded; plans run in a read-only transaction. Startup measurements use separate fresh Node processes and a warm local database; these do not measure a suspended Neon compute.
+30 HTTP samples per endpoint at concurrency 1 and 10, after three warmups. Raw samples and nearest-rank percentiles are in before-samples.json and before-metrics.json. Baseline EXPLAIN ANALYZE BUFFERS plans are in before-plans.json.gz. Locking SELECTs are excluded; plans run in a read-only transaction. Startup measurements use separate fresh Node processes and a warm local database; these do not measure a suspended hosted database.
 
 | Endpoint | Baseline p50 / p95 ms, serial | Queries | Diagnosis / evidence |
 |---|---:|---:|---|

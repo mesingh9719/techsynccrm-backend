@@ -12,8 +12,8 @@ Object.assign(process.env, {
   DATABASE_URL: url.href, DATABASE_URL_UNPOOLED: url.href, NODE_ENV: 'test', LOG_LEVEL: 'silent',
   JWT_ACCESS_SECRET: 'performance-fixture-only-secret-01234567890123456789',
   DATA_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
-  AWS_ACCESS_KEY_ID: 'fixture-only', AWS_SECRET_ACCESS_KEY: 'fixture-only', AWS_REGION: 'us-east-1',
-  AWS_ENDPOINT_URL_S3: 'http://127.0.0.1:9',
+  SUPABASE_URL: 'http://127.0.0.1:9',
+  SUPABASE_SECRET_KEY: 'fixture-only',
   PERFORMANCE_METRICS: 'true', RATE_LIMIT_MAX: '100000',
   AUTH_RATE_LIMIT_MAX: '100000',
 })

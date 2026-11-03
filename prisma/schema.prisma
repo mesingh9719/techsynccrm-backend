@@ -103,6 +103,8 @@ model User {
   gmailOAuthStates GmailOAuthState[]
   emailAuditActions EmailAuditLog[] @relation("EmailAuditActor")
   emailAuditTargets EmailAuditLog[] @relation("EmailAuditTarget")
+  salesTargets      SalesTarget[]
+  reportSchedules   ReportSchedule[]
   facebookConnections FacebookConnection[]
   facebookOAuthStates FacebookOAuthState[]
   facebookAssignedForms FacebookForm[]
@@ -189,6 +191,8 @@ model Organization {
   activities      Activity[]
   tasks           Task[]
   notifications   Notification[]
+  salesTargets    SalesTarget[]
+  reportSchedules ReportSchedule[]
   notificationPreferences NotificationPreference[]
   notificationReceipts NotificationReceipt[]
   notificationBatches NotificationEmailBatch[]
@@ -396,7 +400,7 @@ model UserToken {
   @@map("user_tokens")
 }
 
-/// Metadata for objects in Neon Object Storage. The bytes live in the bucket; the key lives here.
+/// Metadata for objects in Supabase Storage. The bytes live in the bucket; the key lives here.
 model File {
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId         String   @map("uploaded_by_id") @db.Uuid
@@ -2262,4 +2266,50 @@ model GoogleSheet {
   @@index([organizationId, leadId, createdAt])
   @@index([status, nextAttemptAt, leaseUntil])
   @@map("google_sheets")
+}
+
+/// Monthly sales targets per member (M15). Team and workspace targets are the sum of member targets.
+model SalesTarget {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  /// First day of the target month
+  month          DateTime @db.Date
+  /// revenue (amount in minor units of the workspace currency) | deals_won (amount is a count)
+  metric         String   @db.VarChar(20)
+  amount         BigInt
+  createdById    String?  @map("created_by_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId, month, metric])
+  @@index([organizationId, month])
+  @@map("sales_targets")
+}
+
+/// A member's emailed report summary (M15). Built with the recipient's own report scope at send time.
+model ReportSchedule {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  /// weekly (Mondays, previous Monday–Sunday) | monthly (1st, previous calendar month)
+  frequency      String    @db.VarChar(10)
+  /// Optional report filters applied to every send: { ownerId?, sourceId? }
+  filters        Json      @default("{}")
+  enabled        Boolean   @default(true)
+  /// Period already emailed, e.g. "2026-W44" or "2026-10"; claims each send exactly once
+  lastPeriodKey  String?   @map("last_period_key") @db.VarChar(10)
+  lastSentAt     DateTime? @map("last_sent_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId, frequency])
+  @@index([enabled, frequency])
+  @@map("report_schedules")
 }

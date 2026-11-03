@@ -1,12 +1,12 @@
 import { PgBoss } from 'pg-boss'
 import { env } from '../config/env.js'
-import { withStrictSsl } from '../db/connectionString.js'
+import { pgConnection } from '../db/connectionString.js'
 import { logger } from '../lib/logger.js'
 import { QUEUES } from './queues.js'
 
 /**
- * Postgres-backed job queue (pg-boss) — no extra infrastructure on Neon. It needs a direct
- * (unpooled) connection, so it uses DATABASE_URL_UNPOOLED.
+ * Postgres-backed job queue (pg-boss) — no extra infrastructure on Supabase. It needs a
+ * session-mode (not transaction-pooled) connection, so it uses DATABASE_URL_UNPOOLED.
  *
  * - The API process starts it in "producer" mode: it only sends jobs.
  * - The worker process (src/worker.js) also runs maintenance, cron schedules and job handlers.
@@ -21,7 +21,7 @@ export function startQueue({ role }) {
   startPromise ??= (async () => {
     const isWorker = role === 'worker'
     boss = new PgBoss({
-      connectionString: withStrictSsl(env.DATABASE_URL_UNPOOLED),
+      ...pgConnection(env.DATABASE_URL_UNPOOLED),
       application_name: `techsync-${role}`,
       max: isWorker ? 5 : 2,
       supervise: isWorker,

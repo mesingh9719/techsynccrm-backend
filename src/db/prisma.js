@@ -1,7 +1,7 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient, Prisma } from '../generated/prisma/client.js'
 import { env } from '../config/env.js'
-import { withStrictSsl } from './connectionString.js'
+import { pgConnection } from './connectionString.js'
 import { observeQuery } from '../lib/performance.js'
 import { logger } from '../lib/logger.js'
 
@@ -9,14 +9,14 @@ import { logger } from '../lib/logger.js'
  * Single Prisma client for the whole process.
  *
  * Express runs as a long-lived Node server, so Prisma uses the node-postgres driver adapter
- * with a reusable pool over Neon's pooled (PgBouncer) DATABASE_URL. Migrations use the
- * direct DATABASE_URL_UNPOOLED instead — see prisma.config.ts.
+ * with a reusable pool over Supabase's transaction pooler (Supavisor, port 6543) DATABASE_URL.
+ * Migrations use the session-mode DATABASE_URL_UNPOOLED instead — see prisma7.config.ts.
  */
 const adapter = new PrismaPg({
-  connectionString: withStrictSsl(env.DATABASE_URL),
+  ...pgConnection(env.DATABASE_URL),
   max: env.DB_POOL_MAX,
   idleTimeoutMillis: 30_000,
-  // Neon computes can scale to zero; allow time for a cold start.
+  // Allow for pooler handshakes and paused/resuming projects.
   connectionTimeoutMillis: 10_000,
 })
 

@@ -4,7 +4,7 @@ import fs from 'node:fs/promises'
 import express from 'express'
 const target = new URL(process.env.QA_DATABASE_URL || 'postgresql://invalid/invalid')
 assert(['127.0.0.1', 'localhost'].includes(target.hostname) && target.pathname === '/techsync_product_performance', 'Dedicated local techsync_product_performance required')
-Object.assign(process.env, { NODE_ENV: 'test', DATABASE_URL: target.href, DATABASE_URL_UNPOOLED: target.href, JWT_ACCESS_SECRET: 'review-performance-only-012345678901234567890', DATA_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', AWS_ACCESS_KEY_ID: 'fixture', AWS_SECRET_ACCESS_KEY: 'fixture', AWS_REGION: 'us-east-1', AWS_ENDPOINT_URL_S3: 'http://127.0.0.1:9', LOG_LEVEL: 'silent', FRONTEND_URL: 'http://127.0.0.1:5181' })
+Object.assign(process.env, { NODE_ENV: 'test', DATABASE_URL: target.href, DATABASE_URL_UNPOOLED: target.href, JWT_ACCESS_SECRET: 'review-performance-only-012345678901234567890', DATA_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', SUPABASE_URL: 'http://127.0.0.1:9', SUPABASE_SECRET_KEY: 'fixture', LOG_LEVEL: 'silent', FRONTEND_URL: 'http://127.0.0.1:5181' })
 const { prisma } = await import('../src/db/prisma.js')
 const { reportRoutes } = await import('../src/routes/report.routes.js')
 const { errorHandler } = await import('../src/middlewares/errorHandler.js')

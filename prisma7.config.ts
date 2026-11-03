@@ -16,8 +16,8 @@ export default defineConfig({
     path: 'prisma/migrations',
   },
   datasource: {
-    // Migrations need a DIRECT connection (not through PgBouncer). The app itself uses the
-    // pooled DATABASE_URL via the pg driver adapter — see src/db/prisma.js.
+    // Migrations need a session-mode connection (Supabase direct or session pooler, port 5432),
+    // not the transaction pooler. The app itself uses the pooled DATABASE_URL via the pg driver adapter — see src/db/prisma.js.
     url: process.env.DATABASE_URL_UNPOOLED,
   },
 })

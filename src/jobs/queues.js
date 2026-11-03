@@ -38,6 +38,8 @@ export const QUEUES = {
   // M06 — idempotent, so a retry never double-sends or double-downgrades
   'trial.reminders': { ...standard, retryLimit: 2, expireInSeconds: 900 },
   'trial.expire': { ...standard, retryLimit: 2, expireInSeconds: 900 },
+  // M15 — each period is claimed before its email is queued, so a retry never double-sends
+  'reports.scheduled': { ...standard, retryLimit: 2, expireInSeconds: 1800 },
   'usage.recount': { ...standard, retryLimit: 2, expireInSeconds: 1800 },
   // M07/M08
   'leads.rescore': { ...standard, retryLimit: 2, expireInSeconds: 3600 },

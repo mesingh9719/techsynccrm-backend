@@ -12,7 +12,6 @@ vi.mock('../../src/config/env.js', () => ({ env: {
   JWT_ACCESS_SECRET: 'test-only-not-a-real-secret-01234567890123456789', JWT_ISSUER: 'test', JWT_AUDIENCE: 'test', JWT_ACCESS_EXPIRES_IN: '15m',
 } }))
 vi.mock('../../src/email/mailer.js', () => ({ sendEmail: mail, queueEmail: mail }))
-vi.mock('../../src/storage/files.js', () => ({ storage: {} }))
 vi.mock('../../src/jobs/queue.js', () => ({ enqueue: enqueueJob }))
 
 import { prisma, DB_NULL } from '../../src/db/prisma.js'

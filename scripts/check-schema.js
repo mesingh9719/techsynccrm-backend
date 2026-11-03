@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import crypto from 'node:crypto'
 import pg from 'pg'
-import { withStrictSsl } from '../src/db/connectionString.js'
+import { pgConnection } from '../src/db/connectionString.js'
 
 /** Read-only deployment check: migrate status alone cannot detect edited migrations or missing columns. */
 const source = await fs.readFile(new URL('../prisma/schema.prisma', import.meta.url), 'utf8')
@@ -19,7 +19,7 @@ for (const model of source.matchAll(/^model (\w+) \{([\s\S]*?)^\}/gm)) {
 }
 const direct = process.env.DATABASE_URL_UNPOOLED
 if (!direct) throw new Error('DATABASE_URL_UNPOOLED is required for schema verification')
-const client = new pg.Client({ connectionString: withStrictSsl(direct), connectionTimeoutMillis: 10000 })
+const client = new pg.Client({ ...pgConnection(direct), connectionTimeoutMillis: 10000 })
 try {
   await client.connect()
   const identity = (await client.query('SELECT current_database() AS database, current_schema() AS schema')).rows[0]

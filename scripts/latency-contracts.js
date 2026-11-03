@@ -5,7 +5,7 @@ import crypto from 'node:crypto'
 import { pathToFileURL } from 'node:url'
 const url = new URL(process.env.PERF_DATABASE_URL || 'postgresql://invalid/invalid')
 if (!['localhost','127.0.0.1'].includes(url.hostname) || url.pathname !== '/techsync_perf') throw new Error('Disposable local techsync_perf required')
-Object.assign(process.env, { DATABASE_URL: url.href, DATABASE_URL_UNPOOLED: url.href, NODE_ENV: 'test', LOG_LEVEL: 'silent', JWT_ACCESS_SECRET: 'performance-fixture-only-secret-01234567890123456789', DATA_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', AWS_ACCESS_KEY_ID: 'fixture-only', AWS_SECRET_ACCESS_KEY: 'fixture-only', AWS_ENDPOINT_URL_S3: 'http://127.0.0.1:9', PERFORMANCE_METRICS: 'true', RATE_LIMIT_MAX: '100000', AUTH_RATE_LIMIT_MAX: '100000' })
+Object.assign(process.env, { DATABASE_URL: url.href, DATABASE_URL_UNPOOLED: url.href, NODE_ENV: 'test', LOG_LEVEL: 'silent', JWT_ACCESS_SECRET: 'performance-fixture-only-secret-01234567890123456789', DATA_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', SUPABASE_URL: 'http://127.0.0.1:9', SUPABASE_SECRET_KEY: 'fixture-only', PERFORMANCE_METRICS: 'true', RATE_LIMIT_MAX: '100000', AUTH_RATE_LIMIT_MAX: '100000' })
 const label = process.argv[2] || 'before'
 assert(/^[a-z0-9-]+$/.test(label))
 const source = process.env.PERF_SOURCE_ROOT ? pathToFileURL(`${process.env.PERF_SOURCE_ROOT}/`) : new URL('../', import.meta.url)

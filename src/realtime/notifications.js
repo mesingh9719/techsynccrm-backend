@@ -2,7 +2,7 @@ import { Client } from 'pg'
 import { env } from '../config/env.js'
 import { NOTIFICATION_CHANNEL } from '../config/notifications.js'
 import { prisma } from '../db/prisma.js'
-import { withStrictSsl } from '../db/connectionString.js'
+import { pgConnection } from '../db/connectionString.js'
 import { logger } from '../lib/logger.js'
 import { ApiError } from '../utils/ApiError.js'
 import { notificationContext } from '../services/notificationAccess.service.js'
@@ -50,7 +50,7 @@ function scheduleBroadcast(orgId, userId) {
 async function connect() {
   if (stopped || connecting || client) return
   connecting = true
-  const next = new Client({ connectionString: withStrictSsl(env.DATABASE_URL_UNPOOLED), application_name: 'techsync-notifications-listen', connectionTimeoutMillis: 5000, keepAlive: true })
+  const next = new Client({ ...pgConnection(env.DATABASE_URL_UNPOOLED), application_name: 'techsync-notifications-listen', connectionTimeoutMillis: 5000, keepAlive: true })
   const disconnected = () => {
     if (client === next) client = null
     if (!stopped && !retry) retry = setTimeout(() => { retry = null; void connect() }, 5000)

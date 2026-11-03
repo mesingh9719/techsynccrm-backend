@@ -1,6 +1,6 @@
 # Backend
 
-TechSync uses Express 5, Prisma ORM 7.10.1 with the pg adapter, Neon Postgres and a separate
+TechSync uses Express 5, Prisma ORM 7.10.1 with the pg adapter, Supabase Postgres and a separate
 pg-boss worker. Use Node >=22.18 to compile the generated Prisma client during install/build.
 The application and CLI dependencies now use ORM 7; the previous Prisma 8 RC conflict was removed.
 The npm scripts use `@prisma/prisma7` and `prisma7.config.ts`, which loads `.env` and uses
@@ -69,10 +69,10 @@ fails on unassignable files instead of silently assigning them across tenants.
 
 ## Files and data transfers
 
-Configure the existing `AWS_ENDPOINT_URL_S3`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,
-`AWS_REGION` and `STORAGE_BUCKET` values. The bucket remains private. Browser POST uploads require
-bucket CORS allowing your frontend origin; live CORS/provider roundtrips were not checked here.
-Small uploads pass through the API; larger uploads use a 15-minute bounded pending-key policy.
+Configure `SUPABASE_URL`, `SUPABASE_SECRET_KEY` and `STORAGE_BUCKET`. The bucket remains private and is
+accessed through the Supabase Storage API with the server-only secret key.
+Small uploads pass through the API; larger uploads PUT to a one-time Supabase signed upload URL
+under a pending key (set the bucket's file size limit, since the signed URL does not cap size).
 Completion validates actual bytes and publishes them to a fresh private key. Standard maximum
 is 25 MB (`MAX_UPLOAD_MB`); MP4 maximum is 50 MB. HTML/SVG and mismatched signatures are rejected.
 This signature policy is not an antivirus integration.

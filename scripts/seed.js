@@ -2,7 +2,7 @@
  * Development seed: `npm run db:seed`. Idempotent — safe to run repeatedly.
  * Creates a verified, onboarded demo user. Later modules add their own sample data here.
  *
- * Refuses to run against a production Neon branch unless `--force` is passed.
+ * Refuses to run against a production database (DB_ENVIRONMENT=production|main) unless `--force` is passed.
  */
 import bcrypt from 'bcryptjs'
 import { prisma } from '../src/db/prisma.js'
@@ -12,11 +12,11 @@ const DEMO_EMAIL = process.env.SEED_EMAIL ?? 'demo@techsync.local'
 const DEMO_PASSWORD = process.env.SEED_PASSWORD ?? 'Demo12345'
 
 function guardProduction() {
-  const branch = process.env.NEON_BRANCH ?? ''
+  const branch = process.env.DB_ENVIRONMENT ?? ''
   const isProd = process.env.NODE_ENV === 'production' || /^(main|production)$/i.test(branch)
   if (isProd && !process.argv.includes('--force')) {
-    console.error(`[seed] Refusing to seed: this looks like production (NEON_BRANCH="${branch}", NODE_ENV="${process.env.NODE_ENV}").`)
-    console.error('[seed] Point DATABASE_URL at a development branch, or pass --force if you really mean it.')
+    console.error(`[seed] Refusing to seed: this looks like production (DB_ENVIRONMENT="${branch}", NODE_ENV="${process.env.NODE_ENV}").`)
+    console.error('[seed] Point DATABASE_URL at a development project, or pass --force if you really mean it.')
     process.exit(1)
   }
 }

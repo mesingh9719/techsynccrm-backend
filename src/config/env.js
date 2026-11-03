@@ -68,9 +68,9 @@ export const env = Object.freeze({
   RATE_LIMIT_MAX: number('RATE_LIMIT_MAX', 300),
   AUTH_RATE_LIMIT_MAX: number('AUTH_RATE_LIMIT_MAX', 20),
 
-  /** Neon Postgres — pooled connection for app traffic (migrations use DATABASE_URL_UNPOOLED). */
+  /** Supabase Postgres — transaction-pooler connection for app traffic (migrations use DATABASE_URL_UNPOOLED). */
   DATABASE_URL: required('DATABASE_URL'),
-  /** Direct connection, needed by the job queue (pg-boss) and migrations. Falls back to DATABASE_URL. */
+  /** Session-mode connection, needed by the job queue (pg-boss), LISTEN and migrations. Falls back to DATABASE_URL. */
   DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED || required('DATABASE_URL'),
   DB_POOL_MAX: number('DB_POOL_MAX', 10),
   PERFORMANCE_METRICS: process.env.PERFORMANCE_METRICS === 'true',
@@ -118,7 +118,10 @@ export const env = Object.freeze({
   REFRESH_TOKEN_REMEMBER_TTL_DAYS: number('REFRESH_TOKEN_REMEMBER_TTL_DAYS', 30),
   COOKIE_SAMESITE: sameSite,
 
-  /** Neon Object Storage — credentials/endpoint come from the AWS_* vars read by the SDK. */
+  /** Supabase project API — Storage uses the server-only secret key (never expose it to the frontend). */
+  SUPABASE_URL: required('SUPABASE_URL').replace(/\/$/, ''),
+  SUPABASE_SECRET_KEY: required('SUPABASE_SECRET_KEY'),
+  /** Private Supabase Storage bucket for uploads. */
   STORAGE_BUCKET: process.env.STORAGE_BUCKET ?? 'assets',
   STORAGE_URL_EXPIRES_IN: number('STORAGE_URL_EXPIRES_IN', 900),
   MAX_UPLOAD_MB: number('MAX_UPLOAD_MB', 25),
@@ -159,9 +162,6 @@ export const env = Object.freeze({
   DEMO_MAX_DAYS_AHEAD: number('DEMO_MAX_DAYS_AHEAD', 30),
   NEWSLETTER_CONFIRM_TTL_DAYS: number('NEWSLETTER_CONFIRM_TTL_DAYS', 7),
 })
-
-// The storage SDK reads these directly from process.env; check them here so startup fails clearly.
-for (const name of ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_ENDPOINT_URL_S3']) required(name)
 
 // Explicit foundation opt-in fails fast; legacy GMAIL_ENABLED keeps its existing setup diagnostics.
 if (process.env.EMAIL_FEATURE_ENABLED === 'true') {

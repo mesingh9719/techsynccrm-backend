@@ -7,7 +7,6 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 const { objects, mail, queued } = vi.hoisted(() => ({ objects: new Map(), mail: vi.fn().mockResolvedValue({ messageId: 'test' }), queued: vi.fn().mockResolvedValue('job') }))
 vi.mock('../../src/config/env.js', () => ({ env: { NODE_ENV: 'test', isProduction: false, DATABASE_URL: process.env.TEST_DATABASE_URL || 'postgresql://unused@localhost/unused', DATABASE_URL_UNPOOLED: process.env.TEST_DATABASE_URL || 'postgresql://unused@localhost/unused', DB_POOL_MAX: 10, FRONTEND_URL: 'https://crm.example.test', STORAGE_URL_EXPIRES_IN: 900, MAX_UPLOAD_MB: 25, JWT_ACCESS_SECRET: 'test-only-not-a-real-secret-01234567890123456789', JWT_ISSUER: 'test', JWT_AUDIENCE: 'test', JWT_ACCESS_EXPIRES_IN: '15m', INVITATION_TTL_DAYS: 7, DATA_ENCRYPTION_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=' } }))
 vi.mock('../../src/email/mailer.js', () => ({ sendEmail: mail, queueEmail: mail }))
-vi.mock('../../src/storage/files.js', () => ({ storage: { url: vi.fn().mockResolvedValue('https://storage.example.test/file') } }))
 vi.mock('../../src/jobs/queue.js', () => ({ enqueue: queued }))
 vi.mock('../../src/storage/objectStore.js', () => ({ objectStore: {
   upload: async (key, bytes) => { objects.set(key, Buffer.from(bytes)) },

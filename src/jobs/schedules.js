@@ -18,6 +18,7 @@ import { expireTrials, recountAllUsage, sendTrialReminders } from '../services/p
 import { rescoreAllLeads } from '../services/lead.service.js'
 import { purgeDeletedRecords } from '../services/purge.service.js'
 import { releaseHeldLeads } from '../services/assignment.service.js'
+import { sendScheduledReports } from '../services/reportSchedule.service.js'
 // Record services register their tables for `members.reassign` (registerReassignable) on import.
 import '../services/company.service.js'
 import '../services/contact.service.js'
@@ -68,6 +69,9 @@ export async function registerJobs() {
   // Leads held outside working hours are assigned once their workspace opens.
   await registerHandler('assignment.release', () => releaseHeldLeads())
   await schedule('assignment.release', '*/5 * * * *', null, { tz: 'UTC' })
+  // Hourly; each summary goes out from 08:00 in its workspace's time zone (reportSchedule.service.js).
+  await registerHandler('reports.scheduled', () => sendScheduledReports())
+  await schedule('reports.scheduled', '20 * * * *', null, { tz: 'UTC' })
 
   // 02:30 IST daily
   await schedule('tokens.cleanup', '30 2 * * *', null, { tz: 'Asia/Kolkata' })

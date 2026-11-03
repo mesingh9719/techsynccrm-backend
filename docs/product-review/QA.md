@@ -62,7 +62,7 @@ Dataset: 100,000 leads, 20,000 deals, 20,000 tasks, 30,000 activities, 20,000 st
 | First response | 107.9 | 107.1 |
 | Follow-ups | 581.3 | 50.4 |
 
-The two slow queries were rewritten as grouped joins. Funnel checks status arrays without expanding events per lead; follow-up compliance joins readable records once. Initial/intermediate/final evidence is retained. EXPLAIN ANALYZE shows an Index Only Scan using deals_report_won_period_idx for the measured won-revenue sum (1.543 ms execution in that recorded plan). High-selectivity full-tenant aggregation can legitimately scan many rows. Remote concurrency, large event histories, Enterprise membership limits and cold Neon latency still need staging measurement. Leaderboard rejects more than 500 selected members instead of silently truncating.
+The two slow queries were rewritten as grouped joins. Funnel checks status arrays without expanding events per lead; follow-up compliance joins readable records once. Initial/intermediate/final evidence is retained. EXPLAIN ANALYZE shows an Index Only Scan using deals_report_won_period_idx for the measured won-revenue sum (1.543 ms execution in that recorded plan). High-selectivity full-tenant aggregation can legitimately scan many rows. Remote concurrency, large event histories, Enterprise membership limits and cold hosted-database latency still need staging measurement. Leaderboard rejects more than 500 selected members instead of silently truncating.
 
 ## Reproduction
 
