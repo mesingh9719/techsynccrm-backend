@@ -21,8 +21,8 @@ Release requires no open Blocker/High gaps, accurate real data, scoped server ac
 | First response and follow-up compliance | /reports/first-response, /follow-ups | Lead, Task and readable linked records | Working new metrics and UI; no-response is null not zero |
 | Source drilldown preserves exact cohort | sourceLeadUrl → GET /leads including source none | Lead | Working API/filter-link assertions |
 | Authorized export with audit + CSV escaping | GET /reports/:report/export → shared encoder | AuditLog + aggregate data | Working direct API denied for rep/viewer; browser download |
-| Targets/scheduled reports/saved server reports | No active target/scheduled report models/routes | M15 intended schema | Missing; local saved filters are not saved report definitions |
-| Forecast/pipeline by stage/lost reason reports | Existing deals board/forecast available, not full reports suite | Deal/Pipeline/LostReason | Partial; advanced report UI missing |
+| Monthly targets and emailed summaries | GET/PUT /reports/targets, GET/PUT /reports/schedules/:frequency, reports.scheduled job | SalesTarget, ReportSchedule | Working; targets prorated to the period, summaries built with the recipient's scope; saved views remain browser-local |
+| Trend, pipeline by stage, forecast, lost reasons, campaigns, activity | /reports/trend, /pipeline, /forecast, /lost-reasons, /campaigns, /activity (+ exports) | Deal, PipelineStage, LostReason, Campaign, Activity | Working; seeded verification of every metric and role scope; campaign spend ratios are to-date |
 
 ## Architecture, data, security and performance
 
