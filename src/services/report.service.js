@@ -60,7 +60,6 @@ const leadOwners = (f) => f.owners && f.includeUnowned ? { OR: [ownerWhere(f.own
 const leadBase = (ctx, f) => ({ organizationId: ctx.orgId, deletedAt: null, status: { not: 'junk' }, ...leadOwners(f), ...sourceWhere(f.sourceId) })
 // Revenue is reported in the workspace currency; deals in other currencies aren't converted.
 const dealBase = (ctx, f) => ({ organizationId: ctx.orgId, deletedAt: null, currency: ctx.currency ?? 'INR', ...ownerWhere(f.owners), ...sourceWhere(f.sourceId) })
-const sum = (agg) => minorToJson(agg._sum.valueMinor ?? 0n)
 const ownerSql = (f, alias, unowned = false) => !f.owners ? Prisma.empty : Prisma.sql`AND (${Prisma.raw(alias)}.owner_id = ANY(${f.owners}::uuid[]) ${unowned && f.includeUnowned ? Prisma.sql`OR ${Prisma.raw(alias)}.owner_id IS NULL` : Prisma.empty})`
 const sourceSql = (f, alias) => !f.sourceId ? Prisma.empty : f.sourceId === 'none' ? Prisma.sql`AND ${Prisma.raw(alias)}.source_id IS NULL` : Prisma.sql`AND ${Prisma.raw(alias)}.source_id = ${f.sourceId}::uuid`
 const leadSql = (ctx, f, alias = 'l') => Prisma.sql`${Prisma.raw(alias)}.organization_id = ${ctx.orgId}::uuid AND ${Prisma.raw(alias)}.deleted_at IS NULL AND ${Prisma.raw(alias)}.status <> 'junk' ${ownerSql(f, alias, true)} ${sourceSql(f, alias)}`
@@ -70,29 +69,50 @@ const money = (minor, currency) => new Intl.NumberFormat(currency === 'INR' ? 'e
 
 // ---------- Metrics ----------
 
-async function leadCohort(ctx, f, range) {
-  const where = { ...leadBase(ctx, f), createdAt: range }
-  const [total, converted] = await Promise.all([prisma.lead.count({ where }), prisma.lead.count({ where: { ...where, status: 'converted' } })])
-  return { total, converted, rate: total ? (converted / total) * 100 : null }
-}
-
-async function dealResults(ctx, f, range) {
-  const base = dealBase(ctx, f)
-  const [won, lost] = await Promise.all([
-    prisma.deal.aggregate({ where: { ...base, status: 'won', wonAt: range }, _sum: { valueMinor: true }, _count: { _all: true } }),
-    prisma.deal.count({ where: { ...base, status: 'lost', closedAt: range } }),
-  ])
-  const wonCount = won._count._all
-  return { revenue: sum(won), won: wonCount, lost, winRate: wonCount + lost ? (wonCount / (wonCount + lost)) * 100 : null }
-}
-
 const pct = (value, previous) => (previous ? `${value >= previous ? '+' : '−'}${Math.abs(((value - previous) / previous) * 100).toFixed(1)}%` : '—')
 const points = (value, previous) => (value === null || previous === null ? '—' : `${value >= previous ? '+' : '−'}${Math.abs(value - previous).toFixed(1)} pp`)
+
+/**
+ * Lead cohort (total, converted, rate) and deal results (revenue, won, lost, win rate) for the
+ * current and previous periods: two aggregate statements, one over leads and one over deals.
+ */
+async function periodTotals(ctx, f) {
+  const { current: c, previous: p } = f
+  const within = (column, r) => Prisma.sql`${Prisma.raw(column)} >= ${r.gte} AND ${Prisma.raw(column)} <= ${r.lte}`
+  const [[leads], [deals]] = await Promise.all([
+    prisma.$queryRaw(Prisma.sql`
+      SELECT COUNT(*) FILTER (WHERE ${within('l.created_at', c)})::int AS cur_total,
+        COUNT(*) FILTER (WHERE ${within('l.created_at', c)} AND l.status = 'converted')::int AS cur_converted,
+        COUNT(*) FILTER (WHERE ${within('l.created_at', p)})::int AS prev_total,
+        COUNT(*) FILTER (WHERE ${within('l.created_at', p)} AND l.status = 'converted')::int AS prev_converted
+      FROM leads l WHERE ${leadSql(ctx, f)} AND l.created_at >= ${p.gte} AND l.created_at <= ${c.lte}`),
+    prisma.$queryRaw(Prisma.sql`
+      SELECT w.*, lo.* FROM (
+        SELECT COUNT(*) FILTER (WHERE ${within('d.won_at', c)})::int AS cur_won,
+          COALESCE(SUM(d.value_minor) FILTER (WHERE ${within('d.won_at', c)}), 0)::bigint AS cur_revenue,
+          COUNT(*) FILTER (WHERE ${within('d.won_at', p)})::int AS prev_won,
+          COALESCE(SUM(d.value_minor) FILTER (WHERE ${within('d.won_at', p)}), 0)::bigint AS prev_revenue
+        FROM deals d WHERE ${dealSql(ctx, f)} AND d.status = 'won' AND d.won_at >= ${p.gte} AND d.won_at <= ${c.lte}
+      ) w CROSS JOIN (
+        SELECT COUNT(*) FILTER (WHERE ${within('d.closed_at', c)})::int AS cur_lost,
+          COUNT(*) FILTER (WHERE ${within('d.closed_at', p)})::int AS prev_lost
+        FROM deals d WHERE ${dealSql(ctx, f)} AND d.status = 'lost' AND d.closed_at >= ${p.gte} AND d.closed_at <= ${c.lte}
+      ) lo`),
+  ])
+  const cohort = (total, converted) => ({ total, converted, rate: total ? (converted / total) * 100 : null })
+  const results = (revenue, won, lost) => ({ revenue: minorToJson(revenue), won, lost, winRate: won + lost ? (won / (won + lost)) * 100 : null })
+  return {
+    leads: cohort(leads.cur_total, leads.cur_converted),
+    prevLeads: cohort(leads.prev_total, leads.prev_converted),
+    deals: results(deals.cur_revenue, deals.cur_won, deals.cur_lost),
+    prevDeals: results(deals.prev_revenue, deals.prev_won, deals.prev_lost),
+  }
+}
 
 export async function kpis(ctx, query) {
   const f = filters(ctx, query)
   const currency = ctx.currency ?? 'INR'
-  const [leads, prevLeads, deals, prevDeals] = await Promise.all([leadCohort(ctx, f, f.current), leadCohort(ctx, f, f.previous), dealResults(ctx, f, f.current), dealResults(ctx, f, f.previous)])
+  const { leads, prevLeads, deals, prevDeals } = await periodTotals(ctx, f)
   const avg = deals.won ? minorToJson(divideHalfEven(BigInt(deals.revenue), BigInt(deals.won))) : 0
   const prevAvg = prevDeals.won ? minorToJson(divideHalfEven(BigInt(prevDeals.revenue), BigInt(prevDeals.won))) : 0
   return [
@@ -518,18 +538,24 @@ export async function firstResponse(ctx, query) {
 /** Task compliance by due-date cohort, plus the current backlog. Only readable linked records count. */
 export async function followUps(ctx, query, now = new Date()) {
   const f = filters(ctx, query)
+  // Only tasks that can count are read (due or completed in the period, or open and overdue), and
+  // each is checked against its own linked record instead of materialising every readable record
+  // in the workspace.
   const [row] = await prisma.$queryRaw(Prisma.sql`
-    WITH readable AS (
-      SELECT 'lead' AS type, l.id FROM leads l WHERE ${leadSql(ctx, f)}
-      UNION ALL SELECT 'deal', d.id FROM deals d WHERE ${dealSql(ctx, f)}
-      ${!f.sourceId ? Prisma.sql`UNION ALL SELECT 'contact', c.id FROM contacts c WHERE c.organization_id = ${ctx.orgId}::uuid AND c.deleted_at IS NULL ${ownerSql(f, 'c', true)}
-        UNION ALL SELECT 'company', c.id FROM companies c WHERE c.organization_id = ${ctx.orgId}::uuid AND c.deleted_at IS NULL ${ownerSql(f, 'c', true)}` : Prisma.empty}
-    ), visible AS (
+    WITH visible AS (
       SELECT t.status, t.due_at, t.completed_at FROM tasks t
-      LEFT JOIN readable r ON r.type = t.entity_type AND r.id = t.entity_id
       WHERE t.organization_id = ${ctx.orgId}::uuid AND t.deleted_at IS NULL
+      AND ((t.due_at >= ${f.current.gte} AND t.due_at <= ${f.current.lte})
+        OR (t.completed_at >= ${f.current.gte} AND t.completed_at <= ${f.current.lte})
+        OR (t.status = 'open' AND t.due_at < ${now}))
       ${f.owners ? Prisma.sql`AND (t.assignee_id = ANY(${f.owners}::uuid[]) ${!query.ownerId && !ctx.forExport ? Prisma.sql`OR t.created_by_id = ${ctx.userId}::uuid` : Prisma.empty})` : Prisma.empty}
-      AND (r.id IS NOT NULL ${!f.sourceId ? Prisma.sql`OR t.entity_id IS NULL` : Prisma.empty})
+      AND (
+        (t.entity_type = 'lead' AND EXISTS (SELECT 1 FROM leads l WHERE l.id = t.entity_id AND ${leadSql(ctx, f)}))
+        OR (t.entity_type = 'deal' AND EXISTS (SELECT 1 FROM deals d WHERE d.id = t.entity_id AND ${dealSql(ctx, f)}))
+        ${!f.sourceId ? Prisma.sql`OR (t.entity_type = 'contact' AND EXISTS (SELECT 1 FROM contacts c WHERE c.id = t.entity_id AND c.organization_id = ${ctx.orgId}::uuid AND c.deleted_at IS NULL ${ownerSql(f, 'c', true)}))
+          OR (t.entity_type = 'company' AND EXISTS (SELECT 1 FROM companies c WHERE c.id = t.entity_id AND c.organization_id = ${ctx.orgId}::uuid AND c.deleted_at IS NULL ${ownerSql(f, 'c', true)}))
+          OR t.entity_id IS NULL` : Prisma.empty}
+      )
     )
     SELECT COUNT(*) FILTER (WHERE status <> 'cancelled' AND due_at >= ${f.current.gte} AND due_at <= ${f.current.lte})::int AS due,
       COUNT(*) FILTER (WHERE status = 'completed' AND completed_at >= ${f.current.gte} AND completed_at <= ${f.current.lte})::int AS completed,

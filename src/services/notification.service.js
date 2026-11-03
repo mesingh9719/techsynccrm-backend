@@ -10,6 +10,7 @@ import { RECORD_TYPES } from './recordRef.service.js'
 import { notificationContext, notificationRecord, rottingDealSelect } from './notificationAccess.service.js'
 
 export const notificationScope = (ctx) => ({ organizationId: ctx.orgId, userId: ctx.userId })
+const UNREAD_SCAN_BATCH = 1000
 export async function lockNotificationUser(tx, orgId, userId) {
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`notification:${orgId}:${userId}`}, 0))`
 }
@@ -156,14 +157,22 @@ export async function unreadCount(ctx) {
   // Load the recipient's context once, not once per scanned page.
   const current = ctx.user ? ctx : await notificationContext(ctx.orgId, ctx.userId)
   if (!current) return 0
-  let cursor
+  // Only the number is needed, so scan unread rows in large id-ordered batches (no page building,
+  // no 100-row API cap): a few round trips even for a long unread backlog. Every row still passes
+  // the same access check as the inbox list.
+  let after
   let count = 0
-  do {
-    const page = await listNotifications(current, { unread: true, limit: 100, cursor })
-    count += page.items.length
-    cursor = page.nextCursor
-  } while (cursor)
-  return count
+  for (;;) {
+    const rows = await prisma.notification.findMany({
+      where: { ...notificationScope(current), inApp: true, readAt: null, ...(after && { id: { gt: after } }) },
+      orderBy: { id: 'asc' },
+      take: UNREAD_SCAN_BATCH,
+      select: { id: true, type: true, entityType: true, entityId: true, context: true },
+    })
+    if (rows.length) count += (await readableNotifications(current, rows)).length
+    if (rows.length < UNREAD_SCAN_BATCH) return count
+    after = rows.at(-1).id
+  }
 }
 export async function markNotificationRead(ctx, id) {
   const row = await prisma.notification.findFirst({ where: { id, ...notificationScope(ctx), inApp: true } })

@@ -44,12 +44,13 @@ export async function loadRecord(ctx, entityType, entityId, action = 'read', db 
 /** Display names for a set of refs: Map<"type:id", name>. Missing/deleted records are skipped. */
 export async function namesFor(refs, db = prisma, orgId) {
   const out = new Map()
-  for (const [entityType, t] of Object.entries(RECORD_TYPES)) {
+  // One query per record type, run together rather than one after another.
+  await Promise.all(Object.entries(RECORD_TYPES).map(async ([entityType, t]) => {
     const ids = [...new Set(refs.filter((r) => r.entityType === entityType).map((r) => r.entityId))]
-    if (!ids.length) continue
+    if (!ids.length) return
     const rows = await db[t.model].findMany({ where: { id: { in: ids }, ...(orgId && { organizationId: orgId }) }, select: { id: true, [t.name]: true, deletedAt: true } })
     for (const r of rows) out.set(`${entityType}:${r.id}`, { name: r[t.name], deleted: Boolean(r.deletedAt) })
-  }
+  }))
   return out
 }
 

@@ -275,21 +275,24 @@ export async function pinActivity(ctx, id, pinned) {
  * filterable by type; pinned entries are returned separately on the first page.
  */
 export async function timeline(ctx, query) {
-  await loadRecord(ctx, query.entityType, query.entityId, 'read')
   const types = listParam(query.types)
   const page = parseListQuery(query, { sortable: { occurredAt: 'date' }, defaultSort: '-occurredAt' })
   const where = {
     organizationId: ctx.orgId,
     deletedAt: null,
-    links: { some: { entityType: query.entityType, entityId: query.entityId } },
+    // Tenant first: matches activity_links(organization_id, entity_type, entity_id, occurred_at).
+    links: { some: { organizationId: ctx.orgId, entityType: query.entityType, entityId: query.entityId } },
     ...(types.length && { type: { in: types } }),
   }
-  const [rows, pinned] = await Promise.all([
+  // The access check runs alongside the reads; if it fails, nothing read is returned.
+  const [, rows, pinned] = await Promise.all([
+    loadRecord(ctx, query.entityType, query.entityId, 'read'),
     prisma.activity.findMany({ where: { AND: [where, page.cursorWhere] }, orderBy: page.orderBy, take: page.take, select: activitySelect }),
     query.cursor ? [] : prisma.activity.findMany({ where: { ...where, isPinned: true }, orderBy: { occurredAt: 'desc' }, take: 10, select: activitySelect }),
   ])
   const result = buildPage(rows, page)
-  return { items: await present(result.items), nextCursor: result.nextCursor, ...(!query.cursor && { pinned: await present(pinned) }) }
+  const [items, pinnedItems] = await Promise.all([present(result.items), query.cursor ? null : present(pinned)])
+  return { items, nextCursor: result.nextCursor, ...(!query.cursor && { pinned: pinnedItems }) }
 }
 
 // ---------- System activities (timeline subscriber) ----------

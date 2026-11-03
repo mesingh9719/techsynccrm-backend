@@ -367,10 +367,9 @@ export async function listTasks(ctx, query) {
     const ids = listParam(query.assigneeId).map((v) => (v === 'me' ? ctx.userId : v))
     base.push({ assigneeId: { in: ids } })
   }
-  if (query.entityType && query.entityId) {
-    await loadRecord(ctx, query.entityType, query.entityId, 'read')
-    base.push({ entityType: query.entityType, entityId: query.entityId })
-  }
+  // The linked-record access check runs alongside the reads; if it fails, nothing read is returned.
+  const access = query.entityType && query.entityId ? loadRecord(ctx, query.entityType, query.entityId, 'read') : null
+  if (access) base.push({ entityType: query.entityType, entityId: query.entityId })
   if (query.q) base.push({ title: { contains: query.q, mode: 'insensitive' } })
   const views = {
     today: { status: 'open', dueAt: { gte: start, lte: end } },
@@ -384,7 +383,8 @@ export async function listTasks(ctx, query) {
   const orderBy = view === 'completed' ? [{ completedAt: 'desc' }, { id: 'asc' }] : [{ dueAt: { sort: 'asc', nulls: 'last' } }, { createdAt: 'asc' }, { id: 'asc' }]
   const limit = Math.min(query.limit ?? 100, MAX_LIST)
   const offset = query.cursor ? Number(query.cursor) || 0 : 0
-  const [rows, counts] = await Promise.all([
+  const [, rows, counts] = await Promise.all([
+    access,
     prisma.task.findMany({ where: { AND: [...base, views[view]] }, orderBy, skip: offset, take: limit + 1, select: taskSelect }),
     query.counts
       ? Promise.all(['today', 'overdue', 'upcoming', 'completed'].map((v) => prisma.task.count({ where: { AND: [...base, views[v]] } }))).then(([today, overdue, upcoming, completed]) => ({ today, overdue, upcoming, completed }))

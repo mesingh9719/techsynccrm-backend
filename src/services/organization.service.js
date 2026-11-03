@@ -8,7 +8,7 @@ import { gstinErrors } from '../lib/india.js'
 import { DEFAULT_TZ } from '../lib/time.js'
 import { profileImageUrl } from './profileImage.service.js'
 import { ApiError } from '../utils/ApiError.js'
-import { assertFeature, countUsage } from './entitlements.service.js'
+import { assertFeature, countUsage, getUsage } from './entitlements.service.js'
 import { ensureLeadDefaults } from './leadSetup.service.js'
 import { ensureDefaultPipeline } from './pipeline.service.js'
 import { initialPlanFor, planOverview, recordPlanChangeTx } from './plan.service.js'
@@ -187,22 +187,24 @@ export async function listMyOrganizations(userId, currentOrgId) {
 const logoUrl = profileImageUrl
 
 /** Full settings record plus plan, trial, entitlements and usage (M06). */
-async function presentFull(org) {
+async function presentFull(org, usage) {
   const { seatSelectionRequiredAt: _s, ...rest } = org
-  const [url, overview] = await Promise.all([logoUrl(org.logoFileId), planOverview(org)])
+  const [url, overview] = await Promise.all([logoUrl(org.logoFileId), planOverview(org, usage)])
   return { ...rest, logoUrl: url, ...overview, entitlements: presentEntitlements(org.plan) }
 }
 
 export async function getCurrentOrganization(ctx) {
-  const [organization, membership, unreadNotificationCount] = await Promise.all([
+  // Usage only needs the workspace id, so it loads with the organization rather than after it.
+  const [organization, membership, unreadNotificationCount, usage] = await Promise.all([
     prisma.organization.findUniqueOrThrow({ where: { id: ctx.orgId }, select: fullSelect }),
     prisma.membership.findUniqueOrThrow({
       where: { organizationId_userId: { organizationId: ctx.orgId, userId: ctx.userId } },
       select: { role: true, title: true, joinedAt: true },
     }),
     unreadCount(ctx),
+    getUsage(ctx.orgId),
   ])
-  return { organization: { ...(await presentFull(organization)), unreadNotificationCount }, membership: { ...membership, permissions: permissionsFor(membership.role) } }
+  return { organization: { ...(await presentFull(organization, usage)), unreadNotificationCount }, membership: { ...membership, permissions: permissionsFor(membership.role) } }
 }
 
 // ---------- Update ----------

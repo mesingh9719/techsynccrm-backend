@@ -332,9 +332,15 @@ async function listWhere(ctx, query) {
   if (query.leadId) and.push({ leadId: query.leadId })
   if (query.sourceId) and.push({ sourceId: query.sourceId })
   if (query.campaignId) and.push({ lead: { organizationId: ctx.orgId, campaignId: query.campaignId, deletedAt: null } })
+  // Independent lookups (company search, rotting, tags, custom fields) share one round trip.
+  const q = query.q?.trim()
+  const [companies, rotting, tagged, custom] = await Promise.all([
+    query.q ? prisma.company.findMany({ where: { organizationId: ctx.orgId, deletedAt: null, name: { contains: q, mode: 'insensitive' } }, select: { id: true }, take: 200 }) : null,
+    query.rotting ? rottingIds(ctx.orgId) : null,
+    query.tag ? tagFilterIds(ctx.orgId, ENTITY, listParam(query.tag)) : null,
+    customFieldWhere(ctx.orgId, ENTITY, query),
+  ])
   if (query.q) {
-    const q = query.q.trim()
-    const companies = await prisma.company.findMany({ where: { organizationId: ctx.orgId, deletedAt: null, name: { contains: q, mode: 'insensitive' } }, select: { id: true }, take: 200 })
     and.push({ OR: [{ title: { contains: q, mode: 'insensitive' } }, ...(companies.length ? [{ companyId: { in: companies.map((c) => c.id) } }] : [])] })
   }
   if (query.closeFrom || query.closeTo) {
@@ -346,11 +352,11 @@ async function listWhere(ctx, query) {
   if (query.closedFrom) and.push({ closedAt: { gte: new Date(query.closedFrom) } })
   if (query.valueMin !== undefined) and.push({ valueMinor: { gte: BigInt(query.valueMin) } })
   if (query.valueMax !== undefined) and.push({ valueMinor: { lte: BigInt(query.valueMax) } })
-  if (query.rotting) and.push({ id: { in: await rottingIds(ctx.orgId) } })
-  if (query.tag) and.push({ id: { in: await tagFilterIds(ctx.orgId, ENTITY, listParam(query.tag)) } })
+  if (rotting) and.push({ id: { in: rotting } })
+  if (tagged) and.push({ id: { in: tagged } })
   const created = dateRange(query.createdFrom, query.createdTo, ctx.timezone)
   if (created) and.push({ createdAt: created })
-  and.push(...(await customFieldWhere(ctx.orgId, ENTITY, query)))
+  and.push(...custom)
   return and
 }
 
@@ -374,12 +380,18 @@ export async function getDeal(ctx, id) {
  * deals (by manual position). Won/Lost columns cover deals closed in the last 30 days.
  */
 export async function board(ctx, query) {
-  const pipeline = query.pipelineId
-    ? await prisma.pipeline.findFirst({ where: { id: query.pipelineId, organizationId: ctx.orgId, archivedAt: null }, select: { id: true, name: true } })
-    : await prisma.pipeline.findFirst({ where: { organizationId: ctx.orgId, archivedAt: null }, orderBy: [{ isDefault: 'desc' }, { position: 'asc' }], select: { id: true, name: true } })
+  // Only the default-pipeline case needs the pipeline id before anything else can start; the
+  // rest (stages, filter lookups, plan limits) runs together.
+  const fallback = query.pipelineId ? null : await prisma.pipeline.findFirst({ where: { organizationId: ctx.orgId, archivedAt: null }, orderBy: [{ isDefault: 'desc' }, { position: 'asc' }], select: { id: true, name: true } })
+  const pipelineId = query.pipelineId ?? fallback?.id
+  if (!pipelineId) throw ApiError.notFound('Pipeline not found')
+  const [pipeline, stages, base, writable] = await Promise.all([
+    fallback ?? prisma.pipeline.findFirst({ where: { id: pipelineId, organizationId: ctx.orgId, archivedAt: null }, select: { id: true, name: true } }),
+    prisma.pipelineStage.findMany({ where: { organizationId: ctx.orgId, pipelineId }, orderBy: { position: 'asc' }, select: stageSelect }),
+    listWhere(ctx, { ...query, pipelineId }),
+    writablePipelineIds(ctx.orgId, ctx.plan),
+  ])
   if (!pipeline) throw ApiError.notFound('Pipeline not found')
-  const stages = await prisma.pipelineStage.findMany({ where: { organizationId: ctx.orgId, pipelineId: pipeline.id }, orderBy: { position: 'asc' }, select: stageSelect })
-  const base = await listWhere(ctx, { ...query, pipelineId: pipeline.id })
   const since = new Date(Date.now() - BOARD_CLOSED_DAYS * DAY_MS)
   const scope = { OR: [{ status: 'open' }, { closedAt: { gte: since } }] }
   const where = { AND: [...base, scope] }
@@ -390,7 +402,6 @@ export async function board(ctx, query) {
       prisma.deal.findMany({ where: { AND: [...base, scope, { stageId: s.id }] }, orderBy: [{ position: 'asc' }, { id: 'asc' }], take: BOARD_PAGE + 1, select: dealSelect }),
     ),
   ])
-  const writable = await writablePipelineIds(ctx.orgId, ctx.plan)
   // Hydrate the visible cards together. Per-column hydration repeated the same owner,
   // tag, contact, company, reason and source queries for every non-empty stage.
   const cards = await present(columns.flatMap((rows) => rows.slice(0, BOARD_PAGE)))

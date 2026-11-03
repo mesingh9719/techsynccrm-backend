@@ -344,10 +344,15 @@ async function listWhere(ctx, query, { withStatus = true } = {}) {
   if (query.scoreMin !== undefined) and.push({ score: { gte: query.scoreMin } })
   if (query.city) and.push({ city: { equals: query.city, mode: 'insensitive' } })
   if (query.stateCode) and.push({ stateCode: { in: listParam(query.stateCode) } })
-  if (query.tag) and.push({ id: { in: await tagFilterIds(ctx.orgId, ENTITY, listParam(query.tag)) } })
   const created = dateRange(query.createdFrom, query.createdTo, ctx.timezone)
   if (created) and.push({ createdAt: created })
-  and.push(...(await customFieldWhere(ctx.orgId, ENTITY, query)))
+  // Independent lookups: one round trip instead of two.
+  const [tagged, custom] = await Promise.all([
+    query.tag ? tagFilterIds(ctx.orgId, ENTITY, listParam(query.tag)) : null,
+    customFieldWhere(ctx.orgId, ENTITY, query),
+  ])
+  if (tagged) and.push({ id: { in: tagged } })
+  and.push(...custom)
   return and
 }
 

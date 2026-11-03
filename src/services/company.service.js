@@ -181,10 +181,14 @@ export async function listCompanies(ctx, query) {
   }
   if (query.ownerId) and.push(ownerFilter(ctx, query.ownerId))
   if (query.industry) and.push({ industry: { in: listParam(query.industry) } })
-  if (query.tag) and.push({ id: { in: await tagFilterIds(ctx.orgId, ENTITY, listParam(query.tag)) } })
   const created = dateRange(query.createdFrom, query.createdTo, ctx.timezone)
   if (created) and.push({ createdAt: created })
-  and.push(...(await customFieldWhere(ctx.orgId, ENTITY, query)))
+  const [tagged, custom] = await Promise.all([
+    query.tag ? tagFilterIds(ctx.orgId, ENTITY, listParam(query.tag)) : null,
+    customFieldWhere(ctx.orgId, ENTITY, query),
+  ])
+  if (tagged) and.push({ id: { in: tagged } })
+  and.push(...custom)
 
   const where = { AND: and }
   const [rows, total] = await Promise.all([

@@ -141,13 +141,17 @@ describe('notification access checks are batched per page', () => {
     })
     const id = (n) => `bbbbbbbb-bbbb-4bbb-8bbb-${String(n).padStart(12, '0')}`
     const page = (n, from) => Array.from({ length: n }, (_, i) => ({ id: id(from + i), type: 'system', entityType: null, entityId: null, context: {}, createdAt: new Date(Date.UTC(2026, 0, 1) - (from + i) * 1000) }))
-    const all = page(120, 0)
-    // Honours the createdAt-desc cursor (unique timestamps), like the real query.
-    db.notification.findMany.mockImplementation(({ where, take }) => {
-      const before = where.AND[1].OR?.[0].createdAt.lt
-      return Promise.resolve(all.filter((n) => !before || n.createdAt < before).slice(0, take))
+    const all = page(2500, 0)
+    // Honours the id-ascending keyset, like the real query.
+    db.notification.findMany.mockImplementation(({ where, take, orderBy }) => {
+      expect(where).toMatchObject({ organizationId: ORG, userId: ME, inApp: true, readAt: null })
+      expect(orderBy).toEqual({ id: 'asc' })
+      const after = where.id?.gt
+      return Promise.resolve(all.filter((n) => !after || n.id > after).slice(0, take))
     })
-    await expect(unreadCount({ orgId: ORG, userId: ME })).resolves.toBe(120)
+    await expect(unreadCount({ orgId: ORG, userId: ME })).resolves.toBe(2500)
     expect(db.membership.findUnique).toHaveBeenCalledOnce()
+    // 2,500 unread rows: three batched scans, not 25 API-sized pages.
+    expect(db.notification.findMany).toHaveBeenCalledTimes(3)
   })
 })

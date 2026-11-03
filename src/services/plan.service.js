@@ -166,12 +166,13 @@ async function applyPlanTx(tx, ctx, org, toPlan, { reason, trialEndsAt, meta } =
 // ---------- Current plan (GET /organizations/current) ----------
 
 /** Plan, trial and entitlement fields added to the current workspace. */
-export async function planOverview(org) {
+/** `usage` may be passed in when the caller already loaded it alongside the organization. */
+export async function planOverview(org, usage) {
   return {
     trialDaysLeft: trialDaysLeft(org.trialEndsAt, org.timezone),
     trialActive: Boolean(org.trialEndsAt && org.trialEndsAt > new Date() && TRIAL_PLANS.includes(org.plan)),
     seatSelectionRequired: Boolean(org.seatSelectionRequiredAt),
-    usage: await getUsage(org.id),
+    usage: usage ?? await getUsage(org.id),
   }
 }
 
