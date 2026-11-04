@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { hideContactInfo } from '../lib/contactInfo.js'
 import { z } from 'zod'
 import * as crm from '../controllers/crm.controller.js'
 import { permit, requireOrg } from '../middlewares/org.js'
@@ -44,26 +45,26 @@ const companyDuplicatesSchema = z.object({
 })
 
 export const contactRoutes = Router()
-contactRoutes.use(requireOrg)
-contactRoutes.get('/', permit('contacts.read'), validate(contactListQuery, 'query'), crm.listContacts)
+contactRoutes.use(requireOrg, hideContactInfo('contacts'))
+contactRoutes.get('/', permit('contacts.list'), validate(contactListQuery, 'query'), crm.listContacts)
 contactRoutes.post('/', permit('contacts.create'), allow, validate(createContactSchema), crm.createContact)
 contactRoutes.post('/check-duplicates', permit('contacts.read'), validate(checkDuplicatesSchema), crm.checkContactDuplicates)
 contactRoutes.post('/merge', permit('contacts.update'), validate(mergeSchema), crm.mergeContacts)
 contactRoutes.post('/bulk', permit('contacts.update'), validate(bulkSchema), crm.bulkContacts)
-contactRoutes.get('/:id', permit('contacts.read'), validate(idParams, 'params'), crm.getContact)
+contactRoutes.get('/:id', permit('contacts.view'), validate(idParams, 'params'), crm.getContact)
 contactRoutes.patch('/:id', permit('contacts.update'), allow, validate(idParams, 'params'), validate(updateContactSchema), crm.updateContact)
 contactRoutes.delete('/:id', permit('contacts.delete'), validate(idParams, 'params'), crm.deleteContact)
 contactRoutes.post('/:id/restore', permit('contacts.delete'), validate(idParams, 'params'), crm.restoreContact)
 
 export const companyRoutes = Router()
-companyRoutes.use(requireOrg)
-companyRoutes.get('/', permit('companies.read'), validate(companyListQuery, 'query'), crm.listCompanies)
+companyRoutes.use(requireOrg, hideContactInfo('companies'))
+companyRoutes.get('/', permit('companies.list'), validate(companyListQuery, 'query'), crm.listCompanies)
 companyRoutes.post('/', permit('companies.create'), allow, validate(createCompanySchema), crm.createCompany)
 companyRoutes.post('/check-duplicates', permit('companies.read'), validate(companyDuplicatesSchema), crm.checkCompanyDuplicates)
 companyRoutes.post('/merge', permit('companies.update'), validate(mergeSchema), crm.mergeCompanies)
 companyRoutes.post('/bulk', permit('companies.update'), validate(bulkSchema), crm.bulkCompanies)
-companyRoutes.get('/:id', permit('companies.read'), validate(idParams, 'params'), crm.getCompany)
-companyRoutes.get('/:id/contacts', permit('companies.read'), validate(idParams, 'params'), crm.listCompanyContacts)
+companyRoutes.get('/:id', permit('companies.view'), validate(idParams, 'params'), crm.getCompany)
+companyRoutes.get('/:id/contacts', permit('companies.view'), validate(idParams, 'params'), crm.listCompanyContacts)
 companyRoutes.patch('/:id', permit('companies.update'), allow, validate(idParams, 'params'), validate(updateCompanySchema), crm.updateCompany)
 companyRoutes.delete('/:id', permit('companies.delete'), validate(idParams, 'params'), crm.deleteCompany)
 companyRoutes.post('/:id/restore', permit('companies.delete'), validate(idParams, 'params'), crm.restoreCompany)

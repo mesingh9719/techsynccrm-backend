@@ -44,7 +44,7 @@ beforeEach(() => {
   db.$transaction = vi.fn(async (fn) => fn(db))
   db.$queryRaw = vi.fn().mockResolvedValue([])
   db.$executeRaw = vi.fn().mockResolvedValue(1)
-  db.membership.findUnique.mockResolvedValue({ status: 'active', role: 'owner' })
+  db.membership.findUnique.mockResolvedValue({ status: 'active', role: 'owner', roleId: null, organization: { plan: 'growth', rolesVersion: 0 } })
   db.lead.create.mockImplementation(async ({ data }) => lead(data))
   db.lead.update.mockImplementation(async ({ data }) => lead(data))
 })
@@ -184,7 +184,7 @@ describe('M10 activities and tasks', () => {
   it('revalidates the existing assignee when linking a different record', async () => {
     db.task.findFirst.mockResolvedValue(task())
     db.contact.findFirst.mockResolvedValue({ id: otherId, ownerId: otherId, displayName: 'Other' })
-    db.membership.findUnique.mockResolvedValue({ role: 'sales_rep', status: 'active' })
+    db.membership.findUnique.mockResolvedValue({ role: 'sales_rep', roleId: null, status: 'active', organization: { plan: 'growth', rolesVersion: 0 } })
     await expect(updateTask(ctx, id, { entityType: 'contact', entityId: otherId })).rejects.toMatchObject({ code: 'VALIDATION_ERROR' })
   })
   it('returns 404 for a task outside the workspace', async () => {

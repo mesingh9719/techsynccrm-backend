@@ -1,4 +1,4 @@
-import { scopeFor } from '../config/permissions.js'
+import { scopeFor, usesTeamScope } from '../config/permissions.js'
 import { ApiError } from '../utils/ApiError.js'
 
 /** Unowned records anyone with read access can see: unassigned leads (to claim them — D10), and contacts/companies without an owner (M07). */
@@ -41,6 +41,23 @@ export function canAccessRecord(ctx, resource, action, ownerId) {
 /** The caller's scope for an action, or null — e.g. to decide whether "update" is allowed at all. */
 export function recordScope(ctx, resource, action) {
   return scopeFor(ctx.permissions, resource, action)
+}
+
+/**
+ * The teams a member manages and the other members in them, for team-scoped access. Only looked up
+ * when the permissions have a team scope (`.team`); everyone else gets empty lists.
+ * @returns {Promise<{ teamIds: string[], managedUserIds: string[] }>}
+ */
+export async function managedMembers(db, orgId, userId, permissions) {
+  if (!usesTeamScope(permissions)) return { teamIds: [], managedUserIds: [] }
+  const rows = await db.teamMember.findMany({
+    where: { team: { organizationId: orgId, members: { some: { userId, isManager: true } } } },
+    select: { teamId: true, userId: true },
+  })
+  return {
+    teamIds: [...new Set(rows.map((r) => r.teamId))],
+    managedUserIds: [...new Set(rows.map((r) => r.userId))].filter((id) => id !== userId),
+  }
 }
 
 // ---------- Reassignment registry ----------

@@ -39,7 +39,7 @@ app.use(
   cors({
     origin: env.CORS_ORIGINS,
     credentials: true,
-    exposedHeaders: ['X-Request-Id', ...(env.PERFORMANCE_METRICS ? ['Server-Timing'] : [])],
+    exposedHeaders: ['X-Request-Id', 'X-Access-Version', ...(env.PERFORMANCE_METRICS ? ['Server-Timing'] : [])],
   }),
 )
 app.use(compression({ filter: (req, res) => req.headers.accept?.includes('text/event-stream') ? false : compression.filter(req, res) }))

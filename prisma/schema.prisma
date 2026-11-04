@@ -166,6 +166,8 @@ model Organization {
   seatSuspendedResolvedAt DateTime? @map("seat_suspended_resolved_at") @db.Timestamptz(6)
   /// Members must have 2FA enabled to use this workspace (M05)
   require2fa              Boolean   @default(false) @map("require_2fa")
+  /// Bumped whenever a role's permissions change, so cached permissions are re-read (RBAC)
+  rolesVersion            Int       @default(0) @map("roles_version")
   createdById             String    @map("created_by_id") @db.Uuid
   createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -176,6 +178,7 @@ model Organization {
   files           File[]
   invitations     Invitation[]
   teams           Team[]
+  roles           Role[]
   lastActiveUsers User[]                  @relation("LastActiveOrganization")
   usage           OrganizationUsage?
   planChanges     PlanChange[]
@@ -301,6 +304,8 @@ model Membership {
   organizationId       String       @map("organization_id") @db.Uuid
   userId               String       @map("user_id") @db.Uuid
   role                 MemberRole   @default(sales_rep)
+  /// A custom role (Business+). `role` then holds its base tier, used when the plan no longer includes custom roles.
+  roleId               String?      @map("role_id") @db.Uuid
   status               MemberStatus @default(active)
   /// Job title shown in the team list
   title                String?
@@ -313,9 +318,11 @@ model Membership {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customRole   Role?        @relation(fields: [roleId], references: [id], onDelete: Restrict)
 
   @@unique([organizationId, userId])
   @@index([userId, status])
+  @@index([roleId])
   @@map("memberships")
 }
 
@@ -341,6 +348,8 @@ model Invitation {
   organizationId String     @map("organization_id") @db.Uuid
   email          String
   role           MemberRole
+  /// Custom role to join with (see Membership.roleId)
+  roleId         String?    @map("role_id") @db.Uuid
   teamIds        String[]   @map("team_ids") @db.Uuid
   tokenHash      String     @unique @map("token_hash")
   invitedById    String     @map("invited_by_id") @db.Uuid
@@ -352,10 +361,40 @@ model Invitation {
   createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customRole   Role?        @relation(fields: [roleId], references: [id], onDelete: Restrict)
 
   @@index([organizationId, email])
   @@index([organizationId, createdAt])
   @@map("invitations")
+}
+
+/// A workspace role's permissions (RBAC). System rows (systemKey = manager / sales_rep / viewer) override
+/// the code defaults in config/permissions.js and exist only once an admin edits that role; owner and
+/// admin are never stored. Custom rows (systemKey null, Business+) are assigned via Membership.roleId.
+/// Active names are unique per workspace, case-insensitively (partial index in SQL).
+model Role {
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String      @map("organization_id") @db.Uuid
+  systemKey      MemberRole? @map("system_key")
+  name           String
+  description    String?
+  /// Chip accent (token name, e.g. "violet")
+  color          String?
+  /// Permission strings from PERMISSION_CATALOGUE
+  permissions    String[]    @default([])
+  /// Bumped on every change (optimistic concurrency)
+  version        Int         @default(1)
+  createdById    String?     @map("created_by_id") @db.Uuid
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  archivedAt     DateTime?   @map("archived_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  memberships  Membership[]
+  invitations  Invitation[]
+
+  @@unique([organizationId, systemKey])
+  @@map("roles")
 }
 
 /// A group of members. Managers of a team see records owned by its members.

@@ -133,6 +133,10 @@ export async function logActivity(ctx, input) {
 /** Also used by task completion so the task, recurrence and logged activity commit together. */
 export async function logActivityTx(tx, ctx, input) {
   const record = await loadRecord(ctx, input.entityType, input.entityId, 'read', tx)
+  // Logging a call on a lead or contact is its own permission (leads.call / contacts.call).
+  if (input.type === 'call' && ['lead', 'contact'].includes(input.entityType) && !ctx.permissions.includes(`${input.entityType}s.call`)) {
+    throw new ApiError(403, `You don’t have permission to log calls on ${input.entityType}s.`, { code: 'FORBIDDEN' })
+  }
   const body = input.type === 'note' || 'body' in input ? sanitizeNote(input.body) : null
   if (input.type === 'note' && !body) throw validationError({ body: 'Write something first' })
   const mentionIds = await validateMentions(ctx, body, record, tx)

@@ -1,17 +1,17 @@
-import { permissionsFor } from '../config/permissions.js'
 import { planHasFeature } from '../config/plans.js'
 import { prisma } from '../db/prisma.js'
-import { taskVisibilityWhere } from '../lib/visibility.js'
+import { managedMembers, taskVisibilityWhere } from '../lib/visibility.js'
 import { loadRecord, RECORD_TYPES } from './recordRef.service.js'
+import { memberPermissions } from './roleAccess.service.js'
 
 /** Build the recipient's current context, never the actor's permissions. */
 export async function notificationContext(orgId, userId, db = prisma) {
   const membership = await db.membership.findUnique({
     where: { organizationId_userId: { organizationId: orgId, userId } },
     select: {
-      role: true, status: true,
+      role: true, roleId: true, status: true,
       user: { select: { id: true, fullName: true, email: true, emailVerifiedAt: true, deletedAt: true, twoFactorEnabledAt: true, timezone: true, quietHours: true, digestEnabled: true } },
-      organization: { select: { id: true, name: true, timezone: true, plan: true, require2fa: true, deletedAt: true, seatSelectionRequiredAt: true, trialEndsAt: true } },
+      organization: { select: { id: true, name: true, timezone: true, plan: true, require2fa: true, deletedAt: true, seatSelectionRequiredAt: true, trialEndsAt: true, rolesVersion: true } },
     },
   })
   if (!membership || membership.status !== 'active') return null
@@ -23,8 +23,9 @@ export async function notificationContext(orgId, userId, db = prisma) {
     const senior = await db.membership.findFirst({ where: { organizationId: orgId, role: 'admin', status: 'active' }, orderBy: [{ joinedAt: 'asc' }, { createdAt: 'asc' }], select: { userId: true } })
     if (senior?.userId !== userId) return null
   }
-  const team = role === 'manager' ? await db.teamMember.findMany({ where: { team: { organizationId: orgId, members: { some: { userId, isManager: true } } } }, select: { userId: true } }) : []
-  return { orgId, userId, role, permissions: permissionsFor(role), managedUserIds: team.map((m) => m.userId), timezone: user.timezone || org.timezone, user, organization: org }
+  const permissions = await memberPermissions(db, { orgId, role, roleId: membership.roleId, plan: org.plan, rolesVersion: org.rolesVersion })
+  const { managedUserIds } = await managedMembers(db, orgId, userId, permissions)
+  return { orgId, userId, role, permissions, managedUserIds, timezone: user.timezone || org.timezone, user, organization: org }
 }
 
 export const rottingDealSelect = { id: true, status: true, lastActivityAt: true, stageEnteredAt: true, stage: { select: { rottingDays: true } } }

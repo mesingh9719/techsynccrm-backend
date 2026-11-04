@@ -18,6 +18,7 @@ import metaRoutes from './meta.routes.js'
 import organizationRoutes from './organization.routes.js'
 import publicRoutes from './public.routes.js'
 import { invitationRoutes, memberRoutes, teamRoutes } from './team.routes.js'
+import { roleRoutes } from './role.routes.js'
 import userRoutes from './user.routes.js'
 import { notificationRoutes } from './notification.routes.js'
 import { campaignRoutes } from './campaign.routes.js'
@@ -48,6 +49,7 @@ router.use('/organizations', organizationRoutes)
 router.use('/members', memberRoutes)
 router.use('/invitations', invitationRoutes)
 router.use('/teams', teamRoutes)
+router.use('/roles', roleRoutes)
 router.use('/files', fileRoutes)
 router.use('/imports', importRoutes)
 router.use('/exports', exportRoutes)

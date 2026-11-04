@@ -28,6 +28,7 @@ import {
 import { canAccessRecord, registerReassignable, visibilityWhere } from '../lib/visibility.js'
 import { logger } from '../lib/logger.js'
 import { ApiError } from '../utils/ApiError.js'
+import { hasPermission } from '../config/permissions.js'
 import { findContactMatches, setCompanies, syncLookups as syncContactLookups } from './contact.service.js'
 import { copyMatchingCustomFields, customFieldWhere, validateCustomFields } from './customField.service.js'
 import { assertWithinLimit } from './entitlements.service.js'
@@ -412,7 +413,7 @@ async function insertLeadTx(tx, ctx, data, { tagIds, extra = {} } = {}) {
 export async function createLead(ctx, input, { allowDuplicate = false, tx: externalTx, linkedContactId = null } = {}) {
   const data = await prepare(ctx, input, null, { db: externalTx ?? prisma })
   const ownerId = 'ownerId' in input ? input.ownerId : ctx.userId
-  await assertAssignableOwner(ctx, ownerId)
+  await assertAssignableOwner(ctx, ownerId, undefined, 'leads')
   if (!allowDuplicate) {
     const duplicates = await findDuplicates(ctx.orgId, data.emails, data.phones)
     if (duplicates.length) throw duplicateError(duplicates)
@@ -541,8 +542,9 @@ async function changeStatusTx(tx, ctx, lead, { status, lostReasonId, junkReason,
   return row
 }
 
+// Status and converting have their own permissions (leads.status / leads.convert) and reach every lead the role can see.
 export async function changeStatus(ctx, id, input) {
-  const lead = await getForAction(ctx, id, 'update')
+  const lead = await getForAction(ctx, id, 'read')
   assertOpen(lead)
   const row = await prisma.$transaction((tx) => changeStatusTx(tx, ctx, lead, input))
   return present(row)
@@ -573,7 +575,7 @@ export async function recordLeadActivity(ctx, leadId, { outbound = false, at = n
 
 /** Race-safe claim of an unassigned lead: exactly one of two simultaneous claims wins. */
 export async function claimLead(ctx, id) {
-  if (!ctx.permissions.some((p) => p === 'records.claim' || p.startsWith('records.assign'))) {
+  if (!hasPermission(ctx.permissions, 'leads.claim') && !hasPermission(ctx.permissions, 'leads.assign')) {
     throw new ApiError(403, 'You don’t have permission to claim leads.', { code: 'FORBIDDEN' })
   }
   const lead = await getForAction(ctx, id, 'read')
@@ -594,10 +596,10 @@ export async function claimLead(ctx, id) {
 export async function assignLead(ctx, id, ownerId) {
   const lead = await getForAction(ctx, id, 'read')
   assertOpen(lead)
-  if (!ctx.permissions.some((p) => p.startsWith('records.assign'))) throw new ApiError(403, 'You don’t have permission to assign leads.', { code: 'FORBIDDEN' })
+  if (!hasPermission(ctx.permissions, 'leads.assign')) throw new ApiError(403, 'You don’t have permission to assign leads.', { code: 'FORBIDDEN' })
   // Team-scoped managers can only reassign leads they can see as theirs/their team's (or unassigned ones).
   if (lead.ownerId && !canAccessRecord(ctx, RESOURCE, 'update', lead.ownerId)) throw new ApiError(403, 'You don’t have permission to reassign this lead.', { code: 'FORBIDDEN' })
-  await assertAssignableOwner(ctx, ownerId)
+  await assertAssignableOwner(ctx, ownerId, undefined, 'leads')
   if (lead.ownerId === ownerId) return present(lead)
   const row = await prisma.$transaction(async (tx) => {
     const updated = await tx.lead.update({ where: { id }, data: { ownerId, assignedAt: ownerId ? new Date() : null }, select: leadSelect })
@@ -652,8 +654,8 @@ export async function bulkLeads(ctx, { ids, action, payload = {} }) {
     else allowed.push(id)
   }
   if (action === 'assign') {
-    if (!ctx.permissions.some((p) => p.startsWith('records.assign'))) throw new ApiError(403, 'You don’t have permission to assign leads.', { code: 'FORBIDDEN' })
-    await assertAssignableOwner(ctx, payload.ownerId ?? null)
+    if (!hasPermission(ctx.permissions, 'leads.assign')) throw new ApiError(403, 'You don’t have permission to assign leads.', { code: 'FORBIDDEN' })
+    await assertAssignableOwner(ctx, payload.ownerId ?? null, undefined, 'leads')
   }
 
   const done = []
@@ -706,7 +708,7 @@ export async function bulkLeads(ctx, { ids, action, payload = {} }) {
  * - the lead becomes `converted` and read-only. Net zero for the `records` limit.
  */
 export async function convertLead(ctx, id, input) {
-  const lead = await getForAction(ctx, id, 'update')
+  const lead = await getForAction(ctx, id, 'read')
   assertOpen(lead)
   if (!OPEN_STATUSES.includes(lead.status)) throw new ApiError(400, 'Reopen this lead before converting it.', { code: 'INVALID_TRANSITION' })
   if (input.deal?.create && !ctx.permissions.includes('deals.create')) throw new ApiError(403, 'You don’t have permission to create deals.', { code: 'FORBIDDEN' })

@@ -1,12 +1,13 @@
 import { Router } from 'express'
-import { requireOrg, permit } from '../middlewares/org.js'
+import { requireOrg, permitAny } from '../middlewares/org.js'
 import { validate } from '../middlewares/validate.js'
 import { idParams } from '../validators/crm.validators.js'
 import { createImportSchema, updateImportSchema, exportSchema, datasetQuery, previewQuery, startImportSchema, importTemplateQuery } from '../validators/transfer.validators.js'
 import * as t from '../controllers/transfer.controller.js'
 const id = validate(idParams, 'params')
 export const importRoutes = Router()
-importRoutes.use(requireOrg, permit('records.import'))
+// Per record type checks happen in the service (`<resource>.import` / `<resource>.export`).
+importRoutes.use(requireOrg, permitAny('import'))
 importRoutes.get('/', t.importHistory)
 importRoutes.get('/template', validate(importTemplateQuery, 'query'), t.importTemplate)
 importRoutes.post('/', validate(createImportSchema), t.createImport)
@@ -22,7 +23,7 @@ importRoutes.post('/:id/cancel', id, t.cancelImport)
 importRoutes.post('/:id/undo', id, t.undoImport)
 importRoutes.get('/:id/errors', id, t.importErrors)
 export const exportRoutes = Router()
-exportRoutes.use(requireOrg, permit('records.export'))
+exportRoutes.use(requireOrg, permitAny('export'))
 exportRoutes.get('/', t.exportHistory)
 exportRoutes.post('/', validate(exportSchema), t.createExport)
 exportRoutes.get('/:id', id, t.exportStatus)

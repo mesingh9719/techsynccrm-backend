@@ -53,7 +53,7 @@ reportRoutes.put('/schedules/:frequency', validate(scheduleParams, 'params'), va
 
 // The client uses the shared, authenticated HTTP client and CSV encoder. Authorization and
 // auditing happen here before releasing the export dataset, including for direct API callers.
-reportRoutes.get('/:report/export', permit('records.export'), q, async (req, res) => {
+reportRoutes.get('/:report/export', permit('reports.export'), q, async (req, res) => {
   const query = req.validated.query
   res.json({ success: true, data: await reports.exportReport(req.ctx, req.params.report, { ...query, ...(!query.from && reports.defaultPeriod(req.ctx.timezone)) }) })
 })

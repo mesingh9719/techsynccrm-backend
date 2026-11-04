@@ -11,6 +11,7 @@ import { ApiError } from '../utils/ApiError.js'
 import { assertWithinLimit } from './entitlements.service.js'
 import { assertPassword } from './password.js'
 import { scheduleReassignment } from './reassign.service.js'
+import { resolveRoleChoice } from './role.service.js'
 
 /** Members of the current workspace (M04). Functions take `ctx` (req.ctx) first. */
 
@@ -20,6 +21,8 @@ const fieldError = (fields) => new ApiError(400, 'Validation failed', { code: 'V
 const memberSelect = {
   userId: true,
   role: true,
+  roleId: true,
+  customRole: { select: { name: true, archivedAt: true } },
   status: true,
   title: true,
   joinedAt: true,
@@ -52,6 +55,9 @@ function present(m, teams, lastActive) {
     fullName: m.user.fullName,
     email: m.user.email,
     role: m.role,
+    // Custom role, when the member has one (role is then their tier).
+    roleId: m.customRole && !m.customRole.archivedAt ? m.roleId : null,
+    roleName: m.customRole && !m.customRole.archivedAt ? m.customRole.name : null,
     status: m.status,
     title: m.title,
     joinedAt: m.joinedAt,
@@ -98,21 +104,23 @@ async function setTeams(tx, ctx, userId, teamIds) {
   await tx.teamMember.createMany({ data: teamIds.map((teamId) => ({ teamId, userId })), skipDuplicates: true })
 }
 
-export async function updateMember(ctx, userId, { role, title, teamIds }) {
+export async function updateMember(ctx, userId, { role: choice, title, teamIds }) {
   const target = await getMembership(ctx, userId)
   assertCanManage(ctx, target)
-  if (role === 'admin' && !hasPermission(ctx.permissions, 'members.manage.admins')) throw forbidden('Only the workspace owner can make someone an admin.')
+  // `role` is a built-in key or a custom role id.
+  const picked = choice ? await resolveRoleChoice(prisma, ctx.orgId, choice) : null
+  if (picked?.role === 'admin' && !hasPermission(ctx.permissions, 'members.manage.admins')) throw forbidden('Only the workspace owner can make someone an admin.')
 
   await prisma.$transaction(async (tx) => {
     const updated = await tx.membership.update({
       where: { id: target.id },
-      data: { ...(role && { role }), ...(title !== undefined && { title }) },
-      select: { role: true, title: true },
+      data: { ...(picked && { role: picked.role, roleId: picked.roleId }), ...(title !== undefined && { title }) },
+      select: { role: true, roleId: true, title: true },
     })
     if (teamIds) await setTeams(tx, ctx, userId, teamIds)
-    const changes = diff(target, updated, ['role', 'title'])
+    const changes = diff(target, updated, ['role', 'roleId', 'title'])
     if (changes || teamIds) {
-      await emit(tx, ctx, role && role !== target.role ? 'member.role_changed' : 'member.updated', { entityType: 'user', entityId: userId }, { changes, teamIds })
+      await emit(tx, ctx, picked && (picked.role !== target.role || picked.roleId !== target.roleId) ? 'member.role_changed' : 'member.updated', { entityType: 'user', entityId: userId }, { changes, teamIds })
       await recordAudit(tx, ctx, { action: 'member.update', entityType: 'user', entityId: userId, changes: { ...changes, ...(teamIds && { teamIds: [null, teamIds] }) } })
     }
   })

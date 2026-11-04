@@ -148,7 +148,7 @@ async function prepare(ctx, input, before, db) {
     !(await db.leadSource.count({ where: { id: data.sourceId, organizationId: ctx.orgId, archivedAt: null } }))
   )
     throw validationError({ sourceId: 'Choose an active workspace source' })
-  if (!before || 'ownerId' in data) await assertAssignableOwner(ctx, 'ownerId' in data ? data.ownerId : ctx.userId, db)
+  if (!before || 'ownerId' in data) await assertAssignableOwner(ctx, 'ownerId' in data ? data.ownerId : ctx.userId, db, 'campaigns')
   if ('startDate' in data) data.startDate = new Date(`${data.startDate}T00:00:00Z`)
   if ('endDate' in data) data.endDate = data.endDate ? new Date(`${data.endDate}T00:00:00Z`) : null
   const endDate = 'endDate' in data ? data.endDate : before?.endDate

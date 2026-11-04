@@ -103,7 +103,7 @@ async function prepare(ctx, input, existing = null) {
   if ('billingAddress' in input) data.billingAddress = input.billingAddress
   if ('shippingAddress' in input) data.shippingAddress = input.shippingAddress
   if ('ownerId' in input) {
-    await assertAssignableOwner(ctx, input.ownerId)
+    await assertAssignableOwner(ctx, input.ownerId, undefined, 'companies')
     data.ownerId = input.ownerId
   }
   if ('domain' in input || ('website' in input && !existing?.domain && !input.domain)) {
@@ -348,7 +348,7 @@ export async function bulkCompanies(ctx, { ids, action, payload = {} }) {
     else if (!canAccessRecord(ctx, RESOURCE, action2perm[action], row.ownerId)) failed.push({ id, code: 'FORBIDDEN' })
     else allowed.push(id)
   }
-  if (action === 'assign') await assertAssignableOwner(ctx, payload.ownerId ?? null)
+  if (action === 'assign') await assertAssignableOwner(ctx, payload.ownerId ?? null, undefined, 'companies')
   if (allowed.length) {
     await prisma.$transaction(async (tx) => {
       if (action === 'assign') await tx.company.updateMany({ where: { id: { in: allowed } }, data: { ownerId: payload.ownerId ?? null } })

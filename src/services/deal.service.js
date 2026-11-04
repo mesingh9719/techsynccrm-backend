@@ -189,7 +189,7 @@ async function prepare(ctx, input, existing = null, db = prisma) {
     data.sourceId = input.sourceId
   }
   if ('ownerId' in input && input.ownerId !== existing?.ownerId) {
-    await assertAssignableOwner(ctx, input.ownerId, db)
+    await assertAssignableOwner(ctx, input.ownerId, db, 'deals')
     data.ownerId = input.ownerId
   }
   if ('customFields' in input || !existing) {
@@ -621,7 +621,7 @@ export async function bulkDeals(ctx, { ids, action, payload = {} }) {
     else if (!canAccessRecord(ctx, RESOURCE, needs, row.ownerId)) failed.push({ id, code: 'FORBIDDEN' })
     else allowed.push(id)
   }
-  if (action === 'assign') await assertAssignableOwner(ctx, payload.ownerId ?? null)
+  if (action === 'assign') await assertAssignableOwner(ctx, payload.ownerId ?? null, undefined, 'deals')
   const done = []
   if (action === 'move') {
     for (const id of allowed) {

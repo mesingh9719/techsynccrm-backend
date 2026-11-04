@@ -170,7 +170,7 @@ async function prepare(ctx, input, existing = null) {
   if ('optedOut' in input) data.optOutAt = input.optedOut ? (existing?.optOutAt ?? now) : null
   if ('consentSource' in input) data.consentSource = input.consentSource
   if ('ownerId' in input) {
-    await assertAssignableOwner(ctx, input.ownerId)
+    await assertAssignableOwner(ctx, input.ownerId, undefined, 'contacts')
     data.ownerId = input.ownerId
   }
   if ('customFields' in input || !existing) {
@@ -421,7 +421,7 @@ export async function bulkContacts(ctx, { ids, action, payload = {} }) {
     else if (!canAccessRecord(ctx, RESOURCE, needs, row.ownerId)) failed.push({ id, code: 'FORBIDDEN' })
     else allowed.push(id)
   }
-  if (action === 'assign') await assertAssignableOwner(ctx, payload.ownerId ?? null)
+  if (action === 'assign') await assertAssignableOwner(ctx, payload.ownerId ?? null, undefined, 'contacts')
   if (allowed.length) {
     await prisma.$transaction(async (tx) => {
       if (action === 'assign') await tx.contact.updateMany({ where: { id: { in: allowed } }, data: { ownerId: payload.ownerId ?? null } })

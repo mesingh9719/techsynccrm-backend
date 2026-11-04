@@ -7,6 +7,7 @@ import { prisma, DB_NULL } from '../../db/prisma.js'
 import { env } from '../../config/env.js'
 import { parseListQuery, buildPage } from '../../lib/pagination.js'
 import { planHasFeature } from '../../config/plans.js'
+import { hasPermission } from '../../config/permissions.js'
 import { encrypt, decrypt, sha256, safeEqual } from '../../lib/crypto.js'
 import { recordAudit } from '../../lib/audit.js'
 import { notificationContext } from '../../services/notificationAccess.service.js'
@@ -34,7 +35,7 @@ export async function gmailMe(ctx) {
   const c = settings()
   const tenant = await getSettings(ctx.orgId)
   const setup = configurationStatus(c)
-  return { enabled: setup.ready && tenant.emailEnabled, tenantEnabled: tenant.emailEnabled, canCustomizeSignature: tenant.allowEmployeeCustomSignature || ['owner', 'admin'].includes(ctx.role), setup, syncEnabled: c.syncEnabled && canSyncAccount(row), entitled: planHasFeature(ctx.plan, 'emailSync'), consentVersion: CONSENT_VERSION, account: accountStatus(row) }
+  return { enabled: setup.ready && tenant.emailEnabled, tenantEnabled: tenant.emailEnabled, canCustomizeSignature: tenant.allowEmployeeCustomSignature || hasPermission(ctx.permissions, 'email.connections.manage'), setup, syncEnabled: c.syncEnabled && canSyncAccount(row), entitled: planHasFeature(ctx.plan, 'emailSync'), consentVersion: CONSENT_VERSION, account: accountStatus(row) }
 }
 export async function startLogin(ctx, input) {
   requireConfiguration(); permitEmail(ctx, 'email.connect'); await assertEmailEnabled(ctx.orgId)
@@ -128,7 +129,7 @@ export async function disconnect(ctx, id) {
 export async function updateSettings(ctx, input) {
   permitEmail(ctx, 'email.connect'); const row = await ownAccount(ctx, { connected: false })
   const tenant = await getSettings(ctx.orgId)
-  if (input.signatureHtml !== undefined && !tenant.allowEmployeeCustomSignature && !['owner', 'admin'].includes(ctx.role)) throw gmailError('EMAIL_SIGNATURE_MANAGED', 'Your administrator has turned off custom signatures for employees.', 403)
+  if (input.signatureHtml !== undefined && !tenant.allowEmployeeCustomSignature && !hasPermission(ctx.permissions, 'email.connections.manage')) throw gmailError('EMAIL_SIGNATURE_MANAGED', 'Your administrator has turned off custom signatures for employees.', 403)
   await prisma.gmailAccount.update({ where: { id: row.id, organizationId: ctx.orgId }, data: { ...input, ...(input.signatureHtml !== undefined && { signatureHtml: cleanHtml(input.signatureHtml) }), generation: { increment: 1 } } })
   return gmailMe(ctx)
 }

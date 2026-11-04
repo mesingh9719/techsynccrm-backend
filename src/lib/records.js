@@ -1,4 +1,5 @@
 import { prisma } from '../db/prisma.js'
+import { scopeFor } from '../config/permissions.js'
 import { ApiError } from '../utils/ApiError.js'
 import { toJsonValue } from './json.js'
 import { normalizePhone } from './phone.js'
@@ -115,17 +116,20 @@ export async function usersById(ids) {
 }
 
 /**
- * Who may be made a record's owner by this caller:
- * - yourself, always; nobody (unassigned) or anyone else needs `records.assign`;
- * - with only "team" assign scope, yourself or someone in a team you manage;
+ * Who may be made the owner of a `resource` record (leads, deals…) by this caller:
+ * - yourself, always; nobody (unassigned) or anyone else needs `<resource>.assign`;
+ * - it reaches as far as the role sees that module: "all" → anyone, "team" → yourself or
+ *   someone in a team you manage, "own" → only yourself;
  * - the owner must be an active member of the workspace.
  * System callers (connectors, jobs) skip the permission part.
  */
-export async function assertAssignableOwner(ctx, ownerId, db = prisma) {
+export async function assertAssignableOwner(ctx, ownerId, db = prisma, resource) {
   if (ctx.actorType !== 'system' && ownerId !== ctx.userId) {
     const perms = ctx.permissions ?? []
-    if (!perms.includes('records.assign.all')) {
-      const team = perms.includes('records.assign.team')
+    const canAssign = perms.includes(`${resource}.assign`)
+    const scope = scopeFor(perms, resource, 'read')
+    if (!canAssign || scope !== 'all') {
+      const team = canAssign && scope === 'team'
       if (!team || (ownerId && !(ctx.managedUserIds ?? []).includes(ownerId))) {
         throw new ApiError(403, team ? 'You can only assign records to members of teams you manage.' : 'You don’t have permission to assign records to others.', { code: 'FORBIDDEN' })
       }

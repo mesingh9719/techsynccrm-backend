@@ -19,7 +19,7 @@ export function requirePermission(ctx, permission) {
   if (!hasPermission(ctx.permissions, permission)) throw googleError('GOOGLE_ACCESS_DENIED', 'Your role cannot perform this action.', 403)
 }
 export async function requireExport(ctx, db = prisma) {
-  requirePermission(ctx, 'records.export')
+  requirePermission(ctx, 'leads.export')
   if (!(await tenantSettings(ctx.orgId, db)).exportsEnabled) throw googleError('GOOGLE_EXPORT_DISABLED', 'Google exports are turned off in Team & Google.', 403)
 }
 export async function resourceRequest(ctx, connection, service, api, path, options) {

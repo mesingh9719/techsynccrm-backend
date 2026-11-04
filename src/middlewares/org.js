@@ -1,7 +1,9 @@
 import { measureAuth } from '../lib/performance.js'
-import { hasPermission, permissionsFor } from '../config/permissions.js'
+import { hasAnyRecordAction, hasPermission } from '../config/permissions.js'
 import { planDefinition, planHasFeature } from '../config/plans.js'
 import { prisma } from '../db/prisma.js'
+import { managedMembers } from '../lib/visibility.js'
+import { accessVersion, memberPermissions } from '../services/roleAccess.service.js'
 import { ApiError } from '../utils/ApiError.js'
 import { requireAuth } from './auth.js'
 
@@ -34,7 +36,7 @@ async function keepsAccessDuringSeatSelection(orgId, userId, role) {
  * Also replaces `requireVerified`, and enforces the workspace's "require 2FA" setting.
  *
  * Sets `req.ctx`, which services take as their first argument:
- *   { userId, email, orgId, role, permissions, teamIds, managedUserIds, plan, trialEndsAt,
+ *   { userId, email, orgId, role, roleId, permissions, teamIds, managedUserIds, plan, trialEndsAt,
  *     entitlements (config/plans.js definition), timezone, currency,
  *     country, locale, fiscalYearStartMonth, actorType, ip, userAgent }
  */
@@ -42,14 +44,14 @@ export function loadOrgContext(req, res, next) {
   return measureAuth(() => loadContext(req, res, next))
 }
 
-async function loadContext(req, _res, next) {
+async function loadContext(req, res, next) {
   const orgId = req.user.orgId
   if (!orgId) return next(ORG_REQUIRED())
 
   // Three key lookups in parallel: one database round trip instead of a membership query followed
   // by its relation queries. Runs on every workspace request.
   const [found, user, organization] = await Promise.all([
-    prisma.membership.findUnique({ where: { organizationId_userId: { organizationId: orgId, userId: req.user.id } }, select: { role: true, status: true } }),
+    prisma.membership.findUnique({ where: { organizationId_userId: { organizationId: orgId, userId: req.user.id } }, select: { role: true, roleId: true, status: true } }),
     prisma.user.findUnique({ where: { id: req.user.id }, select: { email: true, emailVerifiedAt: true, twoFactorEnabledAt: true, deletedAt: true } }),
     prisma.organization.findUnique({
       where: { id: orgId },
@@ -64,6 +66,7 @@ async function loadContext(req, _res, next) {
         require2fa: true,
         trialEndsAt: true,
         seatSelectionRequiredAt: true,
+        rolesVersion: true,
         deletedAt: true,
       },
     }),
@@ -83,26 +86,21 @@ async function loadContext(req, _res, next) {
     return next(SEAT_SUSPENDED())
   }
 
-  // Managers see records owned by members of the teams they manage.
-  let teamIds = []
-  let managedUserIds = []
-  if (membership.role === 'manager') {
-    const rows = await prisma.teamMember.findMany({
-      where: { team: { organizationId: orgId, members: { some: { userId: req.user.id, isManager: true } } } },
-      select: { teamId: true, userId: true },
-    })
-    teamIds = [...new Set(rows.map((r) => r.teamId))]
-    managedUserIds = [...new Set(rows.map((r) => r.userId))].filter((id) => id !== req.user.id)
-  }
-
   const org = membership.organization
+  const permissions = await memberPermissions(prisma, { orgId, role: membership.role, roleId: membership.roleId, plan: org.plan, rolesVersion: org.rolesVersion })
+  // Lets the app notice its session copy of the permissions is stale (role changed or edited).
+  res.set('X-Access-Version', accessVersion(permissions))
+  // Team-scoped members see records owned by members of the teams they manage.
+  const { teamIds, managedUserIds } = await managedMembers(prisma, orgId, req.user.id, permissions)
+
   req.ctx = {
     userId: req.user.id,
     sessionId: req.user.sid ?? null,
     email: membership.user.email,
     orgId: org.id,
     role: membership.role,
-    permissions: permissionsFor(membership.role),
+    roleId: membership.roleId,
+    permissions,
     teamIds,
     managedUserIds,
     plan: org.plan,
@@ -144,4 +142,9 @@ export function requireRole(...roles) {
     if (!roles.includes(req.ctx?.role)) return next(FORBIDDEN())
     next()
   }
+}
+
+/** Use after requireOrg. Allows the request if the member may do `action` (import, export…) on any record module. */
+export function permitAny(action) {
+  return (req, _res, next) => (hasAnyRecordAction(req.ctx?.permissions ?? [], action) ? next() : next(FORBIDDEN()))
 }

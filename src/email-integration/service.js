@@ -1,5 +1,6 @@
 import { prisma } from '../db/prisma.js'
 import { ApiError } from '../utils/ApiError.js'
+import { hasPermission } from '../config/permissions.js'
 import { env } from '../config/env.js'
 import { queueEmail } from '../email/mailer.js'
 import { logger } from '../lib/logger.js'
@@ -12,7 +13,7 @@ export const defaults = Object.freeze({ emailEnabled: true, emailVisibility: 'LE
 const connected = ['connected', 'syncing', 'delayed']
 const relevant = [...connected, 'reconnect_required', 'paused']
 export function requireEmailAdmin(ctx) {
-  if (!['owner', 'admin'].includes(ctx.role)) throw new ApiError(403, 'Only workspace administrators can manage team email.', { code: 'FORBIDDEN' })
+  if (!hasPermission(ctx.permissions, 'email.connections.manage')) throw new ApiError(403, 'Only workspace administrators can manage team email.', { code: 'FORBIDDEN' })
 }
 export const getSettings = async (orgId, db = prisma) => await db.tenantEmailSettings.findUnique({ where: { organizationId: orgId } }) || { ...defaults, organizationId: orgId }
 export async function assertEmailEnabled(orgId, db = prisma) {

@@ -16,7 +16,7 @@ export const campaignRoutes = Router()
 const params = validate(idParams, 'params')
 campaignRoutes.use(requireOrg)
 campaignRoutes.get('/options', permit('campaigns.read'), campaigns.options)
-campaignRoutes.get('/', permit('campaigns.read'), validate(campaignListQuery, 'query'), campaigns.list)
+campaignRoutes.get('/', permit('campaigns.list'), validate(campaignListQuery, 'query'), campaigns.list)
 campaignRoutes.post('/', permit('campaigns.create'), validate(createCampaignSchema), campaigns.create)
 campaignRoutes.post(
   '/sync/meta',
@@ -24,7 +24,7 @@ campaignRoutes.post(
   validate(campaignSyncSchema),
   campaigns.syncMeta,
 )
-campaignRoutes.get('/:id', permit('campaigns.read'), params, campaigns.get)
+campaignRoutes.get('/:id', permit('campaigns.view'), params, campaigns.get)
 campaignRoutes.get('/:id/meta-status', permit('campaigns.read', 'settings.workspace.manage'), params, campaigns.metaState)
 campaignRoutes.get(
   '/:id/leads',

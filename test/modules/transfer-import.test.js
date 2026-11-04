@@ -27,7 +27,7 @@ const updateImportClient = (importId, body) => fetch(`/imports/${importId}`, { m
 
 const id = 'ee8cc2c1-0af9-4469-88b8-2cf4b9558f73'
 const fileId = '11111111-1111-4111-8111-111111111111'
-const ctx = { orgId: '22222222-2222-4222-8222-222222222222', userId: '33333333-3333-4333-8333-333333333333', role: 'owner', permissions: ['records.import'] }
+const ctx = { orgId: '22222222-2222-4222-8222-222222222222', userId: '33333333-3333-4333-8333-333333333333', role: 'owner', permissions: ['leads.import', 'contacts.import', 'companies.import', 'deals.import'] }
 let job
 
 beforeEach(() => {

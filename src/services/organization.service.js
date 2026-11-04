@@ -1,4 +1,3 @@
-import { permissionsFor } from '../config/permissions.js'
 import { DB_NULL, prisma, UNIQUE_VIOLATION } from '../db/prisma.js'
 import { detachForDeparture } from '../integrations/google/revocation.js'
 import { diff, emit } from '../events/outbox.js'
@@ -14,6 +13,7 @@ import { ensureDefaultPipeline } from './pipeline.service.js'
 import { initialPlanFor, planOverview, recordPlanChangeTx } from './plan.service.js'
 import { selectableIndustry } from './industry.service.js'
 import { unreadCount } from './notification.service.js'
+import { summaryAccess, summaryMembershipSelect, summaryOrganizationSelect } from './roleAccess.service.js'
 
 /**
  * Workspaces (organizations) and the user's active workspace.
@@ -54,12 +54,13 @@ const validationError = (fields) => new ApiError(400, 'Validation failed', { cod
 
 /**
  * Compact shape embedded in the signed-in user (AuthUser.organization). `permissions` is the
- * member's permission list (config/permissions.js) — the frontend's useCan reads it.
+ * member's effective permission list (services/roleAccess.service.js) — the frontend's useCan reads it.
+ * `org` needs summaryOrganizationSelect and `membership` summaryMembershipSelect.
  */
-export function presentOrganizationSummary(org, role) {
+export function presentOrganizationSummary(org, membership) {
   // require2fa is only enforced on plans that include it (paused after a downgrade).
   const require2fa = Boolean(org.require2fa) && planHasFeature(org.plan, 'require2fa')
-  return { id: org.id, name: org.name, slug: org.slug, plan: org.plan, role, permissions: permissionsFor(role), require2fa }
+  return { id: org.id, name: org.name, slug: org.slug, plan: org.plan, ...summaryAccess(org, membership), require2fa }
 }
 
 // ---------- Active workspace ----------
@@ -69,10 +70,10 @@ export function presentOrganizationSummary(org, role) {
  * an active member and it isn't deleted, otherwise their most recently joined active workspace,
  * otherwise null. Keeps users.last_active_organization_id in step with the answer.
  *
- * @returns {Promise<{ organization: { id, name, slug, plan }, role: string } | null>}
+ * @returns {Promise<{ organization: { id, name, slug, plan }, role: string, roleId: string | null, customRole } | null>}
  */
 export async function resolveActiveMembership(userId, preferredOrgId, db = prisma) {
-  const select = { role: true, organization: { select: { id: true, name: true, slug: true, plan: true, require2fa: true } } }
+  const select = { ...summaryMembershipSelect, organization: { select: { id: true, name: true, slug: true, require2fa: true, ...summaryOrganizationSelect } } }
   const activeWhere = { userId, status: 'active', organization: { deletedAt: null } }
 
   let membership = preferredOrgId ? await db.membership.findFirst({ where: { ...activeWhere, organizationId: preferredOrgId }, select }) : null
@@ -82,7 +83,7 @@ export async function resolveActiveMembership(userId, preferredOrgId, db = prism
   if (resolvedId !== (preferredOrgId ?? null)) {
     await db.user.update({ where: { id: userId }, data: { lastActiveOrganizationId: resolvedId } })
   }
-  return membership ? { organization: membership.organization, role: membership.role } : null
+  return membership
 }
 
 // ---------- Create ----------
@@ -178,11 +179,11 @@ export async function createAdditionalOrganization(actor, data) {
 export async function listMyOrganizations(userId, currentOrgId) {
   const memberships = await prisma.membership.findMany({
     where: { userId, status: 'active', organization: { deletedAt: null } },
-    select: { role: true, organization: { select: { id: true, name: true, slug: true, plan: true, require2fa: true, logoFileId: true } } },
+    select: { ...summaryMembershipSelect, organization: { select: { id: true, name: true, slug: true, require2fa: true, logoFileId: true, ...summaryOrganizationSelect } } },
     orderBy: { organization: { name: 'asc' } },
   })
-  return memberships.map(({ role, organization }) => ({
-    ...presentOrganizationSummary(organization, role),
+  return memberships.map(({ organization, ...membership }) => ({
+    ...presentOrganizationSummary(organization, membership),
     current: organization.id === currentOrgId,
   }))
 }
@@ -207,7 +208,7 @@ export async function getCurrentOrganization(ctx) {
     unreadCount(ctx),
     getUsage(ctx.orgId),
   ])
-  return { organization: { ...(await presentFull(organization, usage)), unreadNotificationCount }, membership: { ...membership, permissions: permissionsFor(membership.role) } }
+  return { organization: { ...(await presentFull(organization, usage)), unreadNotificationCount }, membership: { ...membership, roleId: ctx.roleId ?? null, permissions: ctx.permissions } }
 }
 
 // ---------- Update ----------

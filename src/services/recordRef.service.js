@@ -1,8 +1,8 @@
-import { permissionsFor } from '../config/permissions.js'
 import { prisma } from '../db/prisma.js'
 import { validationError } from '../lib/records.js'
-import { canAccessRecord, visibilityWhere } from '../lib/visibility.js'
+import { canAccessRecord, managedMembers, visibilityWhere } from '../lib/visibility.js'
 import { ApiError } from '../utils/ApiError.js'
+import { memberPermissions } from './roleAccess.service.js'
 
 /**
  * References to CRM records by (entityType, entityId) — used by activities and tasks (M10), which
@@ -85,13 +85,10 @@ export async function relatedRefs(orgId, entityType, entityId, db = prisma) {
  * context for that member: role permissions plus the teams they manage.
  */
 export async function memberCanRead(orgId, userId, entityType, ownerId, db = prisma) {
-  const membership = await db.membership.findUnique({ where: { organizationId_userId: { organizationId: orgId, userId } }, select: { role: true, status: true } })
+  const membership = await db.membership.findUnique({ where: { organizationId_userId: { organizationId: orgId, userId } }, select: { role: true, roleId: true, status: true, organization: { select: { plan: true, rolesVersion: true } } } })
   if (membership?.status !== 'active') return false
   if (!entityType) return true
-  let managedUserIds = []
-  if (membership.role === 'manager') {
-    const rows = await db.teamMember.findMany({ where: { team: { organizationId: orgId, members: { some: { userId, isManager: true } } } }, select: { userId: true } })
-    managedUserIds = rows.map((r) => r.userId)
-  }
-  return canAccessRecord({ userId, permissions: permissionsFor(membership.role), managedUserIds }, RECORD_TYPES[entityType].resource, 'read', ownerId)
+  const permissions = await memberPermissions(db, { orgId, role: membership.role, roleId: membership.roleId, plan: membership.organization.plan, rolesVersion: membership.organization.rolesVersion })
+  const { managedUserIds } = await managedMembers(db, orgId, userId, permissions)
+  return canAccessRecord({ userId, permissions, managedUserIds }, RECORD_TYPES[entityType].resource, 'read', ownerId)
 }

@@ -4,7 +4,8 @@ import { validateCustomFields } from './customField.service.js'
 import { GST_STATE_LIST } from '../lib/india.js'
 import crypto from 'node:crypto'
 import { prisma } from '../db/prisma.js'
-import { hasPermission, scopeFor } from '../config/permissions.js'
+import { hasAnyRecordAction, hasPermission } from '../config/permissions.js'
+import { canSeeContactInfo, redactContactInfo } from '../lib/contactInfo.js'
 import { planDefinition } from '../config/plans.js'
 import { emit } from '../events/outbox.js'
 import { recordAudit } from '../lib/audit.js'
@@ -36,7 +37,11 @@ export const TRANSFER_COLUMNS = {
 const hashHeaders = (headers) => crypto.createHash('sha256').update(JSON.stringify(headers)).digest('hex')
 const invalid = (message, details) => new ApiError(400, message, { code: 'VALIDATION_ERROR', details })
 const forbidden = () => new ApiError(403, 'You do not have permission to transfer these records.', { code: 'FORBIDDEN' })
-const mustImport = (ctx) => { if (!hasPermission(ctx.permissions, 'records.import')) throw forbidden() }
+/** Importing needs `<resource>.import` for the record type, or for any type when none is given yet. */
+const mustImport = (ctx, entityType) => {
+  const ok = entityType ? ctx.permissions.includes(`${ENTITIES[entityType]?.resource}.import`) : hasAnyRecordAction(ctx.permissions, 'import')
+  if (!ok) throw forbidden()
+}
 const TEMPLATE_COLUMNS = {
   lead: ['Full name', 'Mobile', 'Email', 'Company', 'Lead source', 'Budget', 'Requirement', 'City', 'State', 'Pincode', 'Owner email', 'Tags'],
   contact: ['Full name', 'Mobile', 'Email', 'Company', 'Title', 'Source', 'Owner email', 'Tags'],
@@ -44,13 +49,14 @@ const TEMPLATE_COLUMNS = {
   deal: ['Deal title', 'Amount', 'Close date', 'Company', 'Pipeline', 'Stage', 'Source', 'Owner email', 'Tags'],
 }
 export async function importTemplate(ctx, entityType) {
-  mustImport(ctx)
+  mustImport(ctx, entityType)
   if (!TEMPLATE_COLUMNS[entityType]) throw invalid('Choose a valid record type.')
   const definitions = await prisma.customFieldDefinition.findMany({ where: { organizationId: ctx.orgId, entityType, archivedAt: null }, orderBy: [{ position: 'asc' }, { id: 'asc' }], select: { label: true } })
   // Text-formatted columns keep phone prefixes, PIN codes and long identifiers intact.
   return writeSpreadsheet([...TEMPLATE_COLUMNS[entityType], ...definitions.map((field) => field.label)], [], 'xlsx')
 }
-const jobWhere = (ctx, id) => ({ id, organizationId: ctx.orgId, ...(!['owner', 'admin'].includes(ctx.role) && { createdById: ctx.userId }) })
+// Everyone's import jobs are visible to admins (team managers); others see their own.
+const jobWhere = (ctx, id) => ({ id, organizationId: ctx.orgId, ...(!hasPermission(ctx.permissions, 'members.manage') && { createdById: ctx.userId }) })
 async function getImport(ctx, id, db = prisma) {
   mustImport(ctx)
   const job = await db.importJob.findFirst({ where: jobWhere(ctx, id) })
@@ -119,7 +125,7 @@ export async function transformImportRow(ctx, job, headers, row, lookup, db = pr
   if (job.entityType === 'contact' && values.source) input.source = values.source
   else if (values.source) {
     let source = lookup.sources.find((s) => equal(s.name, values.source))
-    if (!source && job.options.createMissingSources && ['owner', 'admin'].includes(ctx.role) && values.source.length <= 60) {
+    if (!source && job.options.createMissingSources && hasPermission(ctx.permissions, 'settings.workspace.manage') && values.source.length <= 60) {
       pending.sourceName = values.source
       warnings.push(`Source will be created: ${values.source}`)
     } else if (!source) throw invalid(`Unknown lead source: ${values.source}`, { issues: [{ field: 'source', column: headers.findIndex((header) => job.mapping[header] === 'source'), severity: 'error', message: 'Choose an existing source name, or enable Create unknown lead sources in Import options.' }] })
@@ -205,7 +211,7 @@ async function duplicateFor(ctx, type, input, db) {
   return contact ? { ...contact, matchedEntityType: 'contact' } : null
 }
 export async function createImport(ctx, { entityType, fileId }) {
-  mustImport(ctx)
+  mustImport(ctx, entityType)
   const file = await accessibleFile(ctx, fileId)
   if (file.status !== 'ready' || !/\.(csv|xlsx)$/i.test(file.originalName)) throw invalid('Choose a CSV or XLSX file.')
   const parsed = await parseSpreadsheet(file.originalName, await objectStore.bytes(file.storageKey))
@@ -482,7 +488,7 @@ export async function runImport(importId) {
   let job = await prisma.importJob.findUnique({ where: { id: importId } })
   if (!job || !['queued', 'running'].includes(job.status)) return
   try {
-    let ctx = await currentContext(job.organizationId, job.createdById); mustImport(ctx)
+    let ctx = await currentContext(job.organizationId, job.createdById); mustImport(ctx, job.entityType)
     const parsed = await parsedJob(ctx, job), lookup = await setup(ctx)
     const total = Math.min(parsed.rows.length, job.options.maxRows ?? parsed.rows.length)
     for (;;) {
@@ -492,7 +498,7 @@ export async function runImport(importId) {
         if (!['queued', 'running'].includes(current.status) || current.processed >= total) return null
         // Check current membership/permission every row; role changes stop queued work immediately.
         ctx = { ...(await currentContext(job.organizationId, job.createdById, tx)), importId }
-        mustImport(ctx)
+        mustImport(ctx, job.entityType)
         await tx.$queryRaw`SELECT id FROM organizations WHERE id = ${ctx.orgId}::uuid FOR UPDATE`
         const index = current.processed
         let action, entityId = null, recordUpdatedAt = null, error = null
@@ -580,15 +586,15 @@ export async function importErrors(ctx, id) {
   return getFileWithUrl(ctx, file.id)
 }
 
-function exportContext(ctx) {
-  const scope = scopeFor(ctx.permissions, 'records', 'export')
-  if (!scope) throw forbidden()
-  if (scope === 'team') return { ...ctx, forExport: true, permissions: ctx.permissions.filter((p) => !Object.values(ENTITIES).some((e) => p === `${e.resource}.read.all`)).concat(Object.values(ENTITIES).map((e) => `${e.resource}.read.team`)) }
+/** Exporting needs `<resource>.export` (or any export for history); it covers the records the role can see. */
+function exportContext(ctx, entityType) {
+  const ok = entityType ? ctx.permissions.includes(`${ENTITIES[entityType]?.resource}.export`) : hasAnyRecordAction(ctx.permissions, 'export')
+  if (!ok) throw forbidden()
   return ctx
 }
 /** Bounded, visibility-scoped RAW Google Sheets projection; never proxies arbitrary CRM columns. */
 export async function googleLeadRows(ctx, { leadId, filters = {}, columns = ['id', 'displayName', 'primaryEmail', 'primaryPhoneE164', 'companyName', 'status', 'city', 'budgetMinor', 'source', 'owner'] }) {
-  ctx = exportContext(ctx)
+  ctx = exportContext(ctx, 'lead')
   const allowed = new Set(['id', 'displayName', 'primaryEmail', 'primaryPhoneE164', 'companyName', 'status', 'city', 'budgetMinor', 'source', 'owner'])
   if (!columns.length || columns.some((column) => !allowed.has(column))) throw invalid('Choose valid lead export columns.')
   let rows
@@ -598,6 +604,7 @@ export async function googleLeadRows(ctx, { leadId, filters = {}, columns = ['id
     rows = [await getLead(ctx, leadId)]
   } else rows = await exportRows(ctx, { entityType: 'lead', filters }, 5001)
   if (rows.length > 5000) throw invalid('Google Sheets exports are limited to 5,000 leads. Narrow the filters.')
+  if (!canSeeContactInfo(ctx, 'leads')) redactContactInfo(rows)
   const labels = { id: 'Lead ID', displayName: 'Name', primaryEmail: 'Email', primaryPhoneE164: 'Phone', companyName: 'Company', status: 'Status', city: 'City', budgetMinor: 'Budget', source: 'Source', owner: 'Owner' }
   const values = [columns.map((column) => labels[column]), ...rows.map((row) => columns.map((column) => {
     if (column === 'source') return row.source?.name || ''
@@ -609,11 +616,13 @@ export async function googleLeadRows(ctx, { leadId, filters = {}, columns = ['id
   return values
 }
 async function exportRows(ctx, job, cap = 50001) {
-  ctx = exportContext(ctx)
+  ctx = exportContext(ctx, job.entityType)
   const config = ENTITIES[job.entityType]
   const query = config.query.parse(Object.fromEntries(Object.entries({ ...job.filters, limit: 100 }).map(([k, v]) => [k, typeof v === 'boolean' ? String(v) : v])))
   const rows = []; let cursor
-  do { ctx = exportContext(await currentContext(ctx.orgId, ctx.userId)); const page = await config.list(ctx, { ...query, cursor }); rows.push(...page.items); cursor = page.nextCursor } while (cursor && rows.length < cap)
+  do { ctx = exportContext(await currentContext(ctx.orgId, ctx.userId), job.entityType); const page = await config.list(ctx, { ...query, cursor }); rows.push(...page.items); cursor = page.nextCursor } while (cursor && rows.length < cap)
+  // Without 'See phone numbers and emails' the export leaves them blank.
+  if (!canSeeContactInfo(ctx, config.resource)) redactContactInfo(rows)
   return rows
 }
 async function exportFile(ctx, job, rows) {
@@ -659,7 +668,7 @@ async function exportFile(ctx, job, rows) {
   return getFileWithUrl(ctx, file.id)
 }
 export async function createExport(ctx, input) {
-  exportContext(ctx)
+  exportContext(ctx, input.entityType)
   const definitions = await prisma.customFieldDefinition.findMany({ where: { organizationId: ctx.orgId, entityType: input.entityType, archivedAt: null }, select: { key: true } })
   const allowed = new Set([...TRANSFER_COLUMNS[input.entityType], ...definitions.map((d) => `cf.${d.key}`)])
   if (input.columns.some((c) => !allowed.has(c))) throw invalid('Choose valid export columns.')

@@ -2,7 +2,8 @@ import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import { env } from '../config/env.js'
 import { LEGAL_VERSIONS } from '../config/legal.js'
-import { ASSIGNABLE_ROLES, hasPermission } from '../config/permissions.js'
+import { hasPermission } from '../config/permissions.js'
+import { resolveRoleChoice } from './role.service.js'
 import { prisma, UNIQUE_VIOLATION } from '../db/prisma.js'
 import { queueEmail } from '../email/mailer.js'
 import { invitationEmail } from '../email/templates.js'
@@ -43,7 +44,7 @@ async function sendInvitationEmail(ctx, invitation, token) {
     ...invitationEmail({
       inviterName: inviter.fullName,
       organizationName: org.name,
-      roleLabel: ROLE_LABELS[invitation.role],
+      roleLabel: invitation.roleName ?? ROLE_LABELS[invitation.role],
       url: `${env.FRONTEND_URL}/invite?token=${token}`,
       days: env.INVITATION_TTL_DAYS,
     }),
@@ -56,19 +57,20 @@ export async function listInvitations(ctx) {
   const rows = await prisma.invitation.findMany({
     where: { organizationId: ctx.orgId, acceptedAt: null, revokedAt: null },
     orderBy: { createdAt: 'desc' },
-    select: { id: true, email: true, role: true, teamIds: true, expiresAt: true, lastSentAt: true, createdAt: true, acceptedAt: true, revokedAt: true, invitedById: true },
+    select: { id: true, email: true, role: true, roleId: true, customRole: { select: { name: true } }, teamIds: true, expiresAt: true, lastSentAt: true, createdAt: true, acceptedAt: true, revokedAt: true, invitedById: true },
   })
   const inviters = await prisma.user.findMany({ where: { id: { in: [...new Set(rows.map((r) => r.invitedById))] } }, select: { id: true, fullName: true } })
   const names = new Map(inviters.map((u) => [u.id, u.fullName]))
-  return rows.map(({ acceptedAt: _a, revokedAt: _r, ...r }) => ({ ...r, status: stateOf({ ...r, acceptedAt: null, revokedAt: null }), invitedByName: names.get(r.invitedById) ?? null }))
+  return rows.map(({ acceptedAt: _a, revokedAt: _r, customRole, ...r }) => ({ ...r, roleName: customRole?.name ?? null, status: stateOf({ ...r, acceptedAt: null, revokedAt: null }), invitedByName: names.get(r.invitedById) ?? null }))
 }
 
 /**
  * Invites up to 20 emails at once. Returns a result per email so the UI can show which were sent.
  * Re-inviting an email replaces its earlier pending invitation (new link, old one stops working).
  */
-export async function createInvitations(ctx, { emails, role, teamIds = [] }) {
-  if (!ASSIGNABLE_ROLES.includes(role)) throw fieldError({ role: 'Choose a role' })
+export async function createInvitations(ctx, { emails, role: choice, teamIds = [] }) {
+  // `role` is a built-in key or a custom role id.
+  const { role, roleId, name: roleName } = await resolveRoleChoice(prisma, ctx.orgId, choice)
   if (role === 'admin' && !hasPermission(ctx.permissions, 'members.manage.admins')) throw forbidden('Only the workspace owner can invite admins.')
 
   const unique = [...new Set(emails)]
@@ -110,14 +112,14 @@ export async function createInvitations(ctx, { emails, role, teamIds = [] }) {
       })
       await assertWithinLimit(ctx, 'users', 1, tx)
       const created = await tx.invitation.create({
-        data: { organizationId: ctx.orgId, email, role, teamIds, tokenHash: sha256(token), invitedById: ctx.userId, expiresAt: expiry() },
+        data: { organizationId: ctx.orgId, email, role, roleId, teamIds, tokenHash: sha256(token), invitedById: ctx.userId, expiresAt: expiry() },
       })
       await emit(tx, ctx, 'member.invited', { entityType: 'invitation', entityId: created.id }, { email, role })
       await recordAudit(tx, ctx, { action: 'member.invite', entityType: 'invitation', entityId: created.id, changes: { email: [null, email], role: [null, role] } })
       return created
     })
     try {
-      await sendInvitationEmail(ctx, invitation, token)
+      await sendInvitationEmail(ctx, { ...invitation, roleName: roleId ? roleName : null }, token)
       results.push({ email, status: 'invited', id: invitation.id })
     } catch (err) {
       logger.error({ err }, '[email] invitation failed')
@@ -143,9 +145,9 @@ export async function resendInvitation(ctx, id) {
     const wait = Math.ceil((RESEND_COOLDOWN_MS - (Date.now() - inv.lastSentAt.getTime())) / 1000)
     if (wait > 0) throw new ApiError(429, `Please wait ${wait}s before resending.`, { code: 'COOLDOWN', details: { retryAfter: wait } })
     await assertWithinLimit(ctx, 'users', inv.expiresAt <= new Date() ? 1 : 0, tx)
-    return tx.invitation.update({ where: { id, organizationId: ctx.orgId }, data: { tokenHash: sha256(token), expiresAt: expiry(), lastSentAt: new Date() } })
+    return tx.invitation.update({ where: { id, organizationId: ctx.orgId }, data: { tokenHash: sha256(token), expiresAt: expiry(), lastSentAt: new Date() }, include: { customRole: { select: { name: true } } } })
   })
-  await sendInvitationEmail(ctx, updated, token)
+  await sendInvitationEmail(ctx, { ...updated, roleName: updated.customRole?.name ?? null }, token)
 }
 
 export async function revokeInvitation(ctx, id) {
@@ -161,7 +163,7 @@ export async function revokeInvitation(ctx, id) {
 async function findByToken(token) {
   return prisma.invitation.findUnique({
     where: { tokenHash: sha256(token) },
-    include: { organization: { select: { id: true, name: true, deletedAt: true } } },
+    include: { organization: { select: { id: true, name: true, deletedAt: true } }, customRole: { select: { name: true, archivedAt: true } } },
   })
 }
 
@@ -178,6 +180,7 @@ export async function lookupInvitation(token) {
     inviterName: inviter?.fullName ?? null,
     email: inv.email,
     role: inv.role,
+    roleName: inv.customRole && !inv.customRole.archivedAt ? inv.customRole.name : null,
     status: stateOf(inv),
     accountExists: Boolean(account),
   }
@@ -204,12 +207,14 @@ async function join(tx, inv, user, meta) {
   // The invitation (claimed above, so no longer counted as pending) turns into a member: +1 seat.
   // Normally it fits — the invitation held the seat — unless the plan was downgraded since.
   if (existing?.status !== 'active') await assertWithinLimit({ orgId: inv.organizationId }, 'users', 1, tx)
+  // A custom role deleted since the invitation was sent falls back to its tier (deleting a role moves invitations, so this is rare).
+  const roleId = inv.roleId && inv.customRole && !inv.customRole.archivedAt ? inv.roleId : null
   if (existing?.status === 'active') {
     // Already in — nothing to change, just switch to it.
   } else if (existing) {
-    await tx.membership.update({ where: { id: existing.id }, data: { status: 'active', role: inv.role, deactivatedAt: null, joinedAt: new Date() } })
+    await tx.membership.update({ where: { id: existing.id }, data: { status: 'active', role: inv.role, roleId, deactivatedAt: null, joinedAt: new Date() } })
   } else {
-    await tx.membership.create({ data: { organizationId: inv.organizationId, userId: user.id, role: inv.role, status: 'active', joinedAt: new Date() } })
+    await tx.membership.create({ data: { organizationId: inv.organizationId, userId: user.id, role: inv.role, roleId, status: 'active', joinedAt: new Date() } })
   }
   if (inv.teamIds.length) {
     const teams = await tx.team.findMany({ where: { id: { in: inv.teamIds }, organizationId: inv.organizationId }, select: { id: true } })

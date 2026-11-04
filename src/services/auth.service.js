@@ -74,7 +74,7 @@ export async function presentUser(row, active = null) {
     hasPassword: Boolean(passwordHash),
     /** False when the Terms or Privacy Policy changed since the user last accepted them. */
     termsUpToDate: termsVersion === LEGAL_VERSIONS.terms && privacyVersion === LEGAL_VERSIONS.privacy,
-    organization: active ? presentOrganizationSummary(active.organization, active.role) : null,
+    organization: active ? presentOrganizationSummary(active.organization, active) : null,
   }
 }
 

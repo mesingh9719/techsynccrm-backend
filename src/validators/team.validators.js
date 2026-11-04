@@ -2,7 +2,8 @@ import { z } from 'zod'
 import { ASSIGNABLE_ROLES } from '../config/permissions.js'
 
 const email = z.string().trim().toLowerCase().email('Enter a valid email address').max(254)
-const role = z.enum(ASSIGNABLE_ROLES, { error: 'Choose a role' })
+/** A built-in role key (`viewer`) or a custom role id. */
+const role = z.union([z.enum(ASSIGNABLE_ROLES), z.uuid()], { error: 'Choose a role' })
 const uuidList = z.array(z.uuid('Invalid team')).max(50)
 
 export const userIdParams = z.object({ userId: z.uuid('Invalid member') })

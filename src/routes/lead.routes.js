@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { hideContactInfo } from '../lib/contactInfo.js'
 import * as leads from '../controllers/lead.controller.js'
 import { permit, requireOrg } from '../middlewares/org.js'
 import { validate } from '../middlewares/validate.js'
@@ -32,20 +33,20 @@ import { allow } from './crm.routes.js'
 const params = validate(idParams, 'params')
 
 export const leadRoutes = Router()
-leadRoutes.use(requireOrg)
-leadRoutes.get('/', permit('leads.read'), validate(leadListQuery, 'query'), leads.list)
+leadRoutes.use(requireOrg, hideContactInfo('leads'))
+leadRoutes.get('/', permit('leads.list'), validate(leadListQuery, 'query'), leads.list)
 leadRoutes.post('/', permit('leads.create'), allow, validate(createLeadSchema), leads.create)
 leadRoutes.post('/check-duplicates', permit('leads.read'), validate(leadDuplicatesSchema), leads.checkDuplicates)
 leadRoutes.post('/bulk', permit('leads.update'), validate(leadBulkSchema), leads.bulk)
-leadRoutes.get('/:id', permit('leads.read'), params, leads.get)
+leadRoutes.get('/:id', permit('leads.view'), params, leads.get)
 leadRoutes.patch('/:id', permit('leads.update'), allow, params, validate(updateLeadSchema), leads.update)
 leadRoutes.delete('/:id', permit('leads.delete'), params, leads.remove)
 leadRoutes.post('/:id/restore', permit('leads.delete'), params, leads.restore)
-leadRoutes.post('/:id/status', permit('leads.update'), params, validate(leadStatusSchema), leads.changeStatus)
+leadRoutes.post('/:id/status', permit('leads.status'), params, validate(leadStatusSchema), leads.changeStatus)
 leadRoutes.post('/:id/claim', permit('leads.read'), params, leads.claim)
-leadRoutes.post('/:id/assign', permit('records.assign'), params, validate(assignLeadSchema), leads.assign)
-leadRoutes.get('/:id/conversion', permit('leads.update'), params, leads.conversionSuggestions)
-leadRoutes.post('/:id/convert', permit('leads.update'), params, validate(convertLeadSchema), leads.convert)
+leadRoutes.post('/:id/assign', permit('leads.assign'), params, validate(assignLeadSchema), leads.assign)
+leadRoutes.get('/:id/conversion', permit('leads.convert'), params, leads.conversionSuggestions)
+leadRoutes.post('/:id/convert', permit('leads.convert'), params, validate(convertLeadSchema), leads.convert)
 
 /** Everyone reads the lists (pickers); admins manage them. */
 export const leadSourceRoutes = Router()

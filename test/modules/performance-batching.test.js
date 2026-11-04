@@ -6,6 +6,7 @@ const { db } = vi.hoisted(() => ({
     user: { findUnique: vi.fn() },
     organization: { findUnique: vi.fn() },
     teamMember: { findMany: vi.fn() },
+    role: { findMany: vi.fn() },
     notification: { findMany: vi.fn() },
     task: { findMany: vi.fn() },
     deal: { findMany: vi.fn() },
@@ -62,9 +63,12 @@ describe('loadOrgContext', () => {
     db.user.findUnique.mockImplementation(defer('user', user))
     db.organization.findUnique.mockImplementation(defer('organization', org))
     const r = req()
+    const res = { set: vi.fn() }
     const next = vi.fn()
-    await loadOrgContext(r, {}, next)
+    await loadOrgContext(r, res, next)
     expect(next).toHaveBeenCalledWith()
+    expect(res.set).toHaveBeenCalledWith('X-Access-Version', expect.stringMatching(/^[A-Za-z0-9_-]{12}$/))
+    expect(db.role.findMany).not.toHaveBeenCalled()
     expect(order.slice(0, 3)).toEqual(['start:membership', 'start:user', 'start:organization'])
     expect(r.ctx).toMatchObject({ userId: ME, orgId: ORG, role: 'admin', email: user.email, plan: 'growth', timezone: 'Asia/Kolkata', teamIds: [], managedUserIds: [] })
     expect(db.teamMember.findMany).not.toHaveBeenCalled()
@@ -80,8 +84,21 @@ describe('loadOrgContext', () => {
     db.user.findUnique.mockResolvedValue(u)
     db.organization.findUnique.mockResolvedValue(o)
     const next = vi.fn()
-    await loadOrgContext(req(), {}, next)
+    await loadOrgContext(req(), { set: vi.fn() }, next)
     expect(next.mock.calls[0][0]).toMatchObject({ code })
+  })
+  it('uses an edited system role once the workspace has role changes, cached per version', async () => {
+    const otherOrg = '22222222-2222-4222-8222-222222222222'
+    db.membership.findUnique.mockResolvedValue({ role: 'sales_rep', roleId: null, status: 'active' })
+    db.user.findUnique.mockResolvedValue(user)
+    db.organization.findUnique.mockResolvedValue({ ...org, id: otherOrg, rolesVersion: 3 })
+    db.role.findMany.mockResolvedValue([{ id: 'r1', systemKey: 'sales_rep', permissions: ['leads.read.own', 'leads.read.all', 'leads.create', 'bogus.permission', 'organization.delete'], archivedAt: null }])
+    for (let i = 0; i < 2; i++) {
+      const r = { ...req(), user: { id: ME, orgId: otherOrg } }
+      await loadOrgContext(r, { set: vi.fn() }, vi.fn())
+      expect(r.ctx.permissions).toEqual(['leads.create', 'leads.read.all'])
+    }
+    expect(db.role.findMany).toHaveBeenCalledTimes(1)
   })
 })
 

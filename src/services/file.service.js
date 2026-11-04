@@ -10,13 +10,14 @@ import { assertFileSize, downloadDisposition, sniffFile } from '../lib/fileSafet
 import { registerConversionHook, registerMergeHook } from '../lib/merge.js'
 import { objectStore } from '../storage/objectStore.js'
 import { ApiError } from '../utils/ApiError.js'
+import { hasPermission } from '../config/permissions.js'
 import { assertWithinLimit, refreshUsage } from './entitlements.service.js'
 import { loadRecord } from './recordRef.service.js'
 
 const notFound = () => ApiError.notFound('File not found')
 const forbidden = () => new ApiError(403, 'You cannot change this file.', { code: 'FORBIDDEN' })
 export const presentFile = (r) => ({ id: r.id, name: r.originalName, contentType: r.contentType, size: Number(r.sizeBytes), createdAt: r.createdAt, deletedAt: r.deletedAt, status: r.status, uploadedById: r.userId })
-const canManage = (ctx, file) => file.userId === ctx.userId || ['owner', 'admin'].includes(ctx.role)
+const canManage = (ctx, file) => file.userId === ctx.userId || hasPermission(ctx.permissions, 'files.manage')
 const keyFor = (ctx, name) => `orgs/${ctx.orgId}/${new Date().toISOString().slice(0, 7).replace('-', '/')}/${crypto.randomUUID()}-${path.basename(name).replace(/[^a-zA-Z0-9._-]/g, '-').slice(-100)}`
 
 async function reference(ctx, ref, action = 'read', db = prisma) {
@@ -26,7 +27,7 @@ async function reference(ctx, ref, action = 'read', db = prisma) {
     return loadRecord(ctx, activity.entityType, activity.entityId, action, db)
   }
   if (ref.entityType === 'import') {
-    const job = await db.importJob.findFirst({ where: { id: ref.entityId, organizationId: ctx.orgId, ...(!['owner', 'admin'].includes(ctx.role) && { createdById: ctx.userId }) } })
+    const job = await db.importJob.findFirst({ where: { id: ref.entityId, organizationId: ctx.orgId, ...(!hasPermission(ctx.permissions, 'members.manage') && { createdById: ctx.userId }) } })
     if (!job) throw notFound()
     return job
   }
@@ -45,7 +46,7 @@ export async function accessibleFile(ctx, id, { manage = false, deleted = false 
   throw notFound()
 }
 async function reserveFile(ctx, name, size, contentType, ref, expiresAt = null) {
-  if (ctx.role === 'viewer') throw forbidden()
+  if (!hasPermission(ctx.permissions, 'files.upload')) throw forbidden()
   if (ref?.entityType) await reference(ctx, ref, 'update')
   return prisma.$transaction(async (tx) => {
     await assertWithinLimit(ctx, 'storage', size, tx)
@@ -129,7 +130,7 @@ export async function getFileWithUrl(ctx, id) {
 }
 export async function linkFile(ctx, id, ref) {
   const file = await accessibleFile(ctx, id)
-  if (ctx.role === 'viewer' || file.status !== 'ready') throw forbidden()
+  if (!hasPermission(ctx.permissions, 'files.upload') || file.status !== 'ready') throw forbidden()
   await reference(ctx, ref, 'update')
   await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT id FROM files WHERE id = ${id}::uuid AND organization_id = ${ctx.orgId}::uuid FOR UPDATE`

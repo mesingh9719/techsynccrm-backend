@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { hideContactInfo } from '../lib/contactInfo.js'
 import * as deals from '../controllers/deal.controller.js'
 import { permit, requireOrg } from '../middlewares/org.js'
 import { validate } from '../middlewares/validate.js'
@@ -47,14 +48,15 @@ pipelineTemplateRoutes.use(requireOrg)
 pipelineTemplateRoutes.get('/', deals.listTemplates)
 
 export const dealRoutes = Router()
-dealRoutes.use(requireOrg)
-dealRoutes.get('/', permit('deals.read'), validate(dealListQuery, 'query'), deals.list)
-dealRoutes.get('/board', permit('deals.read'), validate(boardQuery, 'query'), deals.board)
-dealRoutes.get('/forecast', permit('deals.read'), validate(forecastQuery, 'query'), deals.forecast)
+// Deals show their contacts; their phone numbers and emails follow the Contacts setting.
+dealRoutes.use(requireOrg, hideContactInfo('contacts'))
+dealRoutes.get('/', permit('deals.list'), validate(dealListQuery, 'query'), deals.list)
+dealRoutes.get('/board', permit('deals.list'), validate(boardQuery, 'query'), deals.board)
+dealRoutes.get('/forecast', permit('deals.list'), validate(forecastQuery, 'query'), deals.forecast)
 dealRoutes.post('/', permit('deals.create'), validate(createDealSchema), deals.create)
 dealRoutes.post('/bulk', permit('deals.update'), validate(dealBulkSchema), deals.bulk)
-dealRoutes.get('/:id', permit('deals.read'), id, deals.get)
-dealRoutes.get('/:id/history', permit('deals.read'), id, deals.history)
+dealRoutes.get('/:id', permit('deals.view'), id, deals.get)
+dealRoutes.get('/:id/history', permit('deals.view'), id, deals.history)
 dealRoutes.patch('/:id', permit('deals.update'), id, validate(updateDealSchema), deals.update)
 dealRoutes.post('/:id/move', permit('deals.update'), id, validate(moveDealSchema), deals.move)
 dealRoutes.post('/:id/contacts', permit('deals.update'), id, validate(dealContactSchema), deals.addContact)
