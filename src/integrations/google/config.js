@@ -54,4 +54,4 @@ export function requireConfiguration() {
 }
 export const cookieName = 'techsync_google_workspace'
 export const cookieOptions = () => ({ httpOnly: true, secure: env.isProduction || settings().redirectUri.startsWith('https:'), sameSite: 'lax', path: '/api/google/oauth', maxAge: 600000 })
-export const safeReturn = (value) => ['/app/settings/google', '/app/settings/google-team', '/app/integrations'].includes(value) ? value : '/app/settings/google'
+export const safeReturn = (value) => ['/app/settings/connections', '/app/settings/connections/team', '/app/settings/google', '/app/settings/google-team', '/app/integrations'].includes(value) ? value : '/app/settings/google'

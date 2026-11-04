@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { GST_STATE_CODES } from '../lib/india.js'
-import { industries, teamSizes } from './auth.validators.js'
+import { companyName, teamSizes } from './auth.validators.js'
 
 /** Slugs that would be confusing or collide with app routes if workspaces get subdomains/URLs later. */
 const RESERVED_SLUGS = new Set(['app', 'api', 'admin', 'www', 'help', 'login', 'signup', 'settings', 'support', 'status', 'billing', 'static', 'assets'])
@@ -30,12 +30,10 @@ const nullableText = (max, message) =>
     .nullish()
     .transform((v) => v || null)
 
-const companyName = z.string().trim().min(2, 'Company name is required').max(80, 'Keep it under 80 characters')
-
 /** POST /api/organizations — same fields as the onboarding company step. */
 export const createOrganizationSchema = z.object({
   company: companyName,
-  industry: z.enum(industries, { error: 'Choose your industry' }),
+  industryId: z.uuid('Choose your industry'),
   teamSize: z.enum(teamSizes, { error: 'Select your team size' }),
 })
 
@@ -58,7 +56,7 @@ export const updateOrganizationSchema = z
   .object({
     name: companyName,
     slug,
-    industry: z.enum(industries, { error: 'Choose your industry' }).nullable(),
+    industryId: z.uuid('Choose your industry').nullable(),
     teamSize: z.enum(teamSizes, { error: 'Select your team size' }).nullable(),
     logoFileId: z.uuid('Invalid file').nullable(),
     timezone: z.string().refine(isTimeZone, 'Choose a valid time zone'),

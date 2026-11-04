@@ -46,8 +46,10 @@ async function seedDemoUser() {
 async function seedWorkspace(user) {
   const existing = await prisma.membership.findFirst({ where: { userId: user.id, status: 'active' }, select: { organizationId: true } })
   if (existing) return
+  // Industries are seeded by migration 20261103180000_industries.
+  const industry = await prisma.industry.findUnique({ where: { slug: 'retail-distribution' }, select: { id: true } })
   const org = await withSlugRetry((tx) =>
-    createOrganizationTx(tx, { userId: user.id }, { company: 'Saffron Retail', industry: 'Retail & distribution', teamSize: '11–50' }, { plan: 'growth' }),
+    createOrganizationTx(tx, { userId: user.id }, { company: 'Saffron Retail', industryId: industry?.id ?? null, teamSize: '11–50' }, { plan: 'growth' }),
   )
   await prisma.organization.update({
     where: { id: org.id },

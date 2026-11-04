@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isMobilePhone } from '../lib/phone.js'
 
 // Mirrors the frontend's form rules (frontend/src/lib/schemas.ts) so both sides agree.
 const email = z.string().trim().toLowerCase().email('Enter a valid email address').max(254)
@@ -38,27 +39,33 @@ export const forgotPasswordSchema = z.object({ email })
 export const resetPasswordSchema = z.object({ token, password })
 
 export const teamSizes = ['1–10', '11–50', '51–200', '201–500', '500+']
-export const industries = [
-  'Retail & distribution',
-  'Manufacturing',
-  'Professional services',
-  'Real estate',
-  'Education',
-  'Healthcare',
-  'Other',
-]
 export const goals = ['capture_leads', 'manage_pipeline', 'whatsapp', 'automate_followups', 'quotes_invoices', 'reports']
+
+const COMPANY_NAME_CHARS = /^[\p{L}\p{M}\p{N} &.,'’()/+-]+$/u
+const countOf = (v, re) => v.match(re)?.length ?? 0
+
+// Mirrors frontend/src/lib/schemas.ts.
+/** A workspace/company name: real words, sensible length, no keyboard mashing like "89sd987sd98f7s9d…". */
+export const companyName = z
+  .string()
+  .trim()
+  .min(2, 'Company name is required')
+  .max(80, 'Keep it under 80 characters')
+  .refine((v) => COMPANY_NAME_CHARS.test(v), "Use letters, numbers, spaces and & . , ' - ( ) / only")
+  .refine((v) => countOf(v, /\p{L}/gu) >= 1, 'Include at least one letter')
+  .refine((v) => countOf(v, /\p{N}/gu) <= countOf(v, /\p{L}/gu) && v.split(/\s+/).every((w) => w.length <= 25), 'That doesn’t look like a company name')
+  .transform((v) => v.replace(/\s+/g, ' '))
 
 export const onboardingSchema = z.object({
   jobRole: z.string().trim().min(2, 'Tell us your role').max(60),
   phone: z
     .string()
     .trim()
-    .refine((v) => v === '' || /^\+?[0-9][0-9\s-]{7,15}$/.test(v), 'Enter a valid phone number')
+    .refine((v) => v === '' || isMobilePhone(v), 'Enter a valid mobile number (add the country code if outside India)')
     .transform((v) => v || null)
     .optional(),
-  company: z.string().trim().min(2, 'Company name is required').max(80),
-  industry: z.enum(industries, { error: 'Choose your industry' }),
+  company: companyName,
+  industryId: z.uuid('Choose your industry'),
   teamSize: z.enum(teamSizes, { error: 'Select your team size' }),
   goals: z.array(z.enum(goals)).min(1, 'Pick at least one goal').max(goals.length),
 })
@@ -70,7 +77,7 @@ const recoveryCode = z.string().trim().min(8, 'Enter a recovery code').max(20, '
 const phone = z
   .string()
   .trim()
-  .refine((v) => v === '' || /^\+?[0-9][0-9\s-]{7,15}$/.test(v), 'Enter a valid phone number')
+  .refine((v) => v === '' || isMobilePhone(v), 'Enter a valid mobile number (add the country code if outside India)')
   .transform((v) => v || null)
 
 export const loginSecondFactorSchema = z

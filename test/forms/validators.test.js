@@ -44,7 +44,7 @@ describe('contact form validation (mirrors the frontend)', () => {
       message: 'Tell us a bit more (at least 20 characters)',
       consent: 'Please agree so we can respond to you',
       topic: 'Choose a topic',
-      phone: 'Enter a valid phone number',
+      phone: 'Enter a valid phone number (add the country code if outside India)',
     })
   })
 })

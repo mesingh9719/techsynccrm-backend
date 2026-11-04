@@ -42,6 +42,7 @@ describe('email foundation security boundaries', () => {
   })
   it('keeps permitted return paths and exposes only connection metadata', () => {
     expect(validReturnTo('/app/settings/email')).toBe('/app/settings/email')
+    expect(validReturnTo('/app/settings/connections')).toBe('/app/settings/connections')
     const dto = accountDto({ id: 'one', status: 'connected', credentialEnc: 'secret', wrappedKey: 'secret', googleSubject: 'private' })
     expect(dto.status).toBe('CONNECTED'); expect(JSON.stringify(dto)).not.toMatch(/secret|credential|wrapped|googleSubject/)
   })

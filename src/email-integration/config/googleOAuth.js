@@ -12,5 +12,5 @@ export const hasSendScope = (scopes) => scopes.includes(GMAIL_SEND_SCOPE)
 /** Reject external, encoded, backslash and control-character redirect tricks. */
 export function validReturnTo(value) {
   if (typeof value !== 'string' || value.length > 200 || /[%\\\s\u0000-\u001f\u007f]/.test(value)) return '/app/settings/gmail'
-  return /^\/app\/(?:leads\/[0-9a-f-]{36}|contacts\/[0-9a-f-]{36}|settings\/(?:gmail|email|team-email))$/.test(value) ? value : '/app/settings/gmail'
+  return /^\/app\/(?:leads\/[0-9a-f-]{36}|contacts\/[0-9a-f-]{36}|settings\/(?:gmail|email|team-email|connections|connections\/team))$/.test(value) ? value : '/app/settings/gmail'
 }

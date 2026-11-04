@@ -383,7 +383,7 @@ export async function resetPassword(token, password) {
  * update their profile.
  */
 export async function completeOnboarding(userId, data, meta = {}) {
-  const { company, industry, teamSize, ...profile } = data
+  const { company, industryId, teamSize, ...profile } = data
   const existing = await getUserRow(userId)
 
   await withSlugRetry(async (tx) => {
@@ -399,7 +399,7 @@ export async function completeOnboarding(userId, data, meta = {}) {
       select: { id: true },
     })
     if (!member) {
-      await createOrganizationTx(tx, { userId, ip: meta.ip ?? null, userAgent: meta.userAgent ?? null }, { company, industry, teamSize }, { plan: signupPlan ?? 'starter' })
+      await createOrganizationTx(tx, { userId, ip: meta.ip ?? null, userAgent: meta.userAgent ?? null }, { company, industryId, teamSize }, { plan: signupPlan ?? 'starter' })
       // One trial per signup: a later workspace (e.g. after deleting this one) starts on Starter.
       await tx.user.update({ where: { id: userId }, data: { signupPlan: null } })
     }

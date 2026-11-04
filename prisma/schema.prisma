@@ -140,7 +140,8 @@ model Organization {
   name                    String
   /// URL-safe, unique, 3–40 chars [a-z0-9-]
   slug                    String    @unique
-  industry                String?
+  /// Master list in `industries`; null when not chosen
+  industryId              String?   @map("industry_id") @db.Uuid
   teamSize                String?   @map("team_size")
   logoFileId              String?   @map("logo_file_id") @db.Uuid
   timezone                String    @default("Asia/Kolkata")
@@ -170,6 +171,7 @@ model Organization {
   updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt               DateTime? @map("deleted_at") @db.Timestamptz(6)
 
+  industry        Industry?               @relation(fields: [industryId], references: [id], onDelete: Restrict)
   memberships     Membership[]
   files           File[]
   invitations     Invitation[]
@@ -200,6 +202,7 @@ model Organization {
 
   /// Trial expiry and reminder scans
   @@index([trialEndsAt])
+  @@index([industryId])
   @@map("organizations")
   fileLinks FileLink[]
   importJobs ImportJob[]
@@ -228,6 +231,32 @@ model Organization {
   assignmentRules AssignmentRule[]
   workingHours    WorkingHours?
   outOfOffice     OutOfOffice[]
+}
+
+/// Industry master list for workspaces (onboarding tiles + search, settings). Never deleted:
+/// set isActive = false to stop offering one; workspaces that use it keep it.
+/// Names are unique case-insensitively: industries_name_lower_key (migration 20261103180000_industries).
+model Industry {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Stable key for code, imports and URLs; never changes
+  slug             String         @unique @db.VarChar(60)
+  name             String         @db.VarChar(80)
+  /// lucide-react icon name
+  icon             String         @db.VarChar(40)
+  /// Shown as a tile on onboarding; the rest are found by search
+  featured         Boolean        @default(false)
+  sortOrder        Int            @default(0) @map("sort_order")
+  /// Extra search terms ("CA", "gym", "PG")
+  keywords         String[]       @default([])
+  /// Pipeline template key (config/pipelineTemplates.js) a new workspace starts with; null → general
+  pipelineTemplate String?        @map("pipeline_template") @db.VarChar(30)
+  isActive         Boolean        @default(true) @map("is_active")
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organizations    Organization[]
+
+  @@index([isActive, sortOrder])
+  @@map("industries")
 }
 
 // ---------- Plans & entitlements (M06) ----------

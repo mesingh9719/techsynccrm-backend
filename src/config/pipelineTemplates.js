@@ -1,6 +1,6 @@
 /**
- * Pipeline templates by industry (M09). A new workspace gets the template for its onboarding
- * industry; admins can pick any template when adding a pipeline. Every pipeline also gets the two
+ * Pipeline templates (M09). A new workspace gets the template its industry names
+ * (industries.pipeline_template); admins can pick any template when adding a pipeline. Every pipeline also gets the two
  * system stages Won and Lost, always last.
  *
  * The `default` template must match the backfill in migration 20261019180000_pipelines_deals.
@@ -11,18 +11,18 @@ const spread = (names, rottingDays = 7) =>
   names.map((name, i) => ({ name, probability: Math.round(((i + 1) * 80) / names.length / 5) * 5, rottingDays }))
 
 export const PIPELINE_TEMPLATES = {
-  default: { name: 'Sales pipeline', industry: null, stages: [
+  default: { name: 'Sales pipeline', stages: [
     { name: 'New', probability: 10, rottingDays: 7 },
     { name: 'Qualified', probability: 30, rottingDays: 7 },
     { name: 'Proposal sent', probability: 60, rottingDays: 7 },
     { name: 'Negotiation', probability: 80, rottingDays: 7 },
   ] },
-  retail: { name: 'Sales pipeline', industry: 'Retail & distribution', stages: spread(['New enquiry', 'Sample/visit', 'Quotation sent', 'Negotiation']) },
-  manufacturing: { name: 'Sales pipeline', industry: 'Manufacturing', stages: spread(['RFQ received', 'Technical discussion', 'Quotation sent', 'Negotiation', 'PO pending'], 10) },
-  services: { name: 'Sales pipeline', industry: 'Professional services', stages: spread(['Discovery', 'Proposal sent', 'Negotiation', 'Contract sent'], 10) },
-  real_estate: { name: 'Sales pipeline', industry: 'Real estate', stages: spread(['Enquiry', 'Site visit scheduled', 'Site visit done', 'Negotiation', 'Booking'], 5) },
-  education: { name: 'Admissions', industry: 'Education', stages: spread(['Enquiry', 'Counselling', 'Application', 'Fee pending']) },
-  healthcare: { name: 'Sales pipeline', industry: 'Healthcare', stages: spread(['Enquiry', 'Consultation', 'Proposal', 'Negotiation']) },
+  retail: { name: 'Sales pipeline', stages: spread(['New enquiry', 'Sample/visit', 'Quotation sent', 'Negotiation']) },
+  manufacturing: { name: 'Sales pipeline', stages: spread(['RFQ received', 'Technical discussion', 'Quotation sent', 'Negotiation', 'PO pending'], 10) },
+  services: { name: 'Sales pipeline', stages: spread(['Discovery', 'Proposal sent', 'Negotiation', 'Contract sent'], 10) },
+  real_estate: { name: 'Sales pipeline', stages: spread(['Enquiry', 'Site visit scheduled', 'Site visit done', 'Negotiation', 'Booking'], 5) },
+  education: { name: 'Admissions', stages: spread(['Enquiry', 'Counselling', 'Application', 'Fee pending']) },
+  healthcare: { name: 'Sales pipeline', stages: spread(['Enquiry', 'Consultation', 'Proposal', 'Negotiation']) },
 }
 
 export const TEMPLATE_LABELS = {
@@ -35,10 +35,9 @@ export const TEMPLATE_LABELS = {
   healthcare: 'Healthcare',
 }
 
-/** Template for an onboarding industry ("Other" and unknown → default). */
-export function templateForIndustry(industry) {
-  const entry = Object.entries(PIPELINE_TEMPLATES).find(([, t]) => t.industry && t.industry === industry)
-  return entry ? entry[0] : 'default'
+/** A template key as stored on an industry; none or unknown → default. */
+export function templateKey(key) {
+  return key && PIPELINE_TEMPLATES[key] ? key : 'default'
 }
 
 export function templateCatalogue() {

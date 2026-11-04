@@ -60,6 +60,8 @@ describe('Google configuration and credential compatibility', () => {
     expect(scopesAllowed(['https://www.googleapis.com/auth/drive'])).toBe(false)
     expect(safeReturn('https://evil.test')).toBe('/app/settings/google')
     expect(safeReturn('/app/settings/google-team')).toBe('/app/settings/google-team')
+    expect(safeReturn('/app/settings/connections')).toBe('/app/settings/connections')
+    expect(safeReturn('/app/settings/connections/team')).toBe('/app/settings/connections/team')
     expect(safeRequestUrl('/api/google/oauth/callback?error=denied&error_description=private')).toBe('/api/google/oauth/callback')
   })
   it('preserves the pre-refactor Gmail envelope wire format and binds tenant, account and purpose', () => {

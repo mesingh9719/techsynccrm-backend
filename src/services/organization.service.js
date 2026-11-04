@@ -12,6 +12,7 @@ import { assertFeature, countUsage, getUsage } from './entitlements.service.js'
 import { ensureLeadDefaults } from './leadSetup.service.js'
 import { ensureDefaultPipeline } from './pipeline.service.js'
 import { initialPlanFor, planOverview, recordPlanChangeTx } from './plan.service.js'
+import { selectableIndustry } from './industry.service.js'
 import { unreadCount } from './notification.service.js'
 
 /**
@@ -25,7 +26,8 @@ const fullSelect = {
   id: true,
   name: true,
   slug: true,
-  industry: true,
+  industryId: true,
+  industry: { select: { id: true, slug: true, name: true, icon: true } },
   teamSize: true,
   logoFileId: true,
   timezone: true,
@@ -46,7 +48,7 @@ const fullSelect = {
 }
 
 /** Fields tracked in audit entries and update events. */
-const AUDITED_FIELDS = ['name', 'slug', 'industry', 'teamSize', 'logoFileId', 'timezone', 'country', 'stateCode', 'currency', 'gstin', 'legalName', 'address', 'require2fa']
+const AUDITED_FIELDS = ['name', 'slug', 'industryId', 'teamSize', 'logoFileId', 'timezone', 'country', 'stateCode', 'currency', 'gstin', 'legalName', 'address', 'require2fa']
 
 const validationError = (fields) => new ApiError(400, 'Validation failed', { code: 'VALIDATION_ERROR', details: { fields } })
 
@@ -112,13 +114,14 @@ async function availableSlug(db, name) {
  * `plan` is the plan asked for: Growth/Business start a 14-day trial (M06, see plan.service.js).
  * @param {{ userId: string, ip?: string|null, userAgent?: string|null }} actor
  */
-export async function createOrganizationTx(tx, actor, { company, industry, teamSize }, { plan: requestedPlan }) {
+export async function createOrganizationTx(tx, actor, { company, industryId, teamSize }, { plan: requestedPlan }) {
+  const industry = industryId ? await selectableIndustry(industryId) : null
   const { plan, trialEndsAt, trialDenied } = await initialPlanFor(tx, actor.userId, requestedPlan, DEFAULT_TZ)
   const organization = await tx.organization.create({
     data: {
       name: company,
       slug: await availableSlug(tx, company),
-      industry: industry ?? null,
+      industryId: industry?.id ?? null,
       teamSize: teamSize ?? null,
       plan,
       trialEndsAt,
@@ -135,11 +138,11 @@ export async function createOrganizationTx(tx, actor, { company, industry, teamS
   // workspace can capture leads straight away, even when no worker is running.
   await ensureLeadDefaults(tx, organization.id)
   // First pipeline from the industry template (M09).
-  await ensureDefaultPipeline(tx, organization.id, organization.industry)
+  await ensureDefaultPipeline(tx, organization.id, industry?.pipelineTemplate)
 
   const ctx = { ...actor, orgId: organization.id }
   // Subscribers (e.g. pipeline templates in M09) react to this event.
-  await emit(tx, ctx, 'organization.created', { entityType: 'organization', entityId: organization.id }, { industry: organization.industry })
+  await emit(tx, ctx, 'organization.created', { entityType: 'organization', entityId: organization.id }, { industry: industry?.slug ?? null })
   await recordAudit(tx, ctx, { action: 'organization.create', entityType: 'organization', entityId: organization.id, changes: { name: [null, organization.name] } })
   await recordPlanChangeTx(tx, ctx, {
     organizationId: organization.id,
@@ -241,6 +244,7 @@ export async function updateCurrentOrganization(ctx, input) {
     const me = await prisma.user.findUnique({ where: { id: ctx.userId }, select: { twoFactorEnabledAt: true } })
     if (!me?.twoFactorEnabledAt) throw validationError({ require2fa: 'Turn on two-factor authentication for your own account first' })
   }
+  if (input.industryId && input.industryId !== before.industryId) await selectableIndustry(input.industryId, { currentId: before.industryId })
   if (input.logoFileId) {
     await assertLogoFile(ctx, input.logoFileId)
 

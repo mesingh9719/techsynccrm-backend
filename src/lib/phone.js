@@ -1,4 +1,5 @@
 import { parsePhoneNumberFromString } from 'libphonenumber-js/min'
+import { isValidPhoneNumber as isValidMobileNumber } from 'libphonenumber-js/mobile'
 
 /**
  * Normalises a phone number as typed ("098765 43210", "+91-98765-43210", "9876543210") to E.164
@@ -14,4 +15,14 @@ export function normalizePhone(raw, defaultCountry = 'IN') {
   const parsed = parsePhoneNumberFromString(trimmed, defaultCountry)
   if (!parsed || !parsed.isValid()) return { e164: null, raw: trimmed, valid: false }
   return { e164: parsed.number, raw: trimmed, valid: true }
+}
+
+/**
+ * True when the number is a valid mobile (WhatsApp-capable) number; landlines are rejected.
+ *
+ * @param {string} raw
+ * @param {string} [defaultCountry] ISO 3166 alpha-2, used when the number has no country code
+ */
+export function isMobilePhone(raw, defaultCountry = 'IN') {
+  return isValidMobileNumber(raw.trim(), defaultCountry)
 }

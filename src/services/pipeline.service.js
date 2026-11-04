@@ -1,6 +1,6 @@
 import { Prisma } from '../generated/prisma/client.js'
 import { planDefinition } from '../config/plans.js'
-import { PIPELINE_TEMPLATES, templateCatalogue, templateForIndustry } from '../config/pipelineTemplates.js'
+import { PIPELINE_TEMPLATES, templateCatalogue, templateKey } from '../config/pipelineTemplates.js'
 import { prisma } from '../db/prisma.js'
 import { emit } from '../events/outbox.js'
 import { recordAudit } from '../lib/audit.js'
@@ -48,11 +48,11 @@ export async function createPipelineFromTemplateTx(tx, orgId, templateKey, { nam
   return pipeline
 }
 
-/** A new workspace's first pipeline, from its onboarding industry. Idempotent. */
-export async function ensureDefaultPipeline(tx, orgId, industry) {
+/** A new workspace's first pipeline, from the template its industry names. Idempotent. */
+export async function ensureDefaultPipeline(tx, orgId, template) {
   const existing = await tx.pipeline.count({ where: { organizationId: orgId } })
   if (existing) return
-  await createPipelineFromTemplateTx(tx, orgId, templateForIndustry(industry), { isDefault: true })
+  await createPipelineFromTemplateTx(tx, orgId, templateKey(template), { isDefault: true })
 }
 
 export const listTemplates = () => templateCatalogue()

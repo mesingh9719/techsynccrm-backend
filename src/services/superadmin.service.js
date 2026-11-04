@@ -17,7 +17,7 @@ const clientSelect = {
   id: true,
   name: true,
   slug: true,
-  industry: true,
+  industry: { select: { name: true } },
   teamSize: true,
   plan: true,
   trialEndsAt: true,
@@ -85,8 +85,11 @@ export async function listClients({ search, plan, ...query }) {
     orderBy: page.orderBy,
     take: page.take,
   })
-  return buildPage(rows, page)
+  return buildPage(rows.map(withIndustryName), page)
 }
+
+/** Staff views keep `industry` as the plain name (it's a relation since the industries table). */
+const withIndustryName = (org) => ({ ...org, industry: org.industry?.name ?? null })
 
 export async function clientDetail(id) {
   const org = await prisma.organization.findFirst({
@@ -138,7 +141,7 @@ export async function clientDetail(id) {
   })
   if (!org) throw ApiError.notFound('Client not found')
   return {
-    ...org,
+    ...withIndustryName(org),
     usage: org.usage
       ? { ...org.usage, storageBytes: String(org.usage.storageBytes) }
       : null,

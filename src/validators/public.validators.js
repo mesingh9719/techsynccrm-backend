@@ -1,4 +1,8 @@
 import { z } from 'zod'
+import { normalizePhone } from '../lib/phone.js'
+
+// Same check as the frontend: Indian numbers as typed, other countries with a leading +.
+const isValidPhone = (v) => normalizePhone(v, 'IN').valid
 
 // Mirrors the frontend's form rules and messages (frontend/src/lib/schemas.ts: contactSchema,
 // demoSchema, newsletterSchema) so both sides agree. Server-only rules (demo date window, slot
@@ -15,7 +19,7 @@ const name = z.string().trim().min(2, 'Enter at least 2 characters').max(60, 'Ke
 const phone = z
   .string()
   .trim()
-  .refine((v) => v === '' || /^\+?[0-9][0-9\s-]{7,15}$/.test(v), 'Enter a valid phone number')
+  .refine((v) => v === '' || isValidPhone(v), 'Enter a valid phone number (add the country code if outside India)')
 
 const optionalText = (max) =>
   z
